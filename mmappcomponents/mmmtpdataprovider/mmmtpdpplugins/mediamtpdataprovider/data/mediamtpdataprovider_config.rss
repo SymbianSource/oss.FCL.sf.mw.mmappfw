@@ -1,0 +1,40 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  DP configuration information for mediamtpdataprovider
+*
+*/
+
+
+#include <mtp/mtpdataproviderconfig.rh>
+#include "mediamtpdataprovider_config.rh"
+
+RESOURCE MTP_DATA_PROVIDER dpConfig
+    {
+    type = KMTPDataProviderTypeECOM;
+    major_version = 1;
+    object_enumeration_persistent = 0;
+    supported_modes = KMTPModeMTP;  
+    server_name = "";
+    server_image_name = "";
+    opaque_resource = "folderConfig";
+    enumeration_phase = 11;
+    }
+
+RESOURCE MEDIAMTPDATAPROVIDE_CONFIG folderConfig
+    {
+    media_drive = 4;  // 2 change to SD card
+    }
+    
+    
+    

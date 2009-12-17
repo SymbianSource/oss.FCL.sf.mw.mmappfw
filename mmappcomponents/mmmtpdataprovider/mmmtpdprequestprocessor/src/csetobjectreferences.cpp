@@ -1,0 +1,217 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Implement the operation: SetObjectReferences
+*
+*/
+
+
+#include <mtp/cmtptypearray.h>
+#include <mtp/mmtpobjectmgr.h>
+#include <mtp/mmtpdataproviderframework.h>
+#include <mtp/mmtpreferencemgr.h>
+
+#include "csetobjectreferences.h"
+#include "tmmmtpdppanic.h"
+#include "mmmtpdplogger.h"
+#include "cmmmtpdpmetadataaccesswrapper.h"
+#include "mmmtpdputility.h"
+#include "mmmtpdpconfig.h"
+
+// -----------------------------------------------------------------------------
+// Verification data for the SetReferences request
+// -----------------------------------------------------------------------------
+//
+const TMTPRequestElementInfo KMTPSetObjectReferencesPolicy[] =
+    {
+        {
+        TMTPTypeRequest::ERequestParameter1,
+        EMTPElementTypeObjectHandle,
+        EMTPElementAttrNone,
+        0,
+        0,
+        0
+        }
+    };
+
+// -----------------------------------------------------------------------------
+// CSetObjectReferences::NewL
+// Two-phase construction method
+// -----------------------------------------------------------------------------
+//
+EXPORT_C MMmRequestProcessor* CSetObjectReferences::NewL( MMTPDataProviderFramework& aFramework,
+    MMTPConnection& aConnection,
+    MMmMtpDpConfig& aDpConfig )
+    {
+    CSetObjectReferences* self = new ( ELeave ) CSetObjectReferences( aFramework,
+        aConnection,
+        aDpConfig );
+    CleanupStack::PushL( self );
+    self->ConstructL();
+    CleanupStack::Pop( self );
+    return self;
+    }
+
+// -----------------------------------------------------------------------------
+// CSetObjectReferences::ConstructL
+// Two-phase construction method
+// -----------------------------------------------------------------------------
+//
+void CSetObjectReferences::ConstructL()
+    {
+    SetPSStatus();
+    }
+
+// -----------------------------------------------------------------------------
+// CSetObjectReferences::~CSetObjectReferences
+// Destructor
+// -----------------------------------------------------------------------------
+//
+EXPORT_C CSetObjectReferences::~CSetObjectReferences()
+    {
+    delete iReferences;
+    delete iReferenceSuids;
+    }
+
+// -----------------------------------------------------------------------------
+// CSetObjectReferences::CSetObjectReferences
+// Standard c++ constructor
+// -----------------------------------------------------------------------------
+//
+EXPORT_C CSetObjectReferences::CSetObjectReferences(
+    MMTPDataProviderFramework& aFramework,
+    MMTPConnection& aConnection,
+    MMmMtpDpConfig& aDpConfig ) :
+    CRequestProcessor(
+        aFramework,
+        aConnection,
+        sizeof( KMTPSetObjectReferencesPolicy )/sizeof( TMTPRequestElementInfo ),
+        KMTPSetObjectReferencesPolicy ),
+    iDpConfig( aDpConfig )
+    {
+    PRINT( _L( "Operation: SetObjectReferences(0x9811)" ) );
+    }
+
+// -----------------------------------------------------------------------------
+// CSetObjectReferences::DoSetObjectReferencesL
+// set references to DB
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CSetObjectReferences::DoSetObjectReferencesL( CMmMtpDpMetadataAccessWrapper& aWrapper,
+    TUint16 aObjectFormat,
+    const TDesC& aSrcFileName,
+    CDesCArray& aRefFileArray )
+    {
+    // do nothing, do special thing by inheriting
+    }
+
+// -----------------------------------------------------------------------------
+// CSetObjectReferences::ServiceL
+// SetReferences request handler
+// start receiving reference data from the initiator
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CSetObjectReferences::ServiceL()
+    {
+    PRINT( _L( "MM MTP => CSetObjectReferences::ServiceL" ) );
+    delete iReferences;
+    iReferences = NULL;
+    iReferences = CMTPTypeArray::NewL( EMTPTypeAUINT32 );
+    ReceiveDataL( *iReferences );
+    PRINT( _L( "MM MTP <= CSetObjectReferences::ServiceL" ) );
+    }
+
+// -----------------------------------------------------------------------------
+// CSetObjectReferences::DoHandleResponsePhaseL
+// Apply the references to the specified object
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TBool CSetObjectReferences::DoHandleResponsePhaseL()
+    {
+    PRINT( _L("MM MTP => CSetObjectReferences::DoHandleResponsePhaseL" ) );
+
+    delete iReferenceSuids;
+    iReferenceSuids = NULL;
+    iReferenceSuids = new ( ELeave ) CDesCArrayFlat( 3 );
+
+    if ( !VerifyReferenceHandlesL() )
+        {
+        SendResponseL( EMTPRespCodeInvalidObjectReference );
+        }
+    else
+        {
+        MMTPReferenceMgr& referenceMgr = iFramework.ReferenceMgr();
+        TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
+        PRINT1( _L( "MM MTP <>CSetObjectReferences::DoHandleResponsePhaseL objectHandle = 0x%x" ), objectHandle );
+        referenceMgr.SetReferencesL( TMTPTypeUint32( objectHandle ),
+            *iReferences );
+
+        CMTPObjectMetaData* object = CMTPObjectMetaData::NewLC(); // + object
+        iFramework.ObjectMgr().ObjectL( objectHandle, *object );
+        PRINT1( _L( "MM MTP <> object file name is %S" ), &(object->DesC( CMTPObjectMetaData::ESuid ) ) );
+        DoSetObjectReferencesL( iDpConfig.GetWrapperL(),
+            object->Uint( CMTPObjectMetaData::EFormatCode ),
+            object->DesC( CMTPObjectMetaData::ESuid ),
+            *iReferenceSuids );
+
+        CleanupStack::PopAndDestroy( object ); // - object
+
+        SendResponseL( EMTPRespCodeOK );
+        }
+    PRINT( _L("MM MTP <= CSetObjectReferences::DoHandleResponsePhaseL" ) );
+    return EFalse;
+    }
+
+// -----------------------------------------------------------------------------
+// CSetObjectReferences::VerifyReferenceHandlesL
+// Verify if the references are valid handles to objects
+// -----------------------------------------------------------------------------
+//
+TBool CSetObjectReferences::VerifyReferenceHandlesL() const
+    {
+    PRINT( _L( "MM MTP => CSetObjectReferences::VerifyReferenceHandlesL" ) );
+    __ASSERT_DEBUG( iReferences, Panic( EMmMTPDpReferencesNull ) );
+    TBool result = ETrue;
+    TInt count = iReferences->NumElements();
+    PRINT1( _L( "MM MTP <> CSetObjectReferences::VerifyReferenceHandlesL count = %d" ), count );
+    CMTPObjectMetaData* object( CMTPObjectMetaData::NewLC() ); // + object
+    MMTPObjectMgr& objectMgr = iFramework.ObjectMgr();
+
+    for ( TInt i = 0; i < count; i++ )
+        {
+        TMTPTypeUint32 handle;
+        iReferences->ElementL( i, handle );
+        if ( !objectMgr.ObjectL( handle, *object ) )
+            {
+            result = EFalse;
+            break;
+            }
+
+        iReferenceSuids->AppendL( object->DesC( CMTPObjectMetaData::ESuid ) );
+        }
+    CleanupStack::PopAndDestroy( object ); // - object
+    PRINT( _L( "MM MTP <= CSetObjectReferences::VerifyReferenceHandlesL" ) );
+    return result;
+    }
+
+// -----------------------------------------------------------------------------
+// CSetObjectReferences::HasDataphase
+// Derived from CRequestProcessor, can not be neglected
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TBool CSetObjectReferences::HasDataphase() const
+    {
+    return ETrue;
+    }
+
+// end of file
