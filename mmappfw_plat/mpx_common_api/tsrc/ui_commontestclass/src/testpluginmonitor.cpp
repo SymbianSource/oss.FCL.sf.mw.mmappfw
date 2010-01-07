@@ -70,5 +70,3 @@ void CCommonTestClass::HandlePluginUnload(const TUid& /*aPluginUid*/)//add
 	}
 	
 // end of CMPXPluginMonitor (mpxpluginmonitor.h) =============================================
-
-    

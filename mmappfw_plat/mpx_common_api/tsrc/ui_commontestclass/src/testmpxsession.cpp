@@ -235,4 +235,3 @@ TInt CCommonTestClass::CloseAndDestructRMPXSession()
 
 // end of RMPXSession (mpxsession.h) =============================================
 
-    

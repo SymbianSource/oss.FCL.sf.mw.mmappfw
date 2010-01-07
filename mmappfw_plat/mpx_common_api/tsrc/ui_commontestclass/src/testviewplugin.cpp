@@ -85,4 +85,3 @@ void CCommonTestClass::HandleCustomCommand(
 
 //end of CMPXViewPlugin (mpxviewplugin.h =============================================
 
-    

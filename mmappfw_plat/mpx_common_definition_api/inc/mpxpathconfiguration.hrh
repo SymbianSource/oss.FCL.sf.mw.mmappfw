@@ -21,7 +21,7 @@
 #define MPXPATHCONFIGURATION_HRH
 
 // INCLUDES
-#include <PathConfiguration.hrh>
+#include <pathconfiguration.hrh>
 
 // MACROS
 #define text_hdd_root_path  "E:\\"

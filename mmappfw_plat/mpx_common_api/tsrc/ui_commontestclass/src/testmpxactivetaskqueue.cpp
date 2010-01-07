@@ -523,4 +523,3 @@ TInt CCommonTestClass::DeleteCMPXActiveTaskQueue()
     iLog->Log(_L("CCommonTestClass::DeleteCMPXActiveTaskQueue testing CMPXTaskQueue::~CMPXActiveTaskQueue end err=%d"), err);
       return err;
     }   
-    

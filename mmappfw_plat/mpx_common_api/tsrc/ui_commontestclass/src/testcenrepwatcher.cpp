@@ -170,5 +170,3 @@ TInt CCommonTestClass::CenRepSetValueL( CStifItemParser& aItem )
     }
 
 // end of CMPXCenRepWatcher (mpxcenrepwatcher.h =============================================
-    
-    

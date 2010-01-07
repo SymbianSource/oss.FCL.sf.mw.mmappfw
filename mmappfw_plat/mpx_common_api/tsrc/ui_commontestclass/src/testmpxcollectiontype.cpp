@@ -189,5 +189,3 @@ TInt CCommonTestClass::TUidMPXCollectionType()
     }
     
 
-    
-    

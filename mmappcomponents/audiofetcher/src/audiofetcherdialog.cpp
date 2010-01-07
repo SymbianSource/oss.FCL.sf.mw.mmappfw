@@ -286,7 +286,6 @@ void CAudioFetcherDialog::PreLayoutDynInitL()
     iListBox->View()->SetListEmptyTextL( *iEmptyListText );
     
     iStatusPaneHandler->SetTitleL( iTitle );
-    iStatusPaneHandler->SetNaviPaneTitleL( KNullDesC );
     
     CEikButtonGroupContainer& dialogCba = ButtonGroupContainer(); 
     dialogCba.MakeCommandVisible(EAknSoftkeySelect, EFalse);
@@ -876,7 +875,6 @@ void CAudioFetcherDialog::HandleResourceChange(TInt aType)
         AknLayoutUtils::EMainPane, mainPaneRect );
         SetRect( mainPaneRect );
         TRAP_IGNORE( iStatusPaneHandler->SetTitleL( iTitle ) );
-        TRAP_IGNORE( iStatusPaneHandler->SetNaviPaneTitleL( KNullDesC ) );
         DrawDeferred();
         }
         

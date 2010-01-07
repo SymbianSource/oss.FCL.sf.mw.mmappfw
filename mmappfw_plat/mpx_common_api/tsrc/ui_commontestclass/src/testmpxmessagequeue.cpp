@@ -112,5 +112,3 @@ TInt CCommonTestClass::AddCMPXMessageQueue()
 
 
 // end of CMPXMessageQueue (mpxmessagequeue.h) =============================================
-
-    
