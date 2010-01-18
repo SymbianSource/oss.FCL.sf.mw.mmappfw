@@ -164,7 +164,8 @@ enum TMPXPlaybackAccessoryMode
     EPbAccessoryLoopset            = 0x00000020,
     EPbAccessoryMusicStand         = 0x00000040,
     EPbAccessoryTVOut              = 0x00000080,
-    EPbAccessoryHeadphones         = 0x00000100
+    EPbAccessoryHeadphones         = 0x00000100,
+    EPbAccessoryHDMI               = 0x00000200
     };
 #else
 /**

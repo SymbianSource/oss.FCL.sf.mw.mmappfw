@@ -1514,7 +1514,7 @@ void CMPXPlaybackEngine::HandlePluginEventInitialisedL(TMPXPlaybackState& s, TIn
         // Try pre-initialsing the next song, just in case we get there
         //
         TBool more = iInitializer->Next();
-        if (!more && iPlaylist->Shuffle())
+        if (!more && iPlaylist && iPlaylist->Shuffle())
             { // Reach to the end and shuffle is on, pre-initializer
               // needs  to re-copy the new shuffle list from engine
             if (iInitializer)

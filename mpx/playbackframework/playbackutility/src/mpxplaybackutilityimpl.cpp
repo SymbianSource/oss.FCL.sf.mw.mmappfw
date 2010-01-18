@@ -367,8 +367,11 @@ void CMPXPlaybackUtility::CommandL(
              EPbCmdPlayPause == cmdType ||
              EPbCmdStop == cmdType)
             {
-            aCmd.SetTObjectValueL<TProcessId>(KMPXCommandPlaybackGeneralClientPid,
-                                              RProcess().Id()); // current process id
+            if( !aCmd.IsSupported( KMPXCommandPlaybackGeneralClientPid ) )
+                {
+                aCmd.SetTObjectValueL<TProcessId> (
+                       KMPXCommandPlaybackGeneralClientPid, RProcess().Id()); // current process id
+                }
             }
         }
 

@@ -82,6 +82,8 @@ void CMPXCollectionUiHelperImp::ConstructL(const TUid& aModeId)
     iChunkNumber = 0;
     iChunkSize = 0;
     iArrayIndex = 0;
+    iRefCount = 1;
+
     }
 
 
@@ -103,10 +105,34 @@ CMPXCollectionUiHelperImp* CMPXCollectionUiHelperImp::NewL(const TUid& aModeId)
 //
 CMPXCollectionUiHelperImp* CMPXCollectionUiHelperImp::NewLC(const TUid& aModeId)
     {
-    CMPXCollectionUiHelperImp* self = new( ELeave ) CMPXCollectionUiHelperImp();
-    CleanupStack::PushL( self );
-    self->ConstructL(aModeId);
-    return self;
+
+	CMPXCollectionUiHelperImp* self(NULL);
+
+    if ( aModeId == KMcModeDefault )
+        {
+    	self = reinterpret_cast<CMPXCollectionUiHelperImp*>(Dll::Tls());
+    	if ( !self )
+            {
+            self = new( ELeave ) CMPXCollectionUiHelperImp();
+            CleanupStack::PushL( self );
+			self->ConstructL(aModeId);
+            Dll::SetTls( self );
+            }
+        else
+            {
+            self->iRefCount++;
+            CleanupStack::PushL( self );
+            }
+
+		return self;
+        }
+    else
+		{
+		self = new( ELeave ) CMPXCollectionUiHelperImp();
+		CleanupStack::PushL( self );
+		self->ConstructL(aModeId);
+		return self;
+		}
     }
 
 // ---------------------------------------------------------------------------
@@ -1016,7 +1042,21 @@ void CMPXCollectionUiHelperImp::Cancel()
 //
 void CMPXCollectionUiHelperImp::Close()
     {
-    delete this;
+
+    ASSERT( iRefCount > 0 );
+    if ( --iRefCount == 0 )
+        {
+        // last client released
+        CMPXCollectionUiHelperImp* s = reinterpret_cast<CMPXCollectionUiHelperImp*>( Dll::Tls() );
+        if ( s )
+            {
+            if ( s == this )
+                {
+                delete this;
+                Dll::SetTls( NULL );
+                }
+            }
+        }
     }
 
 // ---------------------------------------------------------------------------

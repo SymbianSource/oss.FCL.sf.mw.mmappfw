@@ -15,7 +15,7 @@
  *
 */
 
-// Version : %version: 5 %
+// Version : %version: e003sa33#6 %
 
 
 
@@ -93,6 +93,20 @@ void DoTest( CConsoleBase* /*aConsole*/ )
     RDebug::Print(_L("#MP# TestAsx Test 4"));
     {
         _LIT(KFile,"c:\\Corrupttest2.asx");
+        parser = CAsxParser::NewL(KFile);
+        TUint i = 0;
+        parser->GetUrlCount(i);
+        __ASSERT_DEBUG(i == 1,1);
+        TPtrC8 url;
+        TPtrC16 url2;
+        parser->GetUrl(1,url);
+        PrintUrl(url);
+        delete parser;
+    }
+    
+    RDebug::Print(_L("#MP# TestAsx Test 5"));
+    {
+        _LIT(KFile,"c:\\multiURL_v3.asx");
         parser = CAsxParser::NewL(KFile);
         TUint i = 0;
         parser->GetUrlCount(i);
