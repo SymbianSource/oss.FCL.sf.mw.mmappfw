@@ -2504,12 +2504,6 @@ void CMPXPlaybackEngine::HandlePlayL()
                     MediaFromCollectionL();
                     break;
                     }
-                else if ( EPlayFromUri == iPlaySource &&
-                        EPbStateStopped == oldNextState )
-                    {
-                    TRAP_IGNORE( InitL( iUri, &( KNullDesC8 ), NULL, iAccessPoint ) );                    
-                    break;
-                    }
                 else
                     {
                     // fall through on purpose

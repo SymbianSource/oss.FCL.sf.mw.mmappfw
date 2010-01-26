@@ -809,7 +809,10 @@ void CMPXCollectionCacheNode::DoInsertMediaArraysL( CMPXMediaArray& aExistingArr
     CleanupStack::PushL( buffer );
     TPtr8 ptr8 = buffer->Ptr(0);
     TPtrC ptr = MPXUser::Ptr( ptr8 );
-    iResults->SetTextValueL( KMPXCollectionOpenLAllResultRange, ptr );
+    if(iResults)
+    	{
+    	iResults->SetTextValueL( KMPXCollectionOpenLAllResultRange, ptr );
+  		}
     CleanupStack::PopAndDestroy( buffer );
     
     CleanupStack::PopAndDestroy( &datablocks );
