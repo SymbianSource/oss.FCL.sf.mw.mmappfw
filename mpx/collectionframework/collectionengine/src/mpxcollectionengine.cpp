@@ -102,6 +102,7 @@ CMPXCollectionEngine::CMPXCollectionEngine()
 //
 void CMPXCollectionEngine::ConstructL()
     {
+    iMediaForHeapKeepAlive = CMPXMedia::NewL(); // To avoid continuous heap 
     iPluginHandler=CMPXCollectionPluginHandler::NewL(*this, *this);
     iCache = CMPXCollectionCache::NewL(KMPXMaxCacheSizeRatio);
     }
@@ -112,6 +113,7 @@ void CMPXCollectionEngine::ConstructL()
 //
 EXPORT_C CMPXCollectionEngine::~CMPXCollectionEngine()
     {
+    delete iMediaForHeapKeepAlive;
     iCleanupStack.Close();
 
     iContexts.ResetAndDestroy();
