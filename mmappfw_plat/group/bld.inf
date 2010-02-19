@@ -19,7 +19,7 @@
 
 
 #include <bldvariant.hrh>
-#include "../inc/mmappfwbldvariant.hrh"
+#include "../../inc/mmappfwbldvariant.hrh"
 
 #include "../collection_helper_api/group/bld.inf"
 #include "../harvester_collection_mediator_api/group/bld.inf"
