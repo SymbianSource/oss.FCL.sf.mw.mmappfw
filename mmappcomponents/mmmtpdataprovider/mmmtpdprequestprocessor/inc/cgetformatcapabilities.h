@@ -20,16 +20,11 @@
 #include <mtp/cmtptypeformatcapabilitylist.h>
 
 #include "crequestprocessor.h"
-#include "mmmtpdplogger.h"
-#include "mmmtpdpconfig.h"
 
 // forward declaration
-class MMTPRequestProcessor;
 class MMmMtpDpConfig;
 class CMTPTypeObjectPropDesc;
 class CMTPTypeInterdependentPropDesc;
-class CMTPTypeObjectPropDesc;
-class CMTPTypeString;
 
 /**
 Implements the file data provider CMTPGetFormatCapabilities request processor.
@@ -39,18 +34,29 @@ class CGetFormatCapabilities : public CRequestProcessor
     {
 public:
     /**
+    * Two-phase construction method
+    * @param aFramework The data provider framework
+    * @param aConnection The connection from which the request comes
+    * @param aDpConfig Configuration of data provider
+    * @return The pointer to the created request processor object
+    */
+    IMPORT_C static MMmRequestProcessor* NewL( MMTPDataProviderFramework& aFramework,
+        MMTPConnection& aConnection,
+        MMmMtpDpConfig& aDpConfig );
+
+    /**
     * Destructor
     */
     IMPORT_C virtual ~CGetFormatCapabilities();
 
-protected:
+private:
     /**
     * Standard c++ constructor
     * @param aFramework    The data provider framework
     * @param aConnection   The connection from which the request comes
     * @param aDpConfig, The interface of dataprovider configuration
     */
-    IMPORT_C CGetFormatCapabilities( MMTPDataProviderFramework& aFramework,
+    CGetFormatCapabilities( MMTPDataProviderFramework& aFramework,
         MMTPConnection& aConnection,
         MMmMtpDpConfig& aDpConfig );
 
@@ -58,7 +64,7 @@ protected:
     * Constructor
     * Second phase constructor
     */
-    IMPORT_C void ConstructL();
+    void ConstructL();
 
 protected:
     // from CMTPRequestProcessor
@@ -74,73 +80,35 @@ protected:
     */
     IMPORT_C TMTPResponseCode CheckRequestL();
 
-protected:
-    // new virtuals
-    /**
-    * Service specific object property
-    * @param aPropCode, The prop code
-    * @return MTPType object propdesc
-    */
-    virtual CMTPTypeObjectPropDesc* ServiceSpecificPropertyDescL( TUint16 aPropCode ) = 0;
-
-    /**
-    * Service interdepent propdesc
-    * @param aFormatCode, The format code
-    * @return MTPTypeInterdependentPropDesc
-    */
-    virtual void ServiceInterdepentPropDescL() = 0;
-
 private:
     /**
-    * Get  PropDesc via PropCode
+     * Handle one format's capabilities
+     */
+    void ServiceOneFormatCapabilitiesL( TUint aFormatCode );
+
+    /**
+    * Handle one property description of one format
     * @param aPropCode    The Property Code
     * @return The MTPTypeObject PropDesc
     */
-    CMTPTypeObjectPropDesc* ServicePropDescL( TUint16 aPropCode );
+    CMTPTypeObjectPropDesc* ServiceOnePropDescL( TUint16 aPropCode );
 
-    /**
-    * Get PropDesc with Protection status
-    * @return The MTPTypeObject PropDesc
-    */
-    CMTPTypeObjectPropDesc*  ServiceProtectionStatusL();
-
-    /**
-    * Get PropDesc with file name
-    * @return The MTPTypeObject PropDesc
-    */
-    CMTPTypeObjectPropDesc*  ServiceFileNameL();
-
-    /**
-    * Get PropDesc with nonconsumable
-    * @return The MTPTypeObject PropDesc
-    */
-    CMTPTypeObjectPropDesc*  ServiceNonConsumableL();
-
-    /**
-    * Get group code
-    * @param aPropCode Specify the property code of which the group code needed
-    * @return Group code of specified property
-    */
-    TUint32 GetGroupCode( TUint32 aPropCode );
-
-protected:
+private:
     /*
      * Format code.
      */
     TUint iFormatCode;
 
-    CMTPTypeInterdependentPropDesc* iInterdependentPropDesc;
+    /*
+     * MMmMtpDpConfig.
+     */
+    MMmMtpDpConfig& iDpConfig;
 
-private: // Owned
     /*
      * CMTPTypeCapabilityList dataset.
      */
     CMTPTypeFormatCapabilityList* iCapabilityList;
 
-    /*
-     * MMmMtpDpConfig.
-     */
-    MMmMtpDpConfig& iDpConfig;
     };
 
 #endif // CMTPGETFORMATCAPABILITLIST_H

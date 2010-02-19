@@ -240,6 +240,9 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
                 ServiceMetaDataFromWrapperL( propCode, *iMTPTypeString, *iObjectInfo );
                 break;
                 }
+            // Else, video DB does not support DateAdded field, use the file system date!
+            // It's the same behavior with DateCreated and DateModified.
+            // Fall through intentional.
             }
         //lint -fallthrough
         case EMTPObjectPropCodeDateCreated:
@@ -260,7 +263,7 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
         // Consumable
         case EMTPObjectPropCodeNonConsumable:
             {
-            iMTPTypeUint8.Set( 0 );
+            iMTPTypeUint8.Set( iObjectInfo->Uint( CMTPObjectMetaData::ENonConsumable ) );
             SendDataL( iMTPTypeUint8 );
             }
             break;

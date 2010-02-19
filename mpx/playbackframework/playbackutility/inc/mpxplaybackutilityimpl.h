@@ -583,6 +583,13 @@ private:
     virtual void InitStreaming64L(RFile64& aShareableFile, const TInt aAccessPoint);
 #endif // SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
     
+    /** 
+     *  Sets the primary client 
+     * 
+     *  @since S60 9.2
+     *  @return system error 
+     */     
+     TInt SetPrimaryClientL();
 private:
 
 

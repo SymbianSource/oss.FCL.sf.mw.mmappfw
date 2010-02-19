@@ -361,4 +361,7 @@ EXPORTS
 	_ZN14CMPXClientList10AddClientLE9TThreadIdiP16CMPXMessageQueuei @ 360 NONAME
 	_ZNK14CMPXClientList14ClientCategoryEi @ 361 NONAME
 	_ZN21CMPXPluginHandlerBase15SelectPlugin64LERK7RFile64 @ 362 NONAME
+	_ZN14CMPXClientList11SendSyncMsgEPK9CMPXMedia @ 363 NONAME
+	_ZN14CMPXClientList16SetPrimaryClientER16CMPXMessageQueue @ 364 NONAME
+	_ZN16CMPXMessageQueue8AddFirstEPK9CMPXMediai @ 365 NONAME
 

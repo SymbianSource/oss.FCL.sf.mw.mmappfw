@@ -60,7 +60,7 @@ void CAbstractMediaMtpDataProviderCopyObject::ConstructL()
 //
 CAbstractMediaMtpDataProviderCopyObject::~CAbstractMediaMtpDataProviderCopyObject()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -73,7 +73,7 @@ CAbstractMediaMtpDataProviderCopyObject::CAbstractMediaMtpDataProviderCopyObject
     MMmMtpDpConfig& aDpConfig ) :
     CCopyObject( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -86,21 +86,8 @@ void CAbstractMediaMtpDataProviderCopyObject::ServiceGetSpecificObjectPropertyL(
     const CMTPObjectMetaData& /*aObject*/ )
     {
     PRINT( _L( "MM MTP <> CAbstractMediaMtpDataProviderCopyObject::ServiceGetSpecificObjectPropertyL" ) );
-    // do nothing
-    }
-
-// -----------------------------------------------------------------------------
-// CAbstractMediaMtpDataProviderCopyObject::ServiceSetSpecificObjectPropertyL
-// do nothing here
-// -----------------------------------------------------------------------------
-//
-TMTPResponseCode CAbstractMediaMtpDataProviderCopyObject::ServiceSetSpecificObjectPropertyL( TUint16 /*aPropCode*/,
-    const CMTPObjectMetaData& /*aObject*/,
-    const CMTPTypeObjectPropListElement& /*aElement*/)
-    {
-    PRINT( _L( "MM MTP <> CAbstractMediaMtpDataProviderCopyObject::ServiceSetSpecificObjectPropertyL" ) );
-
-    return EMTPRespCodeOK;
+    // Do nothing now.
+    // May need add implementation here for further extension.
     }
 
 // end of file

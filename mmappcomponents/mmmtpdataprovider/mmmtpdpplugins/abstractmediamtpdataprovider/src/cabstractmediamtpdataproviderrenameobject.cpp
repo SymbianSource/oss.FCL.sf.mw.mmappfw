@@ -53,9 +53,9 @@ CAbstractMediaMtpDataProviderRenameObject* CAbstractMediaMtpDataProviderRenameOb
 //
 CAbstractMediaMtpDataProviderRenameObject::CAbstractMediaMtpDataProviderRenameObject( MMTPDataProviderFramework& aFramework,
     CMmMtpDpMetadataAccessWrapper& aWrapper ) :
-    CRenameObject( aFramework, aWrapper )
+        CRenameObject( aFramework, aWrapper )
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -65,7 +65,7 @@ CAbstractMediaMtpDataProviderRenameObject::CAbstractMediaMtpDataProviderRenameOb
 //
 CAbstractMediaMtpDataProviderRenameObject::~CAbstractMediaMtpDataProviderRenameObject()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------

@@ -92,6 +92,7 @@ protected:
 private:
     CActiveSchedulerWait* iRenameWaiter;
     TUint32 iParentHandle;
+
     };
 
 #endif // CRENAMEOBJECT_H

@@ -128,7 +128,7 @@ void CMPXFolderMonitor::StartL( TDriveNumber aDrive )
                 User::LeaveIfError(
                     iFs.DriveToChar( aDrive, driveChar ) );
                 MPX_DEBUG2("CMPXFolderMonitor::Start: Drive %c: not supported!",
-                    driveChar );
+                    (TUint)driveChar );
                 User::Leave( KErrNotSupported );
                 }
             break;

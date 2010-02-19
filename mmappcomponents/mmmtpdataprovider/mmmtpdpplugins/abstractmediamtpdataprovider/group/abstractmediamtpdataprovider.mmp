@@ -40,19 +40,16 @@ SOURCE    cabstractmediamtpdataprovider.cpp
 SOURCE    abstractmediamtpdataprovidercontrollerimp.cpp
 SOURCE    abstractmediamtpdataproviderprocessor.cpp
 SOURCE    cabstractmediamtpdataproviderenumerator.cpp
-SOURCE    cabstractmediamtpdataprovidergetobjectpropdesc.cpp
-SOURCE    cabstractmediamtpdataprovidergetinterdependentpropdesc.cpp
 SOURCE    cabstractmediamtpdataprovidergetobjectpropvalue.cpp
 SOURCE    cabstractmediamtpdataprovidergetobjectproplist.cpp
 SOURCE    cabstractmediamtpdataprovidersetobjectpropvalue.cpp
-SOURCE    cabstractmediamtpdataprovidersetobjectproplist.cpp
 SOURCE    cabstractmediamtpdataprovidersetobjectreferences.cpp
 SOURCE    cabstractmediamtpdataproviderabstractmediapreference.cpp
 SOURCE    cabstractmediamtpdataprovidercopyobject.cpp
 SOURCE    cabstractmediamtpdataprovidermoveobject.cpp
 SOURCE    cabstractmediamtpdataproviderrenameobject.cpp
-SOURCE    cabstractmediamtpdataprovidersendobject.cpp
-SOURCE    cabstractmediamtpdataprovidergetformatcapabilities.cpp
+SOURCE    cabstractmediamtpdataproviderpropertysettingutility.cpp
+SOURCE    cabstractmediamtpdataproviderdescriptionutility.cpp
 
 
 SOURCEPATH        ../data 

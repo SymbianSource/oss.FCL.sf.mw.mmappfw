@@ -432,6 +432,7 @@ private: // data
     TUid                             iPodcastCollectionId;
 
     TBool                            iDisablePodcasting;
+    TInt                             iCurUSBEvent;
     
     // DRM
     CDRMNotifier*                    iDrmNotifier;

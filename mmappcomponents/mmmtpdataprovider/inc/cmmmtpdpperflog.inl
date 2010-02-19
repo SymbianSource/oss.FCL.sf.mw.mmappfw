@@ -189,7 +189,7 @@ void CMmMtpDpPerfLog::Stop( const TDesC& aDescription )
         {
         WriteFormat( _L( "<PERFLOG>%S-%S, usage = %u, last time = %u.%S ms, total time = %u.%S ms, average time = %u.%S ms</PERFLOG>" ), 
             iTitle, 
-            &iDescription[index], 
+            &iDescription[index],
             iTotalUsage[index], 
             lastTimeValue, 
             &lastTimeDecimal, 
@@ -202,7 +202,7 @@ void CMmMtpDpPerfLog::Stop( const TDesC& aDescription )
         {
         WriteFormat( _L( "<PERFLOG>%S-%S, usage = %u, last time = %u.%S ms, total time = %u%u.%S ms, average time = %u.%S ms</PERFLOG>" ), 
             iTitle, 
-            &iDescription[index], 
+            &iDescription[index],
             iTotalUsage[index], 
             lastTimeValue, 
             &lastTimeDecimal, 

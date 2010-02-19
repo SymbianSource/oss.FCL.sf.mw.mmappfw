@@ -99,6 +99,7 @@ enum TMPXPlaybackCommand
     EPbCmdDisableEffect,
     EPbCmdSetVolume,             // 25 Set volume to the value specified by aData
     EPbCmdSetAutoResume,         // 26 Set autoresume value (true/false)
+    EPbCmdSyncMsgComplete,      //27 Synchronous message is complete  
     EPbCmdEnd                    // Mark for the end of command
     };
 

@@ -48,7 +48,7 @@ MMmRequestProcessor* CAbstractMediaMtpDataProviderSetObjectReferences::NewL( MMT
 //
 void CAbstractMediaMtpDataProviderSetObjectReferences::ConstructL()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ void CAbstractMediaMtpDataProviderSetObjectReferences::ConstructL()
 //
 CAbstractMediaMtpDataProviderSetObjectReferences::~CAbstractMediaMtpDataProviderSetObjectReferences()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -69,9 +69,9 @@ CAbstractMediaMtpDataProviderSetObjectReferences::~CAbstractMediaMtpDataProvider
 CAbstractMediaMtpDataProviderSetObjectReferences::CAbstractMediaMtpDataProviderSetObjectReferences( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
-    CSetObjectReferences( aFramework, aConnection, aDpConfig )
+        CSetObjectReferences( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -87,7 +87,7 @@ void CAbstractMediaMtpDataProviderSetObjectReferences::DoSetObjectReferencesL( C
     TInt count = sizeof( KAbstractMediaMtpDataProviderSupportedFormats ) / sizeof (TUint16);
     TBool supported = EFalse;
 
-    for( TInt i = 0; i < count; i++ )
+    for ( TInt i = 0; i < count; i++ )
         {
         if( KAbstractMediaMtpDataProviderSupportedFormats[i] == aObjectFormat )
             {
@@ -98,7 +98,7 @@ void CAbstractMediaMtpDataProviderSetObjectReferences::DoSetObjectReferencesL( C
 
     if ( supported )
         {
-        aWrapper.SetPlaylistL( aSrcFileName, aRefFileArray );
+        aWrapper.SetAbstractMediaL( aSrcFileName, aRefFileArray, EMPXPlaylist );
         }
     }
 

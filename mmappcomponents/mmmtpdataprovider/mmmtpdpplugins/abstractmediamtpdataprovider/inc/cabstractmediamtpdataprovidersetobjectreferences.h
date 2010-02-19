@@ -69,9 +69,9 @@ protected:
     * @param aRefFileArray     the array of file names, to
     */
     void DoSetObjectReferencesL( CMmMtpDpMetadataAccessWrapper& aWrapper,
-            TUint16 aObjectFormat,
-            const TDesC& aSrcFileName,
-            CDesCArray& aRefFileArray );
+        TUint16 aObjectFormat,
+        const TDesC& aSrcFileName,
+        CDesCArray& aRefFileArray );
 
     };
 

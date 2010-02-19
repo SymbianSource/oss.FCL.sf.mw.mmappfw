@@ -127,6 +127,7 @@ private:
 
     // Accessor of DB
     MMmMtpDpConfig& iDpConfig;
+
     };
 
 #endif // CDELETEOBJECT_H

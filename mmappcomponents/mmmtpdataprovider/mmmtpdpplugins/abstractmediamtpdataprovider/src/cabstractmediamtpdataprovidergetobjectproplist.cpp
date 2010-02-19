@@ -50,7 +50,7 @@ MMmRequestProcessor* CAbstractMediaMtpDataProviderGetObjectPropList::NewL( MMTPD
 //
 CAbstractMediaMtpDataProviderGetObjectPropList::~CAbstractMediaMtpDataProviderGetObjectPropList()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -61,9 +61,9 @@ CAbstractMediaMtpDataProviderGetObjectPropList::~CAbstractMediaMtpDataProviderGe
 CAbstractMediaMtpDataProviderGetObjectPropList::CAbstractMediaMtpDataProviderGetObjectPropList( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
-    CGetObjectPropList( aFramework, aConnection, aDpConfig )
+        CGetObjectPropList( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -85,6 +85,10 @@ TInt CAbstractMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectProper
     TUint32 /*aHandle*/ )
     {
     PRINT( _L( "MM MTP <> CAbstractMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL, leave with KErrNotSupported" ) );
+
+    // Do nothing now.
+    // May need add implementation here for further extension.
+
     return KErrNotSupported;
     }
 

@@ -515,6 +515,13 @@ void CMPXPlaybackSession::DispatchMessageL( const RMessage2& aMessage, TInt& aMs
             break;
             }
 #endif // SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
+        case EPbsSetPrimaryClient:
+            {
+            TInt error = iPlayer->ClientList()->SetPrimaryClient(*iMessageQueue);
+            TPckgC<TInt> handle(error);
+            aMessage.Write(0, handle);            
+            break;
+            }
         default:
             {
             PanicClient(aMessage,KErrNotSupported);

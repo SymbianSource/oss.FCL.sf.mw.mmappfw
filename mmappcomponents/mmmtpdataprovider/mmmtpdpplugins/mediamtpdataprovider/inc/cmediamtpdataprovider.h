@@ -69,6 +69,16 @@ public:
     */
     CMmMtpDpMetadataAccessWrapper& GetWrapperL();
 
+    /**
+    * @return The utility to setting properties
+    */
+    CPropertySettingUtility* PropSettingUtility();
+
+    /**
+    * @return The utiltiy to setting descriptions
+    */
+    CDescriptionUtility* DescriptionUtility();
+
 protected:
     // from CMTPDataProviderPlugin
     void Cancel();
@@ -168,6 +178,7 @@ private:
     RArray<TUint32> iPendingEnumerations;
 
     TInt iActiveProcessor;
+    TBool iActiveProcessorRemoved;
     TBool iIsSessionOpen;
 
     CRenameObject *iRenameObject;
@@ -179,6 +190,9 @@ private:
     RArray<TUint> iSupportedPropAll;
 
     TUint32 iDefaultStorageId;
+
+    CPropertySettingUtility* iPropSettingUtility;
+    CDescriptionUtility* iDescriptionUtility;
 
     };
 

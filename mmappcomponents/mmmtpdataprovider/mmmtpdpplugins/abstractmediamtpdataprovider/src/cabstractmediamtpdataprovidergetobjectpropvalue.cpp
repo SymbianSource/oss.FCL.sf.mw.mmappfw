@@ -49,7 +49,7 @@ MMmRequestProcessor* CAbstractMediaMtpDataProviderGetObjectPropValue::NewL( MMTP
 //
 void CAbstractMediaMtpDataProviderGetObjectPropValue::ConstructL()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -59,7 +59,7 @@ void CAbstractMediaMtpDataProviderGetObjectPropValue::ConstructL()
 //
 CAbstractMediaMtpDataProviderGetObjectPropValue::~CAbstractMediaMtpDataProviderGetObjectPropValue()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -72,7 +72,7 @@ CAbstractMediaMtpDataProviderGetObjectPropValue::CAbstractMediaMtpDataProviderGe
     MMmMtpDpConfig& aDpConfig ) :
     CGetObjectPropValue( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -84,6 +84,9 @@ CAbstractMediaMtpDataProviderGetObjectPropValue::CAbstractMediaMtpDataProviderGe
 void CAbstractMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL( TUint16 /*aPropCode*/ )
     {
     PRINT( _L( "MM MTP <> CAbstractMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL, leave with KErrNotSupported"));
+
+    // May need add implementation here for further extension.
+
     User::Leave( KErrNotSupported );
     }
 

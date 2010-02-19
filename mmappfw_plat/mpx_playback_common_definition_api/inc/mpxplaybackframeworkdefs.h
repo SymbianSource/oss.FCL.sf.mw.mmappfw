@@ -247,6 +247,7 @@ enum TMPXPlaybackServerOp
     EPbsInitFromFile64,             // 42
     EPbsInitStreamingFromFile64,    // 43
     EPbsGetFile64,                  // 44
+    EPbsSetPrimaryClient,            //45 set primary client
     EPbsServerOpEnd                 // End of operation     
     };
 

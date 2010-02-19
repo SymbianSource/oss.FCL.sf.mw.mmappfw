@@ -26,3 +26,4 @@ PRJ_EXPORTS
           
 ../inc/mpxharvestercommon.h                      MW_LAYER_PLATFORM_EXPORT_PATH(mpxharvestercommon.h)                            
 ../inc/mpxharvesterserverdefs.h                  MW_LAYER_PLATFORM_EXPORT_PATH(mpxharvesterserverdefs.h)                      
+../inc/mpxharvestercrkeys.h                      MW_LAYER_PLATFORM_EXPORT_PATH(mpxharvestercrkeys.h)                      

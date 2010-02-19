@@ -71,7 +71,7 @@ CAbstractMediaMtpDataProviderAbstractMediaPreference::CAbstractMediaMtpDataProvi
 //
 CAbstractMediaMtpDataProviderAbstractMediaPreference::~CAbstractMediaMtpDataProviderAbstractMediaPreference()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -81,7 +81,7 @@ CAbstractMediaMtpDataProviderAbstractMediaPreference::~CAbstractMediaMtpDataProv
 //
 void CAbstractMediaMtpDataProviderAbstractMediaPreference::ConstructL()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -94,3 +94,6 @@ void CAbstractMediaMtpDataProviderAbstractMediaPreference::ServiceL()
     TUint32 referenceType = EMTPAbstractMediaRefOrdinary;
     SendResponseL( EMTPRespCodeOK, 1, &referenceType );
     }
+
+// end of file
+

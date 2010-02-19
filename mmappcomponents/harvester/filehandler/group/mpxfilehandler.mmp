@@ -28,6 +28,9 @@ UID                     0x1000006C 0x10282939
 CAPABILITY              CAP_GENERAL_DLL
 VENDORID                VID_DEFAULT
 
+MACRO __RAMDISK_PERF_ENABLE
+#define __RAMDISK_PERF_ENABLE
+
 SOURCEPATH              ../src
 SOURCE                  mpxharvesterfilehandler.cpp
 SOURCE                  mpxharvesterfilehandlerimp.cpp

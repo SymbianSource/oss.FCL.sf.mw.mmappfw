@@ -18,12 +18,14 @@
 
 #include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
+#include <mtp/mmtpreferencemgr.h>
 #include <mtp/cmtpobjectmetadata.h>
 
 #include "cdeleteobject.h"
 #include "mmmtpdplogger.h"
 #include "mmmtpdpconfig.h"
 #include "cmmmtpdpmetadataaccesswrapper.h"
+#include "mmmtpdputility.h"
 
 // static const TInt KMTPDriveGranularity = 5;
 
@@ -91,7 +93,7 @@ CDeleteObject::CDeleteObject( MMTPDataProviderFramework& aFramework,
         KMTPDeleteObjectPolicy ),
     iObjectMgr( aFramework.ObjectMgr() ),
     iFs( aFramework.Fs() ),
-    iObjectsToDelete( KMmMtpRArrayGranularity ), 
+    iObjectsToDelete( KMmMtpRArrayGranularity ),
     iDeleteError( KErrNone ),
     iDpConfig( aDpConfig )
     {
@@ -263,6 +265,10 @@ void CDeleteObject::DeleteObjectL( const CMTPObjectMetaData& aObjectInfo )
 
     // 3. Delete object from framework db
     iObjectMgr.RemoveObjectL( aObjectInfo.Uint( CMTPObjectMetaData::EHandle ) );
+
+    // 4. If the object has references, Delete references from reference manager
+    if ( MmMtpDpUtility::HasReference( aObjectInfo.Uint( CMTPObjectMetaData::EFormatCode ) ) )
+        iFramework.ReferenceMgr().RemoveReferencesL( aObjectInfo.DesC( CMTPObjectMetaData::ESuid ) );
 
     PRINT( _L( "MM MTP <= CDeleteObject::DeleteObjectL" ) );
     }

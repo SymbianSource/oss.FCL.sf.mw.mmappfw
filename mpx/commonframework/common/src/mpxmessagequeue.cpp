@@ -302,4 +302,36 @@ void CMPXMessageQueue::Send()
                this, data, err, ret);
     }
 
+// ----------------------------------------------------------------------------
+// Adds a message into the top of the queue and sends the message if slot is available
+// ----------------------------------------------------------------------------
+//
+EXPORT_C TInt CMPXMessageQueue::AddFirst(const CMPXMessage* aMessage, TInt aError)
+    {
+    // aMessage should not be NULL and aError is KErrNone
+    MPX_ASSERT(aMessage || aError);
+    MPX_FUNC_EX("CMPXMessageQueue::AddFirst()");
+    CMPXMessageItem* item(NULL);
+    TRAPD(err, item = CMPXMessageItem::NewL(aMessage, aError));
+    if (KErrNone==err)
+        {
+        iMsgs.AddFirst(*item);
+#ifdef _DEBUG
+        MPX_DEBUG3("CMPXMessageQueue::AddFirst 0x%08x, items %d", this, ++iCount);
+#endif
+        }//else failed to create message item.
+    else
+        {
+        MPX_DEBUG2("CMPXMessageQueue::AddFirst Failed to create message item %d", err);
+        }
+    if (KErrNone!=err && KErrNone==iFailure)
+        { // Set the failure code
+        iFailure = err;
+        }
+    if (!iMsgRequest.IsNull())
+        { // outstanding request
+        Send();
+        } // else client has not finished current message yet
+    return err;
+    }
 // End of file

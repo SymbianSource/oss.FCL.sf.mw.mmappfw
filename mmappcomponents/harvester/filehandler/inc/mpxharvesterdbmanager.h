@@ -122,7 +122,112 @@ public:
      * Checks if the spefified drive is a remove drive
      */      
     TBool IsRemoteDrive(TDriveNumber aDrive);
-      
+
+#ifdef __RAMDISK_PERF_ENABLE
+    /**
+    * Copy all databases from RAM disk back to normal drive, E, F,...
+    * 
+    * @return none
+    * Leaves if DB is not usable after the operation
+    */
+    void CopyDBsFromRamL(); 
+
+    /**
+    * Copy all databases to RAM disk from normal drive, E, F,...
+    * 
+    * @return none
+    * Leaves if DB is not usable after the operation
+    */
+    void CopyDBsToRamL(TBool aMtpMode = EFalse);
+
+    /**
+     * Update all databases from RAM drive
+     */
+    //void UpdateDBsFromRamL( TInt aCount );
+
+    /**
+     * If Ram disk is low, copy dbs from ram.
+     */
+    void EnsureRamSpaceL();
+#endif //__RAMDISK_PERF_ENABLE
+
+private: // new functions
+    
+#ifdef __RAMDISK_PERF_ENABLE
+    /**
+    * Find available RAMDISK
+    */
+    TInt GetRAMDiskPath();
+
+    /**
+    * Check if disk is available to copy.
+    *
+    * @return ETrue if there is enough space, EFalse otherwise
+    */
+    TBool IsRamDiskSpaceAvailable();
+    
+    /**
+     * Copy database to ram drive
+     */
+    void DoCopyDBToRamL(TDriveUnit aDriveUnit);
+    
+    /**
+    * Copy database from RAM disk
+    */
+    void DoCopyDBFromRamL(TDriveUnit aDriveUnit); 
+
+    /**
+    * To block a disk space so that it can gurantee for a write back from RAM disk
+    *
+    * @return KErrNone if the dummy file is created successfully
+    */
+    TInt BlockDiskSpaceL( TDriveUnit aDrive, TInt aOrigDbSize );
+
+    /**
+    * To calculate necessary file size of the dummy file
+    *
+    * @return TInt64 estimated file size
+    */
+    TInt64 CalculateInitalDummyDBSizeL( TVolumeInfo aVol, TInt aOrigDbSize );
+
+    /**
+    * Remove dummy file
+    *
+    * @return TInt index to the database handler
+    */
+    void RemoveDummyFile( TInt aIndex );
+    
+    /**
+     * Update the database from ram drive.
+     */
+    //void DoUpdateDBFromRamL( TDriveUnit aDriveUnit );
+    
+    /**
+     * Generate the harvester db path and name.
+     */
+    TFileName GenerateHarvesterDbName( TDriveUnit aDriveUnit, TBool aForRamDrive = EFalse );
+    
+    /**
+     * Generate the dummy db path and name.
+     */
+    TFileName GenerateDummyDbName( TDriveUnit aDriveUnit );
+
+    /**
+     * Check if Ram disk is low.
+     */
+    TBool IsRamDiskLow();
+    
+    /**
+     * Sum up the total size in bytes of the databases.
+     * 
+     * @param aSize - On return, the total size of the databases.
+     * @param aRamDrive - if True, will sum up dbs on Ram Drive, if False, will sum up dbs on other drives.
+     * @return TInt System error.
+     */
+    TInt GetTotalDatabasesSize(TInt& aSize, TBool aRamDrive);
+
+#endif  // __RAMDISK_PERF_ENABLE
+
 private:
 
     /**
@@ -140,6 +245,17 @@ private: // data
     RPointerArray<CMPXHarvesterDB>   iDatabases;
 
     RFs&                             iFs;   // Not Owned
+
+#ifdef __RAMDISK_PERF_ENABLE
+    // Defined for RAM disk performance
+    TBool                   iRAMDiskPerfEnabled;  // flag to indicate RAM disk feature is enabled from cenrep.
+    TUint64                 iMaximumAllowedRAMDiskSpaceToCopy; // max size in megabytes allowed for RAM copying.
+    TFileName               iRAMFolder;
+    TDriveNumber            iRAMDrive;
+    //TInt                    iUpdateCount;
+    TBool                   iMtpMode;
+    //TInt                    iMtpAddCount;
+#endif //__RAMDISK_PERF_ENABLE
     };
 
 

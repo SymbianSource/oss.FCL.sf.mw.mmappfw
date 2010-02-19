@@ -924,6 +924,34 @@ private:  // New functions
     */
     void Init64L(RFile64* aFile, TInt aAccessPoint=0);
 #endif // SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
+    /**
+    *  Callback for sync message timer
+    *
+    *  @since 9.2    
+    *  @param this
+    *  @return systme error
+    */         
+    static TInt SyncMsgTimerCallback(TAny* aPtr);
+    /**
+    *  Cancel the sync message timer
+    *
+    *  @since 9.2    
+    */    
+    void CancelSyncMsgTimer();    
+    /**
+    *  Stop the wait loop
+    *
+    *  @since 9.2    
+    */    
+    void StopWaitLoop();
+    /**
+     * Handle a synchronous message
+     * 
+     * @since 9.2
+     * @param aMsg, message
+     * @return system error
+     */
+    TInt HandlePlaybackSyncMessage (const CMPXMessage& aMsg);
     
 private:
     friend class TCallbackReflector;
@@ -992,6 +1020,8 @@ private:
     TBool iInitVolume;  // Initialize volume on first creation
     // the index which be firstly saved when request media
     TInt iFirstRequestMediaIndex; 
+    CPeriodic* iSyncMsgTimer;  //timer for sync message
+    CActiveSchedulerWait* iSyncMsgWait;  // wait loop use to sync message    
 #if defined(__HIGH_RESOLUTION_VOLUME)
     // flag to indicate whether the volume setting has been rounded up last
     // used to adjust volume up button setting 

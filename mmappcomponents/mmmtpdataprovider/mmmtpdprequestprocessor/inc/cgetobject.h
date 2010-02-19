@@ -87,8 +87,8 @@ private:
     // Object Info
     CMTPObjectMetaData* iObjectInfo;
 
-    //
     TMTPResponseCode iError;
+
     };
 
 #endif // CGETOBJECT_H

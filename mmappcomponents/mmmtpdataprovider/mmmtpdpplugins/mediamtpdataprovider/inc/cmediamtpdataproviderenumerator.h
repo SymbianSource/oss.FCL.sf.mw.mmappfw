@@ -25,12 +25,6 @@
 #include "mmmtpenumerationcallback.h"
 #include "cmmmtpdpperflog.h"
 
-// keep here to avoid warning on urel
-_LIT( KDirectoryScan, "DirectoryScan" );
-_LIT( KFormatFilter, "FormatFilter" );
-_LIT( KObjectManagerObjectUid, "ObjectManagerObjectUid" );
-_LIT( KObjectManagerInsert, "ObjectManagerInsert" );
-
 // Forward declarations
 class MMTPDataProviderFramework;
 class MMTPObjectMgr;
@@ -63,7 +57,7 @@ public:
     * @param aStorageId storage to be enumerated
     */
     void StartL( TUint32 aStorageId );
-    
+
     // introduce to cleanup db at close session
     void SessionClosedL();
 
@@ -192,7 +186,7 @@ private:
 
     /** MTP Data Provider ID */
     TUint iDataProviderId;
-    
+
     CMediaMtpDataProvider& iDataProvider;
     TParse iPath;
     RDir iDir;
@@ -208,7 +202,7 @@ private:
     // record the system tick
     TUint iTickCountBegin;
     TInt iTickPeriod;
-    
+
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     CMmMtpDpPerfLog* iPerfLog;
 #endif

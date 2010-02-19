@@ -34,7 +34,7 @@
 // -----------------------------------------------------------------------------
 //
 EXPORT_C CRenameObject* CRenameObject::NewL( MMTPDataProviderFramework& aFramework,
-        CMmMtpDpMetadataAccessWrapper& aWrapper )
+    CMmMtpDpMetadataAccessWrapper& aWrapper )
     {
     PRINT( _L( "MM MTP => CRenameObject::NewL" ) );
 
@@ -59,6 +59,7 @@ EXPORT_C CRenameObject::CRenameObject( MMTPDataProviderFramework& aFramework,
     iObjectHandles( KMmMtpRArrayGranularity ),
     iWrapper ( aWrapper )
     {
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -121,7 +122,7 @@ EXPORT_C void CRenameObject::StartL( const TUint32 aParentHandle,
 //
 EXPORT_C void CRenameObject::DoCancel()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -220,8 +221,7 @@ void CRenameObject::GenerateObjectHandleListL( TUint32 aParentHandle )
     CleanupClosePushL( context ); // + context
     CleanupClosePushL( handles ); // + handles
 
-    TMTPObjectMgrQueryParams params( KMTPStorageAll, KMTPFormatsAll,
-            aParentHandle );
+    TMTPObjectMgrQueryParams params( KMTPStorageAll, KMTPFormatsAll, aParentHandle );
     do
         {
         iFramework.ObjectMgr().GetObjectHandlesL( params, context, handles );
@@ -232,14 +232,8 @@ void CRenameObject::GenerateObjectHandleListL( TUint32 aParentHandle )
             if ( iFramework.ObjectMgr().ObjectOwnerId( handles[i] ) == iFramework.DataProviderId() )
                 {
                 iObjectHandles.AppendL( handles[i] );
-                continue;
-                }
+                // NOTE: Fw changed the mechanism of notification, no need to iterate
 
-            // Folder
-            // TODO: need to modify, should not know device dp id
-            if ( iFramework.ObjectMgr().ObjectOwnerId( handles[i] ) == 0 ) // We know that the device dp id is always 0, otherwise the whole MTP won't work.
-                {
-                GenerateObjectHandleListL( handles[i] );
                 }
             }
         }
@@ -260,7 +254,8 @@ void CRenameObject::GetParentSuidL( TUint32 aHandle,
     const TDesC& aFolderName )
     {
     PRINT2( _L( "MM MTP => CRenameObject::GetParentSuidL aHandle(0x%x), aFolderName(%S)" ),
-        aHandle, &aFolderName );
+        aHandle,
+        &aFolderName );
     CMTPObjectMetaData* objectInfo( CMTPObjectMetaData::NewLC() ); // + objectInfo
     // get the old folder suid
     if ( iFramework .ObjectMgr().ObjectL( aHandle, *objectInfo ) )
@@ -268,15 +263,10 @@ void CRenameObject::GetParentSuidL( TUint32 aHandle,
         iNewFolderName.Zero();
         iNewFolderName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
         PRINT1( _L( "MM MTP <> CRenameObject::GetParentSuidL new folder full file name(%S)" ), &iNewFolderName );
-        const TInt length = iNewFolderName.Length();
-
-        TParsePtrC parentSuid( iNewFolderName.Left( length - 1 ) );
 
         iOldFolderFullName.Zero();
-        iOldFolderFullName.Append( parentSuid.DriveAndPath() );
         iOldFolderFullName.Append( aFolderName ); // just name not suid
-        _LIT( KBackSlash, "\\" );
-        iOldFolderFullName.Append( KBackSlash );
+
         PRINT1( _L( "MM MTP <> CRenameObject::GetParentSuidL = %S" ), &iOldFolderFullName );
         }
     else

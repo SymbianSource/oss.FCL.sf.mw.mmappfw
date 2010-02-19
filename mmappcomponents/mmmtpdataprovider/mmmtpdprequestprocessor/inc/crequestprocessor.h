@@ -11,7 +11,7 @@
 *
 * Contributors:
 *
-* Description: 
+* Description:
 *
 */
 
@@ -100,8 +100,8 @@ public:
 
     /*
     * Get the session id associated with current request object
-    * This interface was added to avoid the case that the data member iRequest 
-    * was sometimes invalid in session close phase, and getting session id from 
+    * This interface was added to avoid the case that the data member iRequest
+    * was sometimes invalid in session close phase, and getting session id from
     * request would cause panic
     * @return session id
     */
@@ -237,8 +237,8 @@ protected:
 
     /*
     * Get the session id associated with current request object
-    * This interface was added to avoid the case that the data member iRequest 
-    * was sometimes invalid in session close phase, and getting session id from 
+    * This interface was added to avoid the case that the data member iRequest
+    * was sometimes invalid in session close phase, and getting session id from
     * request would cause panic
     * @return session id
     */

@@ -18,54 +18,51 @@
 
 #include <mtp/tmtptyperequest.h>
 
-//Include the standard request processor headers
 #include "crequestunknown.h"
-
 #include "mediamtpdataproviderprocessor.h"
-
-//Include the required header for carrying out the specified request
 #include "mmmtpdplogger.h"
 
+//Include the required header for carrying out the specified request
 #include "cgetobjectpropssupported.h"
-#include "cmediamtpdataprovidergetobjectpropdesc.h"
-#include "cmediamtpdataprovidergetinterdependentpropdesc.h"
+#include "cgetobjectpropdesc.h"
+#include "cgetinterdependentpropdesc.h"
 #include "cgetobject.h"
 #include "cgetobjectinfo.h"
 #include "cmediamtpdataprovidergetobjectpropvalue.h"
 #include "cmediamtpdataprovidergetobjectproplist.h"
-#include "cmediamtpdataprovidersendobject.h"
+#include "csendobject.h"
 #include "cmediamtpdataprovidersetobjectpropvalue.h"
-#include "cmediamtpdataprovidersetobjectproplist.h"
+#include "csetobjectproplist.h"
 #include "cgetobjectreferences.h"
 #include "csetobjectreferences.h"
 #include "cdeleteobject.h"
 #include "cmediamtpdataprovidercopyobject.h"
 #include "cmediamtpdataprovidermoveobject.h"
 #include "cgetpartialobject.h"
-#include "cmediamtpdataprovidergetformatcapabilities.h"
+#include "cgetformatcapabilities.h"
 
 /** A mapping table from the operation code to the request processor factory method */
 const TMediaMtpDataProviderRequestProcessorEntry KKMediaMtpDataProviderRequestProcessorTable[] =
     {
-    {EMTPOpCodeGetObjectPropsSupported, CGetObjectPropsSupported::NewL}, //Get Supported Props
-    {EMTPOpCodeGetObjectPropDesc, CMediaMtpDataProviderGetObjectPropDesc::NewL}, //Get Props Description
-    {EMTPOpCodeGetInterdependentPropDesc, CMediaMtpDataProviderGetInterDependentPropDesc::NewL},//Get Interdependent PropDesc
-    {EMTPOpCodeGetObjectInfo, CGetObjectInfo::NewL}, //GetObjectInfo
-    {EMTPOpCodeGetObject, CGetObject::NewL}, //GetObject
-    {EMTPOpCodeGetObjectPropValue, CMediaMtpDataProviderGetObjectPropValue::NewL}, //Get Props Value
-    {EMTPOpCodeGetObjectPropList, CMediaMtpDataProviderGetObjectPropList::NewL}, //GetObjectPropList
-    {EMTPOpCodeSendObjectInfo, CMediaMtpDataProviderSendObject::NewL}, //SendObjectInfo (routed to SendObject)
-    {EMTPOpCodeSendObject, CMediaMtpDataProviderSendObject::NewL}, //SendObject
-    {EMTPOpCodeSendObjectPropList, CMediaMtpDataProviderSendObject::NewL}, // SendobjectPropList (routed to SendObject)
-    {EMTPOpCodeSetObjectPropValue, CMediaMtpDataProviderSetObjectPropValue::NewL}, //Set Props Value
-    {EMTPOpCodeSetObjectPropList, CMediaMtpDataProviderSetObjectPropList::NewL}, //SetObjectPropList
-    {EMTPOpCodeDeleteObject, CDeleteObject::NewL}, //DeleteObject
-    {EMTPOpCodeCopyObject, CMediaMtpDataProviderCopyObject::NewL}, // Copy Object
-    {EMTPOpCodeMoveObject, CMediaMtpDataProviderMoveObject::NewL}, // Move Object
-    {EMTPOpCodeGetPartialObject, CGetPartialObject::NewL}, // GetPartialObject
-    {EMTPOpCodeSetObjectReferences, CSetObjectReferences::NewL}, //Set Object References
-    {EMTPOpCodeGetObjectReferences, CGetObjectReferences::NewL},  //Get Object References
-    {EMTPOpCodeGetFormatCapabilities, CMediaMtpDataProviderGetFormatCapabilities::NewL} // GetFormatCapabilities
+        { EMTPOpCodeGetObjectPropsSupported, CGetObjectPropsSupported::NewL }, //Get Supported Props
+        { EMTPOpCodeGetObjectPropDesc, CGetObjectPropDesc::NewL }, //Get Props Description
+        { EMTPOpCodeGetInterdependentPropDesc, CGetInterdependentPropDesc::NewL },//Get Interdependent PropDesc
+        { EMTPOpCodeGetObjectInfo, CGetObjectInfo::NewL }, //GetObjectInfo
+        { EMTPOpCodeGetObject, CGetObject::NewL }, //GetObject
+        { EMTPOpCodeGetObjectPropValue, CMediaMtpDataProviderGetObjectPropValue::NewL }, //Get Props Value
+        { EMTPOpCodeGetObjectPropList, CMediaMtpDataProviderGetObjectPropList::NewL }, //GetObjectPropList
+        { EMTPOpCodeSendObjectInfo, CSendObject::NewL }, //SendObjectInfo (routed to SendObject)
+        { EMTPOpCodeSendObject, CSendObject::NewL }, //SendObject
+        { EMTPOpCodeSendObjectPropList, CSendObject::NewL }, // SendobjectPropList (routed to SendObject)
+        { EMTPOpCodeSetObjectPropValue, CMediaMtpDataProviderSetObjectPropValue::NewL }, //Set Props Value
+        { EMTPOpCodeSetObjectPropList, CSetObjectPropList::NewL }, //SetObjectPropList
+        { EMTPOpCodeDeleteObject, CDeleteObject::NewL }, //DeleteObject
+        { EMTPOpCodeCopyObject, CMediaMtpDataProviderCopyObject::NewL }, // Copy Object
+        { EMTPOpCodeMoveObject, CMediaMtpDataProviderMoveObject::NewL }, // Move Object
+        { EMTPOpCodeGetPartialObject, CGetPartialObject::NewL }, // GetPartialObject
+        { EMTPOpCodeSetObjectReferences, CSetObjectReferences::NewL }, //Set Object References
+        { EMTPOpCodeGetObjectReferences, CGetObjectReferences::NewL },  //Get Object References
+        { EMTPOpCodeGetFormatCapabilities, CGetFormatCapabilities::NewL } // GetFormatCapabilities
     };
 
 // -----------------------------------------------------------------------------

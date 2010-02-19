@@ -25,7 +25,6 @@
 #include "mmmtpenumerationcallback.h"
 #include "mmmtpdpconfig.h"
 
-
 // Forward declaration
 class MMmRequestProcessor;
 class CAbstractMediaMtpDataProviderEnumerator;
@@ -66,9 +65,20 @@ public:
     TUint32 GetDefaultStorageIdL() const;
 
     /**
-    * @return the reference of CMmMtpDpMetadataAccessWrapper to enumerator
+    * Get db handler wrapper
+    * @return wrapper references
     */
     CMmMtpDpMetadataAccessWrapper& GetWrapperL();
+
+    /**
+    * @return The utility to setting properties
+    */
+    CPropertySettingUtility* PropSettingUtility();
+
+    /**
+    * @return The utiltiy to setting descriptions
+    */
+    CDescriptionUtility* DescriptionUtility();
 
 protected:
     // from CMTPDataProviderPlugin
@@ -97,7 +107,7 @@ protected:
 
     /**
     * Notify the data provider that the session has been closed
-    * @param aConnection    The connection of the sesssion
+    * @param aSession    The connection of the sesssion
     */
     void SessionClosedL( const TMTPNotificationParamsSessionChange& aSession );
 
@@ -175,6 +185,7 @@ private:
     RArray<TUint32> iPendingEnumerations;
 
     TInt iActiveProcessor;
+    TBool iActiveProcessorRemoved;
 
     CAbstractMediaMtpDataProviderRenameObject *iRenameObject;
     TBool iIsSessionOpen;
@@ -182,6 +193,9 @@ private:
     RArray<TUint> iSupportedFormat;
 
     RArray<TUint> iSupportedProperties;
+
+    CPropertySettingUtility* iPropSettingUtility;
+    CDescriptionUtility* iDescriptionUtility;
 
     };
 

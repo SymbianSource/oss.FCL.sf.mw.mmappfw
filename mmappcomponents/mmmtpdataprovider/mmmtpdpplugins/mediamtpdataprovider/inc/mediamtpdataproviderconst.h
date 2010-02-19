@@ -181,6 +181,8 @@ static const TUint16 KMediaMtpDataProviderSupportedOperations[] =
     EMTPOpCodeSetObjectPropList,
     EMTPOpCodeGetInterdependentPropDesc,
     EMTPOpCodeSendObjectPropList,
+
+    // window 7 extension
     EMTPOpCodeGetFormatCapabilities
     };
 
@@ -235,6 +237,5 @@ static const TUint16 KMmMtpDpSupportedPropAdditionalWMV[] =
     EMTPObjectPropCodeDRMStatus,
     EMTPExtObjectPropCodeOmaDrmStatus,
     };
-
 
 #endif // MEDIAMTPDATAPROVIDERCONST_H

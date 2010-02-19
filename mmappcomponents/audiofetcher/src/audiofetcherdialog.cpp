@@ -468,13 +468,7 @@ void CAudioFetcherDialog::UpdateListBoxL()
         {
         return;
         }
-    
-    TInt resultCount = iFileHandler->ResultCount();
-    
-    if(resultCount > 0){
-        CEikButtonGroupContainer& dialogCba = ButtonGroupContainer(); 
-        dialogCba.MakeCommandVisible(EAknSoftkeySelect, ETrue);
-    }
+
     iListBox->HandleItemAdditionL();
     iListBox->SetCurrentItemIndex( 0 );    
     DrawNow();    
@@ -563,7 +557,7 @@ void CAudioFetcherDialog::HandleListBoxEventL( CEikListBox* /*aListBox*/,
     
     switch ( aEventType )
         {
-        case EEventItemDoubleClicked: // fallthrough
+        case EEventItemSingleClicked:   // fallthrough
         case EEventEnterKeyPressed:
             {
             TBool closeDialog = HandleListSelectionL();

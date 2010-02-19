@@ -49,7 +49,7 @@ MMmRequestProcessor* CAbstractMediaMtpDataProviderSetObjectPropValue::NewL( MMTP
 //
 void CAbstractMediaMtpDataProviderSetObjectPropValue::ConstructL()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -60,9 +60,9 @@ void CAbstractMediaMtpDataProviderSetObjectPropValue::ConstructL()
 CAbstractMediaMtpDataProviderSetObjectPropValue::CAbstractMediaMtpDataProviderSetObjectPropValue( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
-    CSetObjectPropValue( aFramework, aConnection, aDpConfig )
+        CSetObjectPropValue( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -72,7 +72,7 @@ CAbstractMediaMtpDataProviderSetObjectPropValue::CAbstractMediaMtpDataProviderSe
 //
 CAbstractMediaMtpDataProviderSetObjectPropValue::~CAbstractMediaMtpDataProviderSetObjectPropValue()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -95,6 +95,10 @@ TBool CAbstractMediaMtpDataProviderSetObjectPropValue::IsSpecificPropCodeReadOnl
 void CAbstractMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectPropertyL( TUint16 /*aPropCode*/ )
     {
     PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectPropertyL leave with KErrNotSupported" ) );
+
+    // Do nothing now.
+    // May need add implementation here for further extension.
+
     User::Leave( KErrNotSupported );
     }
 
@@ -107,6 +111,9 @@ void CAbstractMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectP
 TMTPResponseCode CAbstractMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectPropertyL( TUint16 /*aPropCode*/ )
     {
     PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectPropertyL leave with KErrNotSupported" ) );
+
+    // Do nothing now.
+    // May need add implementation here for further extension.
     User::Leave( KErrNotSupported );
 
     return EMTPRespCodeOK;

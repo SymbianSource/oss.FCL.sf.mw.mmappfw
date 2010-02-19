@@ -11,7 +11,7 @@
 *
 * Contributors:
 *
-* Description: 
+* Description:
 *
 */
 
@@ -54,7 +54,7 @@ CRequestChecker::CRequestChecker( MMTPDataProviderFramework& aFramework,
     iHandles( KMTPRequestCheckerHandleGranularity ),
     iObjectArray( KMTPRequestCheckerHandleGranularity )
     {
-    
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -64,7 +64,7 @@ CRequestChecker::CRequestChecker( MMTPDataProviderFramework& aFramework,
 //
 void CRequestChecker::ConstructL()
     {
-    
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -84,8 +84,8 @@ CRequestChecker::~CRequestChecker()
 // -----------------------------------------------------------------------------
 //
 TMTPResponseCode CRequestChecker::VerifyRequestL( const TMTPTypeRequest& aRequest,
-        TInt aCount,
-        const TMTPRequestElementInfo* aElementInfo )
+    TInt aCount,
+    const TMTPRequestElementInfo* aElementInfo )
     {
     TMTPResponseCode result = EMTPRespCodeOK;
     iHandles.Close();
@@ -96,9 +96,11 @@ TMTPResponseCode CRequestChecker::VerifyRequestL( const TMTPTypeRequest& aReques
     for ( TInt i = 0; i < aCount && EMTPRespCodeOK == result; i++ )
         {
         TUint32 parameter = aRequest.Uint32( aElementInfo[i].iElementIndex );
-        PRINT3( _L( "MM MTP <> CRequestChecker parameter %d/%d = %d" ), 
-                i + 1, aCount, parameter );
-        
+        PRINT3( _L( "MM MTP <> CRequestChecker parameter %d/%d = %d" ),
+            i + 1,
+            aCount, 
+            parameter );
+
         if ( !IsSpecialValue( parameter, aElementInfo[i] ) )
             {
             switch ( aElementInfo[i].iElementType )
@@ -198,7 +200,7 @@ TMTPResponseCode CRequestChecker::CheckRequestHeader( const TMTPTypeRequest& aRe
             ret = EMTPRespCodeSessionNotOpen;
             }
         }
-    
+
     return ret;
     }
 
@@ -224,7 +226,7 @@ TMTPResponseCode CRequestChecker::VerifySessionId( TUint32 aSessionId,
         {
         ret = EMTPRespCodeInvalidParameter;
         }
-    
+
     return ret;
     }
 
@@ -252,7 +254,7 @@ TMTPResponseCode CRequestChecker::VerifyObjectHandleL( TUint32 aHandle,
         const TDesC& suid( object->DesC( CMTPObjectMetaData::ESuid ) );
         TEntry entry;
         TInt err = iFramework.Fs().Entry( suid, entry );
-        
+
         if ( object->Uint( CMTPObjectMetaData::EFormatCode ) == EMTPFormatCodeAssociation )
 //            && ( object->Uint( CMTPObjectMetaData::EFormatSubCode ) == EMTPAssociationTypeGenericFolder ) )
             {
@@ -262,7 +264,7 @@ TMTPResponseCode CRequestChecker::VerifyObjectHandleL( TUint32 aHandle,
         else
             {
             User::LeaveIfError( err );
-            
+
             if ( iFramework.ObjectMgr().ObjectOwnerId( aHandle ) != iFramework.DataProviderId() )
                 {
                 PRINT( _L(" ewrwe ret = EMTPRespCodeInvalidObjectHandle;"));
@@ -306,7 +308,7 @@ TMTPResponseCode CRequestChecker::VerifyObjectHandleL( TUint32 aHandle,
         ret = EMTPRespCodeInvalidObjectHandle;
         }
     PRINT1( _L( "MM MTP <= CRequestChecker::VerifyObjectHandleL ret = 0x%x" ), ret );
-    
+
     return ret;
     }
 
@@ -357,7 +359,7 @@ TMTPResponseCode CRequestChecker::VerifyStorageIdL( TUint32 aStorageId,
                 }
             }
        }
-    
+
     return ret;
     }
 
@@ -395,7 +397,7 @@ TMTPResponseCode CRequestChecker::VerifyFormatCode( TUint32 aFormatCode,
         }
 
     PRINT1( _L( "MM MTP => CRequestChecker::VerifyFormatCode ret = 0x%x" ), ret );
-    
+
     return ret;
     }
 
@@ -413,16 +415,16 @@ TBool CRequestChecker::IsSpecialValue( TUint32 aParameter,
         case 1:
             result = ( aParameter == aElementInfo.iValue1 );
             break;
-            
+
         case 2:
             result = ( aParameter == aElementInfo.iValue1
                 || aParameter == aElementInfo.iValue2 );
             break;
-            
+
         default:
             break;
         }
-    
+
     return result;
     }
 

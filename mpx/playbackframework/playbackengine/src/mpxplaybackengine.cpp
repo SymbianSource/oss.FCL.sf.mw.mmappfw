@@ -47,6 +47,7 @@
 const TInt KMPXSmallVolumeIncrement = 5;
 const TInt KMPXLargeVolumeIncrement = 10;
 const TInt KPercentMultiplier = 100;
+const TInt KMPXSyncMsgTimer = 3000000; // 3 seconds
 _LIT(KWmaExtension, ".wma");
 _LIT(KRaExtension, ".ra");
 
@@ -186,6 +187,8 @@ void CMPXPlaybackEngine::ConstructL(MMPXClientlistObserver* aClientListObserver)
     iVolRoundedUp = EFalse;
 #endif
     iPluginHandler->Plugin()->PropertyL( EPbPropertyVolume );
+    iSyncMsgTimer = CPeriodic::NewL( CActive::EPriorityIdle ); 
+    iSyncMsgWait = new (ELeave) CActiveSchedulerWait; 
     }
 
 // ----------------------------------------------------------------------------
@@ -232,6 +235,12 @@ EXPORT_C CMPXPlaybackEngine::~CMPXPlaybackEngine()
 #ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
     iFile64.Close();
 #endif // SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
+    delete iSyncMsgTimer;
+    if (iSyncMsgWait && iSyncMsgWait->IsStarted() )
+            {
+            iSyncMsgWait->AsyncStop();
+            }
+    delete iSyncMsgWait; 
     }
 
 // ----------------------------------------------------------------------------
@@ -2175,6 +2184,11 @@ void CMPXPlaybackEngine::HandleCommandL(TMPXPlaybackCommand aCmd, TInt aData )
             iAutoResumeHandler->SetAutoResume( aData );
             break;
             }
+        case EPbCmdSyncMsgComplete:
+            {
+            StopWaitLoop();
+            break;
+            }
         default:
             ASSERT(0);
         }
@@ -3859,4 +3873,71 @@ void CMPXPlaybackEngine::Init64L(RFile64* aFile, TInt aAccessPoint)
     }
 #endif // SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 
+// ----------------------------------------------------------------------------
+// Cancel timer. 
+// ----------------------------------------------------------------------------
+void CMPXPlaybackEngine::CancelSyncMsgTimer()
+    {
+    MPX_FUNC("CMPXPlaybackEngine::CancelSyncMsgTimer()");
+    // Cancel timer.
+    if ( iSyncMsgTimer && iSyncMsgTimer->IsActive() )
+        {
+        MPX_DEBUG1("CMPXPlaybackEngine::CancelSyncMsgTimer(): Timer active, cancelling");
+        iSyncMsgTimer->Cancel();
+        }
+    }
+// ----------------------------------------------------------------------------
+// Callback for timer.
+// ----------------------------------------------------------------------------
+TInt CMPXPlaybackEngine::SyncMsgTimerCallback(TAny* aPtr)
+    {
+    MPX_FUNC("CMPXPlaybackEngine::SyncMsgTimerCallback()");
+    CMPXPlaybackEngine* ptr =
+        static_cast<CMPXPlaybackEngine*>(aPtr);
+    ptr->StopWaitLoop();
+    return KErrNone;
+    }
+// ----------------------------------------------------------------------------
+// Handle a synchronous message
+// ----------------------------------------------------------------------------
+//
+TInt CMPXPlaybackEngine::HandlePlaybackSyncMessage (const CMPXMessage& aMsg)
+    {    
+    MPX_FUNC("CMPXPlaybackEngine::HandlePlaybackSyncMessage()");    
+    TInt err = iClientList->SendSyncMsg(&aMsg);
+    if (err != KErrNone)
+        {
+        return err;
+        }
+    // Cancel timer.
+    CancelSyncMsgTimer();
+    // Start timer in case there is no callback from primary client. 
+    iSyncMsgTimer->Start(
+        KMPXSyncMsgTimer,
+        KMPXSyncMsgTimer,
+        TCallBack(SyncMsgTimerCallback, this ));
+            
+    // Start wait loop until we get a callback from primary client
+    if ( !iSyncMsgWait->IsStarted() )
+        {
+        iSyncMsgWait->Start();
+        }
+    return KErrNone;
+    }
+// ----------------------------------------------------------------------------
+// Stop the wait loop.
+// ----------------------------------------------------------------------------
+void CMPXPlaybackEngine::StopWaitLoop()
+    {
+    MPX_FUNC("CMPXPlaybackEngine::StopWaitLoop()");
+    // Cancel timer
+    CancelSyncMsgTimer();
+    
+    // Stop wait loop to unblock.
+    if ( iSyncMsgWait->IsStarted() )
+        {
+        MPX_DEBUG1("CMPXPlaybackEngine::StopWaitLoop(): Stopping the wait loop.");
+        iSyncMsgWait->AsyncStop();
+        }
+    }
 // End of file

@@ -30,6 +30,14 @@
 #include "cmmmtpdpaccesssingleton.h"
 #include "cmmmtpdpmetadataaccesswrapper.h"
 
+
+#if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
+_LIT( KDirectoryScan, "DirectoryScan" );
+_LIT( KFormatFilter, "FormatFilter" );
+_LIT( KObjectManagerObjectUid, "ObjectManagerObjectUid" );
+_LIT( KObjectManagerInsert, "ObjectManagerInsert" );
+#endif
+
 // Unit: microsecond
 const TInt KThresholdOfEnumerationLoopDuration = 1000 * 1000; // microsecond
 
@@ -187,7 +195,7 @@ void CMediaMtpDataProviderEnumerator::ScanStorageL( TUint32 aStorageId )
     TFileName root( storage.DesC( CMTPStorageMetaData::EStorageSuid ) );
     PRINT2( _L("MM MTP <> CMediaMtpDataProviderEnumerator::ScanStorageL aStorageId = 0x%x, StorageSuid = %S"), aStorageId, &root );
 
-    iParentHandle = KMTPHandleNone;
+    iParentHandle = KMTPHandleNoParent;
     iPath.Set( root, NULL, NULL);
     iDir.Close();
     User::LeaveIfError( iDir.Open( iFramework.Fs(),
@@ -218,7 +226,6 @@ void CMediaMtpDataProviderEnumerator::ScanNextStorageL()
         }
     else
         {
-
         // Round trip suppport
         const CMTPStorageMetaData& storage( iFramework.StorageMgr().StorageL( iStorages[0] ) );
         TFileName root( storage.DesC( CMTPStorageMetaData::EStorageSuid ) );
@@ -283,7 +290,7 @@ void CMediaMtpDataProviderEnumerator::ScanNextDirL()
                 delete entry;
                 entry = NULL;
                 iDir.Close();
-    
+
                 // Scan the next directory of the parent
                 ScanNextDirL();
                 }
@@ -314,9 +321,9 @@ void CMediaMtpDataProviderEnumerator::ScanNextSubdirL()
     // A empty (non-constructed) TEntry is our marker telling us to pop a directory
     // from iPath when we see this
     TEntry* entry = new TEntry( TEntry() );
-    
+
     User::LeaveIfNull( entry );
-    
+
     iDirStack.AppendL( entry );
 
     // Leave with KErrNotFound if we don't find the object handle since it shouldn't be on the
@@ -326,7 +333,7 @@ void CMediaMtpDataProviderEnumerator::ScanNextSubdirL()
     PERFLOGSTART( KObjectManagerObjectUid );
     iParentHandle = iFramework.ObjectMgr().HandleL( suid );
     PERFLOGSTOP( KObjectManagerObjectUid );
-    PRINT1( _L( "MM MTP <> iParentHandle = 0x%Lx" ), iParentHandle );
+    PRINT1( _L( "MM MTP <> iParentHandle = 0x%x" ), iParentHandle );
 
     // Kick-off a scan of the next directory
     iDir.Close();
@@ -553,7 +560,7 @@ TMTPFormatCode CMediaMtpDataProviderEnumerator::GetObjectFormatCode( const TDesC
 //
 TBool CMediaMtpDataProviderEnumerator::IsFileAccepted( const TDesC& aFullFileName )
     {
-    PERFLOGSTART(KFormatFilter);
+    PERFLOGSTART( KFormatFilter );
     iFormatCode = GetObjectFormatCode( aFullFileName );
     PRINT1( _L( "MM MTP <> CMediaMtpDataProviderEnumerator::IsFileAcceptedL formatCode = 0x%x" ), iFormatCode );
     TBool accepted = EFalse;
@@ -567,7 +574,7 @@ TBool CMediaMtpDataProviderEnumerator::IsFileAccepted( const TDesC& aFullFileNam
             }
         }
 
-    PERFLOGSTOP(KFormatFilter);
+    PERFLOGSTOP( KFormatFilter );
     return accepted;
     }
 
