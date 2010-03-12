@@ -49,7 +49,7 @@ EXPORTS
 	_ZN14CGetObjectInfoD2Ev @ 48 NONAME
 	_ZN14MmMtpDpUtility12GetDrmStatusERK7TDesC16 @ 49 NONAME
 	_ZN14MmMtpDpUtility18FormatFromFilenameERK7TDesC16 @ 50 NONAME
-	_ZN14MmMtpDpUtility8IsVideoLERK7TDesC16 @ 51 NONAME
+	_ZN14MmMtpDpUtility7IsVideoERK7TDesC16 @ 51 NONAME
 	_ZN15CRequestUnknown4NewLER25MMTPDataProviderFrameworkR14MMTPConnection @ 52 NONAME
 	_ZN15CRequestUnknown8ServiceLEv @ 53 NONAME
 	_ZN15CRequestUnknownC1ER25MMTPDataProviderFrameworkR14MMTPConnection @ 54 NONAME
@@ -164,7 +164,7 @@ EXPORTS
 	_ZN23CMmMtpDpAccessSingleton17GetAccessWrapperLEv @ 163 NONAME
 	_ZN23CMmMtpDpAccessSingleton7CreateLER3RFsR25MMTPDataProviderFramework @ 164 NONAME
 	_ZN23CMmMtpDpAccessSingleton7ReleaseEv @ 165 NONAME
-	_ZN23CPropertySettingUtility21SetMetaDataToWrapperLER14MMmMtpDpConfigtR8MMTPTypeRK18CMTPObjectMetaData @ 166 NONAME
+	_ZN23CPropertySettingUtility20SetMetaDataToWrapperER14MMmMtpDpConfigtR8MMTPTypeRK18CMTPObjectMetaData @ 166 NONAME
 	_ZN23CPropertySettingUtilityC2Ev @ 167 NONAME
 	_ZN23CPropertySettingUtilityD0Ev @ 168 NONAME
 	_ZN23CPropertySettingUtilityD1Ev @ 169 NONAME

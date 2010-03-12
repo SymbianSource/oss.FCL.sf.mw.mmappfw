@@ -388,14 +388,18 @@ void CAudioFetcherDialog::SetIconsL()
             EMbmAudiofetcherQgn_prop_sml_sync_off_mask ) );
 
     // memory card icon
-    icons->AppendL( IconL( KAknsIIDQgnIndiMmcAdd, iIconFileName,
+    icons->AppendL( ColorIconL( KAknsIIDQgnIndiMmcAdd, iIconFileName,
             EMbmAudiofetcherQgn_indi_mmc_add,
-            EMbmAudiofetcherQgn_indi_mmc_add_mask ) );
+            EMbmAudiofetcherQgn_indi_mmc_add_mask,
+            KAknsIIDQsnIconColors,
+            EAknsCIQsnIconColorsCG26 ) );
 
      // mass storage icon
-    icons->AppendL( IconL( KAknsIIDQgnPropLinkEmbdSmall, iIconFileName,
+    icons->AppendL( ColorIconL( KAknsIIDQgnPropLinkEmbdSmall, iIconFileName,
             EMbmAudiofetcherQgn_indi_fmgr_ms_add,
-            EMbmAudiofetcherQgn_indi_fmgr_ms_add_mask ) );
+            EMbmAudiofetcherQgn_indi_fmgr_ms_add_mask,
+            KAknsIIDQsnIconColors,
+            EAknsCIQsnIconColorsCG26 ) );
 
     // empty icon
     icons->AppendL( IconL( KAknsIIDQgnPropEmpty, KAvkonBitmapFile,
@@ -453,6 +457,45 @@ CGulIcon* CAudioFetcherDialog::IconL(TAknsItemID aId, const TDesC& aFileName,
     CGulIcon* icon = AknsUtils::CreateGulIconL(AknsUtils::SkinInstance(), aId,
                                 aFileName, aFileIndex, aFileMaskIndex);
     return icon;    
+    }
+
+// -----------------------------------------------------------------------------
+// CMediaFileDialog::ColorIconL
+// 
+// -----------------------------------------------------------------------------
+//
+CGulIcon* CAudioFetcherDialog::ColorIconL( const TAknsItemID& aId,
+                                           const TDesC& aFileName,
+                                           TInt aFilexIndex,
+                                           TInt aFileMaskIndex,
+                                           const TAknsItemID& aColorId,
+                                           TInt aColorIndex )
+    {
+    WLOG("CAudioFetcherDialog::ColorIconL");
+    
+    CFbsBitmap* bitmap( NULL );
+    CFbsBitmap* mask( NULL );
+
+    if ( aColorId == KAknsIIDNone )
+        {
+        // do not use theme color, use the default color from the file
+        AknsUtils::CreateIconLC( AknsUtils::SkinInstance(), aId,
+            bitmap, mask, aFileName, aFilexIndex, aFileMaskIndex );
+        }
+    else
+        {
+        // use theme color
+        AknsUtils::CreateColorIconLC( AknsUtils::SkinInstance(), aId, aColorId, aColorIndex,
+            bitmap, mask, aFileName, aFilexIndex, aFileMaskIndex, KRgbBlack );
+        }
+
+    CGulIcon* icon = CGulIcon::NewL( bitmap, mask );
+    icon->SetBitmapsOwnedExternally( EFalse );
+
+    // icon now owns the bitmaps, no need to keep on cleanup stack.
+    CleanupStack::Pop( 2 ); // mask, bitmap
+    
+    return icon;
     }
 
 

@@ -28,5 +28,3 @@ PRJ_MMPFILES
 
 PRJ_TESTMMPFILES
 #include "../CollectionHelperTestClass/group/bld.inf"
-
-PRJ_TESTMMPFILES

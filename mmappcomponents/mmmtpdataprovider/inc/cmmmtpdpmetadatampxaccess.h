@@ -80,7 +80,7 @@ public:
      * @param aCategory, specify the category
      * @return, name of the source, ownership transferred
      */
-    HBufC* CMmMtpDpMetadataMpxAccess::GetAbstractMediaNameL( CMPXMedia* aAbstractMedia,
+    HBufC* GetAbstractMediaNameL( CMPXMedia* aAbstractMedia,
         TMPXGeneralCategory aCategory );
 
     /**

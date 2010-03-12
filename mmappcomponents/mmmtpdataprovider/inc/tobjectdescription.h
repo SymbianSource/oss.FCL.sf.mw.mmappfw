@@ -23,6 +23,11 @@
 
 // vendor extended property code
 const TUint16 EMTPExtObjectPropCodeOmaDrmStatus = 0xDB01;
+const TUint32 KMTPMaxDescriptionLen = 0x00000100;  // 256
+const TInt KMtpMaxStringLength = 255;
+const TInt KMtpMaxDateTimeStringLength = 15;
+_LIT( KMtpDateTimeFormat, "%F%Y%M%DT%H%T%S" );
+
 
 struct TObjectDescription
     {

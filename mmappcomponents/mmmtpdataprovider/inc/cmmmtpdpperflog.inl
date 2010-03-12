@@ -187,9 +187,11 @@ void CMmMtpDpPerfLog::Stop( const TDesC& aDescription )
     
     if (totalTimeValue <= 0xFFFFFFFF)
         {
+        //Define the ptr on stack to avoid compiling warnning for wiscw udeb
+        TPtrC ptr( iDescription[index] );
         WriteFormat( _L( "<PERFLOG>%S-%S, usage = %u, last time = %u.%S ms, total time = %u.%S ms, average time = %u.%S ms</PERFLOG>" ), 
             iTitle, 
-            &iDescription[index],
+            &ptr,
             iTotalUsage[index], 
             lastTimeValue, 
             &lastTimeDecimal, 
@@ -200,9 +202,11 @@ void CMmMtpDpPerfLog::Stop( const TDesC& aDescription )
         }
     else
         {
+        //Define the ptr on stack to avoid compiling warnning for wiscw udeb
+        TPtrC ptr( iDescription[index] );
         WriteFormat( _L( "<PERFLOG>%S-%S, usage = %u, last time = %u.%S ms, total time = %u%u.%S ms, average time = %u.%S ms</PERFLOG>" ), 
             iTitle, 
-            &iDescription[index],
+            &ptr,
             iTotalUsage[index], 
             lastTimeValue, 
             &lastTimeDecimal, 

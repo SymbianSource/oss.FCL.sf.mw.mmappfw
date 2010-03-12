@@ -417,6 +417,7 @@ void CMediaMtpDataProvider::SupportedL( TMTPSupportCategory aCategory,
 
         //EMTPFormatCode3GPContainer,
         aStrings.AppendL(KFormatExtension3GP);
+        aStrings.AppendL(KFormatExtension3G2);
 
         //EMTPFormatCodeAAC,
         aStrings.AppendL(KFormatExtensionAAC);

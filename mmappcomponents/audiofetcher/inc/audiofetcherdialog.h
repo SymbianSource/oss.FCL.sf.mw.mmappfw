@@ -133,6 +133,13 @@ NONSHARABLE_CLASS ( CAudioFetcherDialog ) : public CAknDialog,
 		CGulIcon* IconL(TAknsItemID aId, const TDesC& aFileName,
 		                TInt aFileIndex, TInt aFileMaskIndex);
 		
+		CGulIcon* ColorIconL( const TAknsItemID& aId,
+		                      const TDesC& aFileName,
+		                      TInt aFilexIndex,
+		                      TInt aFileMaskIndex,
+		                      const TAknsItemID& aColorId,
+		                      TInt aColorIndex );
+		
 		void UpdateListBoxL();
 		
         /**

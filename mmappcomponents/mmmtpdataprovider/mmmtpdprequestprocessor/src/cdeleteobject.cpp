@@ -27,7 +27,8 @@
 #include "cmmmtpdpmetadataaccesswrapper.h"
 #include "mmmtpdputility.h"
 
-// static const TInt KMTPDriveGranularity = 5;
+static const TInt KMaxDeletionTimes = 10;
+const TInt KDeletionThreshold = 100 * 1000; // (100 millisec)
 
 // -----------------------------------------------------------------------------
 // Verification data for the DeleteObject request
@@ -227,8 +228,7 @@ void CDeleteObject::DeleteObjectL( const CMTPObjectMetaData& aObjectInfo )
     TFileName fileName( aObjectInfo.DesC( CMTPObjectMetaData::ESuid ) );
     PRINT1( _L( "MM MTP <> CDeleteObject::DeleteObjectL fileName = %S" ), &fileName );
 
-    TParsePtrC parse( fileName );
-    iDpConfig.GetWrapperL().SetStorageRootL( parse.Drive() );
+    iDpConfig.GetWrapperL().SetStorageRootL( fileName );
 
     // To capture special situation: After copy, move, rename playlist folder name,
     // record in MPX is not inlined with framework db, playlist should not be deleted
@@ -252,11 +252,26 @@ void CDeleteObject::DeleteObjectL( const CMTPObjectMetaData& aObjectInfo )
         PRINT1( _L( "MM MTP <= CDeleteObject::DeleteObjectL, \"%S\" is a read-only file"), &fileName );
         return;
         }
-    iDeleteError = iFs.Delete( fileName );
-    if ( iDeleteError != KErrNone && iDeleteError != KErrNotFound )
+    // Some other component might be holding on to the file (MDS background harvesting),
+    // try again after 100 millisec, up to 10 times, before give up
+    TInt count = KMaxDeletionTimes;
+    while ( count > 0 )
         {
-        PRINT1( _L( "MM MTP <= CDeleteObject::DeleteObjectL, Delete from file system failed, err = %d" ), iDeleteError );
-        return;
+        iDeleteError = iFs.Delete( fileName );
+        if ( iDeleteError == KErrNone || iDeleteError == KErrNotFound )
+            {
+            break;
+            }
+        else if ( ( iDeleteError == KErrInUse ) && ( count > 1 ) )
+            {
+            User::After( KDeletionThreshold );
+            count--;
+            }
+        else
+            {
+            PRINT1( _L( "MM MTP <= CDeleteObject::DeleteObjectL, Delete from file system failed, err = %d" ), iDeleteError );
+            return;
+            }
         }
 
     // 2. Delete object from metadata db

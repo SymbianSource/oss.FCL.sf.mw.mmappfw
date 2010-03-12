@@ -149,11 +149,14 @@ void CMoveObject::MoveObjectL()
         <= newObjectName.MaxLength() )
         {
         newObjectName.Append( fileNameParser.NameAndExt() );
-        }
-    responseCode = CanMoveObjectL( suid, newObjectName );
+        responseCode = CanMoveObjectL( suid, newObjectName );
 
-    if ( responseCode == EMTPRespCodeOK )
-        MoveFileL( newObjectName );
+        if ( responseCode == EMTPRespCodeOK )
+            MoveFileL( newObjectName );
+        }
+    else
+        // Destination is not appropriate for the full path name shouldn't be longer than 255
+        responseCode = EMTPRespCodeInvalidDataset;
 
     SendResponseL( responseCode );
 
@@ -289,16 +292,17 @@ void CMoveObject::MoveFileL( const TDesC& aNewFileName )
         iSameStorage = ETrue;
     else
         iSameStorage = EFalse;
+
+    // Move the file first no matter if it will fail in Get/SetPreviousPropertiesL
+    // Already trapped inside
     GetPreviousPropertiesL( *iObjectInfo );
-    SetPropertiesL( oldFileName, aNewFileName );
+    TRAPD( err, SetPropertiesL( oldFileName, aNewFileName ) );
 
     CFileMan* fileMan = CFileMan::NewL( iFramework.Fs() );
-    CleanupStack::PushL( fileMan );
-    User::LeaveIfError( fileMan->Move( oldFileName, aNewFileName ) );
-    CleanupStack::PopAndDestroy( fileMan );
+    err = fileMan->Move( oldFileName, aNewFileName );
 
-    User::LeaveIfError( iFramework.Fs().SetModified( aNewFileName,
-        iPreviousModifiedTime ) );
+    if ( err != KErrNone )
+        PRINT1( _L( "MM MTP <> CMoveObject::MoveFileL err = %d" ), err );
 
     PRINT( _L( "MM MTP <= CMoveObject::MoveFileL" ) );
     }
@@ -313,7 +317,6 @@ void CMoveObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
     PRINT( _L( "MM MTP => CMoveObject::GetPreviousPropertiesL" ) );
 
     const TDesC& suid( aObject.DesC( CMTPObjectMetaData::ESuid ) );
-    User::LeaveIfError( iFramework.Fs().Modified( suid, iPreviousModifiedTime ) );
 
     // same storage, not necessary to get the properties
     if ( iSameStorage )
@@ -375,13 +378,9 @@ void CMoveObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
                         iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue,
                             textData->StringChars() );
                         }
-                    else if ( err == KErrNotFound )
-                        {
-                        iPropertyElement = NULL;
-                        }
                     else
                         {
-                        User::Leave( err );
+                        iPropertyElement = NULL;
                         }
 
                     CleanupStack::PopAndDestroy( textData ); // - textData
@@ -447,13 +446,14 @@ void CMoveObject::SetPreviousPropertiesL()
             case EMTPObjectPropCodeNonConsumable:
                 iObjectInfo->SetUint( CMTPObjectMetaData::ENonConsumable,
                     element.Uint8L( CMTPTypeObjectPropListElement::EValue ) );
+                iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
                 break;
 
             case EMTPObjectPropCodeName:
                 {
                 CMTPTypeString *stringData = CMTPTypeString::NewLC( element.StringL( CMTPTypeObjectPropListElement::EValue ) ); // + stringData
 
-                respcode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapperL( iDpConfig,
+                respcode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
                     propertyCode,
                     *stringData,
                     *iObjectInfo );
@@ -474,6 +474,10 @@ void CMoveObject::SetPreviousPropertiesL()
         } // end of for loop
 
     // ignore errors
+    if (respcode == EMTPRespCodeOK)
+        {
+        // do nothing, just to get rid of build warning
+        }
 
     PRINT1( _L( "MM MTP <= CMoveObject::SetPreviousPropertiesL respcode = 0x%x" ), respcode );
     }
@@ -489,10 +493,11 @@ void CMoveObject::SetPropertiesL( const TDesC& aOldFileName,
     PRINT2( _L( "MM MTP => CMoveObject::SetPropertiesL aOldFileName = %S, aNewFileName = %S" ),
         &aOldFileName, 
         &aNewFileName );
-		
+
     iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, aNewFileName );
     iObjectInfo->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
     iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
+    iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
 
     TUint32 formatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatCode );
     if ( formatCode == EMTPFormatCodeAbstractAudioVideoPlaylist )
@@ -501,11 +506,14 @@ void CMoveObject::SetPropertiesL( const TDesC& aOldFileName,
         PRINT( _L( "MM MTP <> CMoveObject::SetPropertiesL Playlist file do not update the MPX DB" ) );
         }
     else
+        // TODO: Need rollback mechanism for consistant with image dp in fw.
+        // Not sure if it should be trap if something wrong with MPX db.
         {
         if ( iSameStorage )
+            {
             iDpConfig.GetWrapperL().RenameObjectL( aOldFileName, aNewFileName );
-        // if the two object in different storage, we should delete the old one and insert new one
-        else
+            }
+        else    // if the two object in different storage, we should delete the old one and insert new one
             {
             iDpConfig.GetWrapperL().DeleteObjectL( aOldFileName, formatCode );
 
@@ -514,11 +522,11 @@ void CMoveObject::SetPropertiesL( const TDesC& aOldFileName,
                 formatCode,
                 subFormatCode );
 
+            // Only leave when getting proplist element from data received by fw.       
+            // It should not happen after ReceiveDataL in which construction of proplist already succeed.
             SetPreviousPropertiesL();
             }
         }
-
-    iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
 
     // It's not necessary to change references of playlists since Reference DB is used PUID
 

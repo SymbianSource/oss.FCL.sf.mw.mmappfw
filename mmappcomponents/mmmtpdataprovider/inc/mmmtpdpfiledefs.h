@@ -29,6 +29,7 @@ _LIT( KTxtBackSlash, "\\" );
 //--------------------------------------------------------------------------------------------
 
 _LIT( KTxtExtension3GP, ".3gp" );
+_LIT( KTxtExtension3G2, ".3g2" );
 _LIT( KTxtExtensionAAC, ".aac" );
 _LIT( KTxtExtensionASF, ".asf" );
 _LIT( KTxtExtensionM4A, ".m4a" );
@@ -49,6 +50,7 @@ _LIT(KFormatExtensionMP3, "0x3009:mp3");
 _LIT(KFormatExtensionWMA, "0xb901:wma");
 _LIT(KFormatExtensionMP4, "0xb982:mp4");
 _LIT(KFormatExtension3GP, "0xb984:3gp");
+_LIT(KFormatExtension3G2, "0xb984:3g2");
 _LIT(KFormatExtensionAAC, "0xb903:aac");
 _LIT(KFormatExtensionWAV, "0x3008:wav");
 _LIT(KFormatExtensionWMV, "0xb981:wmv");

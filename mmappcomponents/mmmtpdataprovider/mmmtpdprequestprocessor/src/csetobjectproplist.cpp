@@ -219,35 +219,40 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL( const CMTPTypeObjectPro
             case EMTPObjectPropCodeObjectFileName:
                 {
                 TPtrC suid( object->DesC( CMTPObjectMetaData::ESuid ) );
-                TBuf<KMaxFileName> newSuid( aPropListElement.StringL(
-                    CMTPTypeObjectPropListElement::EValue ) );
-                TInt err = MmMtpDpUtility::UpdateObjectFileName( iFramework.Fs(), suid, newSuid );
-                PRINT1( _L( "MM MTP <> Update object file name err = %d" ), err );
-                if ( KErrOverflow == err ) // full path name is too long
-                    {
+                TPtrC ptr( aPropListElement.StringL( CMTPTypeObjectPropListElement::EValue ) );
+                if ( KMaxFileName < ptr.Length() )
                     responseCode = EMTPRespCodeInvalidDataset;
-                    }
-                else if ( ( KErrNone == err ) || ( KErrAlreadyExists == err ) )
+                else
                     {
-                    TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( suid, newSuid ) ); //Update MPX DB
-                    PRINT1( _L( "MM MTP <> Rename Object err = %d" ), err );
-                    // it is ok if file is not found in DB, following S60 solution
-                    if ( KErrNotFound == err )
+                    TFileName newSuid( ptr );
+                    TInt err = MmMtpDpUtility::UpdateObjectFileName( iFramework.Fs(), suid, newSuid );
+                    PRINT1( _L( "MM MTP <> Update object file name err = %d" ), err );
+                    if ( KErrOverflow == err ) // full path name is too long
                         {
-                        TUint formatCode = object->Uint( CMTPObjectMetaData::EFormatCode );
-                        TUint subFormatCode = object->Uint( CMTPObjectMetaData::EFormatSubCode );
-                        TRAP( err, iDpConfig.GetWrapperL().AddObjectL( newSuid, formatCode, subFormatCode ) );
-                        PRINT1( _L( "MM MTP <> Add Object err = %d" ), err );
+                        responseCode = EMTPRespCodeInvalidDataset;
                         }
+                    else if ( ( KErrNone == err ) || ( KErrAlreadyExists == err ) )
+                        {
+                        TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( suid, newSuid ) ); //Update MPX DB
+                        PRINT1( _L( "MM MTP <> Rename Object err = %d" ), err );
+                        // it is ok if file is not found in DB, following S60 solution
+                        if ( KErrNotFound == err )
+                            {
+                            TUint formatCode = object->Uint( CMTPObjectMetaData::EFormatCode );
+                            TUint subFormatCode = object->Uint( CMTPObjectMetaData::EFormatSubCode );
+                            TRAP( err, iDpConfig.GetWrapperL().AddObjectL( newSuid, formatCode, subFormatCode ) );
+                            PRINT1( _L( "MM MTP <> Add Object err = %d" ), err );
+                            }
 
-                    if ( KErrNone == err )
-                        {
-                        object->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
-                        iFramework.ObjectMgr().ModifyObjectL( *object );
-                        }
-                    else
-                        {
-                        responseCode = EMTPRespCodeGeneralError;
+                        if ( KErrNone == err )
+                            {
+                            object->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
+                            iFramework.ObjectMgr().ModifyObjectL( *object );
+                            }
+                        else
+                            {
+                            responseCode = EMTPRespCodeGeneralError;
+                            }
                         }
                     }
                 }
@@ -258,7 +263,7 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL( const CMTPTypeObjectPro
                 CMTPTypeString* stringData = CMTPTypeString::NewLC(
                     aPropListElement.StringL( CMTPTypeObjectPropListElement::EValue ) );// + stringData
 
-                responseCode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapperL( iDpConfig,
+                responseCode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
                     propertyCode,
                     *stringData,
                     *object );
@@ -332,7 +337,8 @@ EXPORT_C void CSetObjectPropList::RunL()
 //
 EXPORT_C TInt CSetObjectPropList::RunError( TInt aError )
     {
-    PRINT1( _L( "MM MTP <> CGetObjectPropList::RunError aError = %d" ), aError );
+    if ( aError != KErrNone )
+        PRINT1( _L( "MM MTP <> CGetObjectPropList::RunError aError = %d" ), aError );
 
     TRAP_IGNORE( SendResponseL( EMTPRespCodeGeneralError ) );
 

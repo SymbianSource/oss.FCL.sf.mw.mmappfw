@@ -284,11 +284,10 @@ void CMmMtpDpMetadataAccessWrapper::SetImageObjPropL( const TDesC& aFullFileName
     const TUint32 aWidth,
     const TUint32 aHeight )
     {
-    if ( MmMtpDpUtility::IsVideoL( aFullFileName, iFramework ) )
-        {
-        iMmMtpDpMetadataVideoAccess->SetStorageRootL( aFullFileName );
-        iMmMtpDpMetadataVideoAccess->SetImageObjPropL( aFullFileName, aWidth, aHeight );
-        }
+    iMmMtpDpMetadataVideoAccess->SetStorageRootL( aFullFileName );
+    iMmMtpDpMetadataVideoAccess->SetImageObjPropL( aFullFileName,
+        aWidth,
+        aHeight );
     }
 
 // -----------------------------------------------------------------------------
@@ -551,7 +550,8 @@ void CMmMtpDpMetadataAccessWrapper::RemoveDummyFiles()
     // Check if playlist file is a dummy file or an imported file
     for ( TInt i = 0; i < count; i++ )
         {
-        if ( MmMtpDpUtility::FormatFromFilename( (*iAbstractMediaArray)[i] ) !=
+        TPtrC dummyFileName( (*iAbstractMediaArray)[i] );
+        if ( MmMtpDpUtility::FormatFromFilename( dummyFileName ) !=
             EMTPFormatCodeM3UPlaylist )
             {
             // delete the virtual playlist
@@ -559,13 +559,13 @@ void CMmMtpDpMetadataAccessWrapper::RemoveDummyFiles()
             TInt err = iRfs.Delete( ( *iAbstractMediaArray )[i] );
 
             PRINT2( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::RemoveDummyFile filename = %S, err %d" ),
-                &( (*iAbstractMediaArray)[i] ),
+                &dummyFileName,
                 err );
             }
         else
             {
             // leave the Imported playlist in the file system
-            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::RemoveDummyFile, Don't delete m3u file [%S]" ), &( (*iAbstractMediaArray)[i] ) );
+            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::RemoveDummyFile, Don't delete m3u file [%S]" ), &dummyFileName );
             }
         }
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::RemoveDummyFiles" ) );

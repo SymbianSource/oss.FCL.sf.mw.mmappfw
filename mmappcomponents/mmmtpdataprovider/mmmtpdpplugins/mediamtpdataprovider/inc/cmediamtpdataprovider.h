@@ -189,8 +189,6 @@ private:
     RArray<TUint> iSupportedPropVideo;
     RArray<TUint> iSupportedPropAll;
 
-    TUint32 iDefaultStorageId;
-
     CPropertySettingUtility* iPropSettingUtility;
     CDescriptionUtility* iDescriptionUtility;
 

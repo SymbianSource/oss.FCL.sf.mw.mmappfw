@@ -107,10 +107,10 @@ EXPORT_C CSetObjectReferences::CSetObjectReferences(
 // set references to DB
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CSetObjectReferences::DoSetObjectReferencesL( CMmMtpDpMetadataAccessWrapper& aWrapper,
-    TUint16 aObjectFormat,
-    const TDesC& aSrcFileName,
-    CDesCArray& aRefFileArray )
+EXPORT_C void CSetObjectReferences::DoSetObjectReferencesL( CMmMtpDpMetadataAccessWrapper& /*aWrapper*/,
+    TUint16 /*aObjectFormat*/,
+    const TDesC& /*aSrcFileName*/,
+    CDesCArray& /*aRefFileArray*/ )
     {
     // do nothing, do special thing by inheriting
     }

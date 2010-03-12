@@ -80,7 +80,7 @@ CMediaMtpDataProviderGetObjectPropValue::CMediaMtpDataProviderGetObjectPropValue
     // Do nothing
     }
 
-void CMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL(TUint16 aPropCode)
+void CMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL( TUint16 aPropCode )
     {
     PRINT( _L( "MM MTP => CMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL" ) );
     switch ( aPropCode )
@@ -151,7 +151,7 @@ void CMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL(TUi
             TInt drmStatus = MmMtpDpUtility::GetDrmStatus( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
             iMTPTypeUint8.Set( 0 );
 
-            if (drmStatus == EMTPDrmStatusProtected)
+            if ( drmStatus == EMTPDrmStatusProtected )
                 iMTPTypeUint8.Set( 1 );
 
             SendDataL( iMTPTypeUint8 );

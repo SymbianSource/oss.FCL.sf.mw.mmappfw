@@ -125,13 +125,9 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
                 iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
                 iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, textData->StringChars() );
                 }
-            else if ( err == KErrNotFound )
-                {
-                iPropertyElement = NULL;
-                }
             else
                 {
-                User::Leave( err );
+                iPropertyElement = NULL;
                 }
 
             CleanupStack::PopAndDestroy( textData ); // - textData
@@ -150,17 +146,12 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
 
             if ( err == KErrNone )
                 {
-
                 iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
                 iPropertyElement->SetArrayL( CMTPTypeObjectPropListElement::EValue, *desData );
                 }
-            else if ( err == KErrNotFound )
-                {
-                iPropertyElement = NULL;
-                }
             else
                 {
-                User::Leave( err );
+                iPropertyElement = NULL;
                 }
 
             CleanupStack::PopAndDestroy( desData ); // - desData
@@ -183,13 +174,9 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
                 iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
                 iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EValue, uint16.Value() );
                 }
-            else if ( err == KErrNotFound )
-                {
-                iPropertyElement = NULL;
-                }
             else
                 {
-                User::Leave( err );
+                iPropertyElement = NULL;
                 }
             }
             break;
@@ -217,13 +204,9 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
                 iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
                 iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, uint32.Value() );
                 }
-            else if ( err == KErrNotFound )
-                {
-                iPropertyElement = NULL;
-                }
             else
                 {
-                User::Leave( err );
+                iPropertyElement = NULL;
                 }
             }
             break;

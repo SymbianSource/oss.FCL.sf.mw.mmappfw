@@ -150,22 +150,25 @@ void CCopyObject::CopyObjectL()
         <= newObjectName.MaxLength() )
         {
         newObjectName.Append( fileNameParser.NameAndExt() );
-        }
-    responseCode = CanCopyObjectL( suid, newObjectName );
+        responseCode = CanCopyObjectL( suid, newObjectName );
 
-    TUint32 newHandle = KMTPHandleNone;
-    if ( responseCode == EMTPRespCodeOK )
-        {
-        newHandle = CopyFileL( newObjectName );
-        SendResponseL( EMTPRespCodeOK, 1, &newHandle );
+        TUint32 newHandle = KMTPHandleNone;
+        if ( responseCode == EMTPRespCodeOK )
+            {
+            newHandle = CopyFileL( newObjectName );
+            SendResponseL( EMTPRespCodeOK, 1, &newHandle );
+            PRINT2( _L( "MM MTP <= CCopyObject::CopyObjectL responseCode = 0x%x, aNewHandle = 0x%x" ),
+                responseCode,
+                newHandle );
+            }
+        else
+            SendResponseL( responseCode );
         }
     else
-        SendResponseL( responseCode );
+        // Destination is not appropriate for the full path name shouldn't be longer than 255
+        SendResponseL( EMTPRespCodeInvalidDataset );
 
     CleanupStack::PopAndDestroy( &newObjectName ); // - newObjectName
-    PRINT2( _L( "MM MTP <= CCopyObject::CopyObjectL responseCode = 0x%x, aNewHandle = 0x%x" ),
-        responseCode,
-        newHandle );
     }
 
 // -----------------------------------------------------------------------------
@@ -302,8 +305,12 @@ TUint32 CCopyObject::CopyFileL( const TDesC& aNewFileName )
 
     GetPreviousPropertiesL( *iObjectInfo );
 
+    // TODO: Need rollback mechanism for consistant with image dp in fw.
+    // Not sure if it should be trap if something wrong with MPX db.
     TUint32 handle = AddObjectToStoreL( suid, aNewFileName );
 
+    // Only leave when getting proplist element from data received by fw.
+    // It should not happen after ReceiveDataL in which construction of proplist already succeed.
     SetPreviousPropertiesL( *iObjectInfo );
 
     CFileMan* fileMan = CFileMan::NewL( iFramework.Fs() );
@@ -388,13 +395,9 @@ void CCopyObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
                         iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue,
                             textData->StringChars() );
                         }
-                    else if ( err == KErrNotFound )
-                        {
-                        iPropertyElement = NULL;
-                        }
                     else
                         {
-                        User::Leave( err );
+                        iPropertyElement = NULL;
                         }
 
                     CleanupStack::PopAndDestroy( textData ); // - textData
@@ -470,7 +473,7 @@ void CCopyObject::SetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
                 {
                 CMTPTypeString *stringData = CMTPTypeString::NewLC( element.StringL( CMTPTypeObjectPropListElement::EValue ) ); // + stringData
 
-                respcode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapperL( iDpConfig,
+                respcode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
                     propertyCode,
                     *stringData,
                     aObject );
@@ -491,6 +494,10 @@ void CCopyObject::SetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
         } // end of for loop
 
     // ignore errors
+    if ( respcode == EMTPRespCodeOK )
+        {
+        // do nothing, just to get rid of build warning
+        }
 
     PRINT1( _L( "MM MTP <= CCopyObject::SetPreviousPropertiesL respcode = 0x%x" ), respcode );
     }

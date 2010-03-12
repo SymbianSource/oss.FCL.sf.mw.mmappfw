@@ -56,7 +56,7 @@ public:
     * @param aFullFileName, the full file name
     * @return TBool for decide if the file is video
     */
-    IMPORT_C static TBool IsVideoL( const TDesC& aFullFileName );
+    IMPORT_C static TBool IsVideo( const TDesC& aFullFileName );
 
     /**
     * Utility function to decide if the file is video.

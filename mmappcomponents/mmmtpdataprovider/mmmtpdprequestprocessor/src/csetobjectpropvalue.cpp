@@ -152,13 +152,13 @@ EXPORT_C TMTPResponseCode CSetObjectPropValue::CheckRequestL()
         CMTPObjectMetaData* objectInfo = iRequestChecker->GetObjectInfo( objectHandle );
         if ( objectInfo == NULL )
             {
-            PRINT( _L("MM MTP <> CGetObjectPropValue::CheckRequestL, objectInfo is NULL" ) );
+            PRINT( _L("MM MTP <> CSetObjectPropValue::CheckRequestL, objectInfo is NULL" ) );
             return EMTPRespCodeInvalidObjectHandle;
             }
 
         TFileName fileName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
         TUint32 formatCode = objectInfo->Uint( CMTPObjectMetaData::EFormatCode );
-        PRINT3( _L( "MM MTP <> CGetObjectPropValue::CheckRequestL, handle = 0x%x, filename = %S, formatCode = 0x%x" ),
+        PRINT3( _L( "MM MTP <> CSetObjectPropValue::CheckRequestL, handle = 0x%x, filename = %S, formatCode = 0x%x" ),
             objectHandle,
             &fileName,
             formatCode );
@@ -269,38 +269,43 @@ EXPORT_C TBool CSetObjectPropValue::DoHandleResponsePhaseL()
         case EMTPObjectPropCodeObjectFileName:
             {
             TPtrC suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
-            TBuf<KMaxFileName> newSuid( iMTPTypeString->StringChars() );
-            PRINT2( _L( "MM MTP <> old name = %S, new name = %S" ), &suid, &newSuid );
-            TInt err = KErrNone;
-            err = MmMtpDpUtility::UpdateObjectFileName( iFramework.Fs(),
-                suid,
-                newSuid );
-            PRINT1( _L( "MM MTP <> Update object file name err = %d" ), err );
-            if ( KErrOverflow == err ) // full path name is too long
-                {
+            TPtrC ptr ( iMTPTypeString->StringChars() );
+            if ( KMaxFileName < ptr.Length() )
                 responseCode = EMTPRespCodeInvalidDataset;
-                }
-            else if ( ( KErrNone == err ) || ( KErrAlreadyExists == err ) )
+            else
                 {
-                TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( suid, newSuid ) ); //Update MPX DB
-                PRINT1( _L( "MM MTP <> Rename MPX object file name err = %d" ), err );
-                // it is ok if file is not found in DB, following S60 solution
-                if ( KErrNotFound == err )
+                TFileName newSuid( ptr );
+                PRINT2( _L( "MM MTP <> old name = %S, new name = %S" ), &suid, &newSuid );
+                TInt err = KErrNone;
+                err = MmMtpDpUtility::UpdateObjectFileName( iFramework.Fs(),
+                    suid,
+                    newSuid );
+                PRINT1( _L( "MM MTP <> Update object file name err = %d" ), err );
+                if ( KErrOverflow == err ) // full path name is too long
                     {
-                    TUint formatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatCode );
-                    TUint subFormatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatSubCode );
-                    TRAP( err, iDpConfig.GetWrapperL().AddObjectL( newSuid, formatCode, subFormatCode ) );
-                    PRINT1( _L( "MM MTP <> Add MPX object file name err = %d" ), err );
+                    responseCode = EMTPRespCodeInvalidDataset;
                     }
-
-                if ( KErrNone == err )
+                else if ( ( KErrNone == err ) || ( KErrAlreadyExists == err ) )
                     {
-                    iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
-                    iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
-                    }
-                else
-                    {
-                    responseCode = EMTPRespCodeGeneralError;
+                    TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( suid, newSuid ) ); //Update MPX DB
+                    PRINT1( _L( "MM MTP <> Rename MPX object file name err = %d" ), err );
+                    // it is ok if file is not found in DB, following S60 solution
+                    if ( KErrNotFound == err )
+                        {
+                        TUint formatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatCode );
+                        TUint subFormatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatSubCode );
+                        TRAP( err, iDpConfig.GetWrapperL().AddObjectL( newSuid, formatCode, subFormatCode ) );
+                        PRINT1( _L( "MM MTP <> Add MPX object file name err = %d" ), err );
+                        }
+                    if ( KErrNone == err )
+                        {
+                        iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
+                        iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
+                        }
+                    else
+                        {
+                        responseCode = EMTPRespCodeGeneralError;
+                        }
                     }
                 }
             }

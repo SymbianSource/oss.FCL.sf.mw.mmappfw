@@ -44,7 +44,7 @@ public:
     *    inserted or updated into database
     * @return response code
     */
-    IMPORT_C TMTPResponseCode SetMetaDataToWrapperL( MMmMtpDpConfig& aDpConfig,
+    IMPORT_C TMTPResponseCode SetMetaDataToWrapper( MMmMtpDpConfig& aDpConfig,
         const TUint16 aPropCode,
         MMTPType& aNewData,
         const CMTPObjectMetaData& aObjectMetaData );

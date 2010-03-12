@@ -153,7 +153,8 @@ EXPORT_C void CGetPartialObject::ServiceL()
     // Get file information
     CMTPObjectMetaData* objectInfo = iRequestChecker->GetObjectInfo( iObjectHandle );
     __ASSERT_DEBUG( objectInfo, Panic( EMmMTPDpObjectNull ) );
-    TBuf<KMaxFileName> fileSuid;
+
+    TFileName fileSuid;
     fileSuid.Append( objectInfo->DesC( CMTPObjectMetaData::ESuid ) );
 
     iFileObject = CMTPTypeFile::NewL( iFramework.Fs(),

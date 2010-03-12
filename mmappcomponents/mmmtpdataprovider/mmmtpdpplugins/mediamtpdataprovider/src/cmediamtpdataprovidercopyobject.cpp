@@ -217,13 +217,9 @@ void CMediaMtpDataProviderCopyObject::ServiceGetSpecificObjectPropertyL( TUint16
             break;
         }
 
-    // centralize logic to handle error, doing so, that's on need to trap the
-    // leave for KErrNotSupported in base class like previous version.
-    if ( ( err == KErrNotFound )
-        || ( ( err == KErrNotSupported )
-            && ( ( aObject.Uint( CMTPObjectMetaData::EFormatCode ) == EMTPFormatCodeASF )
-                || ( aObject.Uint( CMTPObjectMetaData::EFormatCode ) == EMTPFormatCodeMP4Container )
-                || ( aObject.Uint( CMTPObjectMetaData::EFormatCode ) == EMTPFormatCode3GPContainer ) ) ) )
+    // Ignore all errors came from mpx db.
+    // It's enough that only file copied successfully no matter metadata got whatever failure.
+    if ( err != KErrNone )
         {
         iPropertyElement = NULL;
         }

@@ -29,4 +29,4 @@ PRJ_MMPFILES
 PRJ_TESTMMPFILES
 #include "../HarvesterCollectionMediatorTest/group/bld.inf"
 
-PRJ_TESTMMPFILES
+

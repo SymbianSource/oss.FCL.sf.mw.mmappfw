@@ -97,7 +97,6 @@ TInt CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL( TUi
 
     switch ( aPropCode )
         {
-        //case EMTPObjectPropCodeName:
         case EMTPObjectPropCodeArtist:
         case EMTPObjectPropCodeGenre:
         case EMTPObjectPropCodeComposer:
@@ -114,11 +113,8 @@ TInt CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL( TUi
 
             PRINT1( _L( "MM MTP <> CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL err = %d" ), err );
 
-            if ( err == KErrNone )
-                {
-                iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-                iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, textData->StringChars());
-                }
+            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
+            iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, textData->StringChars());
 
             CleanupStack::PopAndDestroy( textData );  // - textData
             }
@@ -134,12 +130,9 @@ TInt CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL( TUi
 
             PRINT1( _L( "MM MTP <> CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL err = %d" ), err );
 
-            if ( err == KErrNone )
-                {
-                iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-                iPropertyElement->SetArrayL( CMTPTypeObjectPropListElement::EValue, *desData);
-                }
-
+            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
+            iPropertyElement->SetArrayL( CMTPTypeObjectPropListElement::EValue, *desData);
+ 
             CleanupStack::PopAndDestroy( desData );  // - desData
             }
             break;
@@ -155,11 +148,8 @@ TInt CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL( TUi
                 *iObject ) );
             PRINT1( _L( "MM MTP <> CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL err = %d" ), err );
 
-            if ( err == KErrNone )
-                {
-                iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-                iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EValue, uint16.Value());
-                }
+            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
+            iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EValue, uint16.Value());
             }
             break;
 
@@ -181,11 +171,8 @@ TInt CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL( TUi
                 *iObject ) );
             PRINT1( _L( "MM MTP <> CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL err = %d" ), err );
 
-            if ( err == KErrNone )
-                {
-                iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-                iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, uint32.Value());
-                }
+            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
+            iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, uint32.Value());
             }
             break;
 
@@ -193,10 +180,10 @@ TInt CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL( TUi
             {
             TInt drmStatus = MmMtpDpUtility::GetDrmStatus( iObject->DesC( CMTPObjectMetaData::ESuid ) );
             TMTPTypeUint8 result;
-            result.Set( 0 );
+            result.Set( EMTPDrmStatusNotProtected );
 
             if ( drmStatus == EMTPDrmStatusProtected )
-                result.Set( 1 );
+                result.Set( EMTPDrmStatusProtected );
 
             iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
             iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EDatatype, EMTPTypeUINT8);

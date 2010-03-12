@@ -109,7 +109,7 @@ EXPORT_C CSendObject::~CSendObject()
 CSendObject::CSendObject( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
-        CRequestProcessor( aFramework, aConnection, 0, NULL),
+        CRequestProcessor( aFramework, aConnection, 0, NULL ),
         iFs( iFramework.Fs() ),
         iObjectMgr( iFramework.ObjectMgr() ),
         iDpConfig( aDpConfig )
@@ -581,9 +581,6 @@ TBool CSendObject::DoHandleResponsePhaseObjectL()
 
     TBool result = ETrue;
 
-    delete iFileReceived;
-    iFileReceived = NULL;
-
     TEntry fileEntry;
     User::LeaveIfError( iFs.Entry( iFullPath, fileEntry ) );
     if ( fileEntry.FileSize() != iObjectSize )
@@ -611,11 +608,15 @@ TBool CSendObject::DoHandleResponsePhaseObjectL()
         {
         if ( iObjectSize > 0 ) // media file
             {
-            AddMediaToStoreL();
+            TRAPD( err, AddMediaToStoreL() );
+            PRINT1( _L( "MM MTP <= CSendObject::DoHandleResponsePhaseObjectL err = %d" ), err );
 
-            if( iPreviousOperation == EMTPOpCodeSendObjectPropList )
+            if ( ( iPreviousOperation == EMTPOpCodeSendObjectPropList )
+                && ( err == KErrNone ) )
                 {
-                SetObjectPropListL( *iObjectPropList );
+                // Only leave when getting proplist element from data received by fw.
+                // It should not happen after ReceiveDataL in which construction of proplist already succeed.
+                SetObjectPropListL();
                 }
 
             // Commits into MTP data object enumeration store the object handle and
@@ -888,7 +889,7 @@ TMTPResponseCode CSendObject::ExtractPropertyL( const CMTPTypeObjectPropListElem
 // Reserve object proplist into database
 // -----------------------------------------------------------------------------
 //
-TMTPResponseCode CSendObject::SetObjectPropListL( const CMTPTypeObjectPropList& aPropList )
+TMTPResponseCode CSendObject::SetObjectPropListL()
     {
     PRINT( _L( "MM MTP => CSendObject::SetObjectPropListL" ) );
 
@@ -903,7 +904,8 @@ TMTPResponseCode CSendObject::SetObjectPropListL( const CMTPTypeObjectPropList& 
         TUint16 propertyCode = element.Uint16L( CMTPTypeObjectPropListElement::EPropertyCode );
         TUint16 dataType = element.Uint16L( CMTPTypeObjectPropListElement::EDatatype );
         PRINT2( _L( "MM MTP <> SetObjectPropListL propertyCode = 0x%x, dataType = 0x%x" ),
-            propertyCode, dataType );
+            propertyCode,
+            dataType );
 
         switch ( propertyCode )
             {
@@ -924,7 +926,7 @@ TMTPResponseCode CSendObject::SetObjectPropListL( const CMTPTypeObjectPropList& 
             case EMTPObjectPropCodeDateCreated:
             case EMTPObjectPropCodeDateModified:
             case EMTPObjectPropCodeObjectFileName:
-                // TODO: Does anything need to be done on these read-only properties?
+                // Do nothing for read-only properties
                 /* spec:
                  * Object properties that are get-only (0x00 GET)
                  * should accept values during object creation by
@@ -933,14 +935,15 @@ TMTPResponseCode CSendObject::SetObjectPropListL( const CMTPTypeObjectPropList& 
                 break;
 
             case EMTPObjectPropCodeProtectionStatus:
-                SetProtectionStatusL();
+                // Already done in AddMediaToStore, it's not necessary to set it again.
+                // SetProtectionStatus();
                 break;
 
             case EMTPObjectPropCodeName:
                 {
                 CMTPTypeString* stringData = CMTPTypeString::NewLC( element.StringL( CMTPTypeObjectPropListElement::EValue ) );// + stringData
 
-                responseCode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapperL( iDpConfig,
+                responseCode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
                     propertyCode,
                     *stringData,
                     *iReceivedObjectInfo );
@@ -1156,15 +1159,22 @@ void CSendObject::ReserveObjectL()
     // Reserves space for and assigns an object handle to the object described
     // by the specified object information record.
     TRAP( err, iObjectMgr.ReserveObjectHandleL( *iReceivedObjectInfo,
-                iObjectSize ) );
+        iObjectSize ) );
 
     PRINT2( _L( "MM MTP => CSendObject::ReserveObjectL iObjectsize = %Lu, Operation: 0x%x" ), iObjectSize, iOperationCode );
     if ( err != KErrNone )
         PRINT1( _L( "MM MTP <> CSendObject::ReserveObjectL err = %d" ), err );
     if ( iObjectSize == 0 )
         {
+        // Already trapped inside SaveEmptyFileL.
         SaveEmptyFileL();
-        SetObjectPropListL( *iObjectPropList );
+        if( iOperationCode == EMTPOpCodeSendObjectPropList )
+            {
+            // Only leave when getting proplist element from data received by fw.
+            // It should not happen after ReceiveDataL in which construction of proplist already succeed.
+            SetObjectPropListL();
+            }
+
         iObjectMgr.CommitReservedObjectHandleL( *iReceivedObjectInfo );
         }
 
@@ -1182,29 +1192,40 @@ void CSendObject::ReserveObjectL()
     }
 
 // -----------------------------------------------------------------------------
-// CSendObject::SetProtectionStatusL
+// CSendObject::SetProtectionStatus
 // -----------------------------------------------------------------------------
 //
-void CSendObject::SetProtectionStatusL()
+void CSendObject::SetProtectionStatus()
     {
-    PRINT1( _L( "MM MTP => CSendObject::SetProtectionStatusL iProtectionStatus = %d" ), iProtectionStatus );
+    PRINT1( _L( "MM MTP => CSendObject::SetProtectionStatus iProtectionStatus = %d" ), iProtectionStatus );
 
-    if ( iProtectionStatus == EMTPProtectionNoProtection
-        || iProtectionStatus == EMTPProtectionReadOnly )
+    if ( iFileReceived != NULL )
         {
-        // TODO: wait for review
-        TInt err = KErrNone;
-        if ( iProtectionStatus == EMTPProtectionNoProtection )
+        if ( iProtectionStatus == EMTPProtectionNoProtection
+            || iProtectionStatus == EMTPProtectionReadOnly )
             {
-            err = iFs.SetAtt( iFullPath, KEntryAttNormal, KEntryAttReadOnly );
+            TInt err = KErrNone;
+            if ( iProtectionStatus == EMTPProtectionNoProtection )
+                {
+                err = iFileReceived->File().SetAtt( KEntryAttNormal, KEntryAttReadOnly );
+                }
+            else
+                {
+                err = iFileReceived->File().SetAtt( KEntryAttReadOnly, KEntryAttNormal );
+                }
+    
+            if ( err != KErrNone )
+                {
+                PRINT1( _L("MM MTP <> CSendObject::SetProtectionStatus err = %d" ), err );
+                }
             }
-        else
-            {
-            err = iFs.SetAtt( iFullPath, KEntryAttReadOnly, KEntryAttNormal );
-            }
-        User::LeaveIfError( err );
+        // Close the file after SetProtectionStatus to make sure other process won't open
+        // the file successfully right at the time calling RFile::SetAtt.
+        delete iFileReceived;
+        iFileReceived = NULL;
         }
-    PRINT( _L( "MM MTP <= CSendObject::SetProtectionStatusL" ) );
+
+    PRINT( _L( "MM MTP <= CSendObject::SetProtectionStatus" ) );
     }
 
 // -----------------------------------------------------------------------------
@@ -1217,28 +1238,28 @@ void CSendObject::SaveEmptyFileL()
 
     RFile file;
     User::LeaveIfError( file.Create( iFs, iFullPath, EFileWrite ) );
-    file.Close();
-
-    // set entry protection status and modified date
-    SetProtectionStatusL();
-
-    // add playlist to MPX DB
-    TParsePtrC parse( iFullPath );
-    iDpConfig.GetWrapperL().SetStorageRootL( parse.Drive() );
-    iDpConfig.GetWrapperL().AddObjectL( iFullPath, iObjectFormat, EMTPSubFormatCodeUnknown );
+    CleanupClosePushL( file );  // + file
 
     if ( EMTPFormatCodeAbstractAudioVideoPlaylist == iObjectFormat )
         {
         TInt err = KErrNone;
-        err = iFs.SetAtt( iFullPath,
-            KEntryAttSystem | KEntryAttHidden,
+        err = file.SetAtt( KEntryAttSystem | KEntryAttHidden,
             KEntryAttReadOnly | KEntryAttNormal );
         if ( err != KErrNone )
             PRINT1( _L( "MM MTP <> CSendObject::SaveEmptyFileL err = %d" ), err );
         iDpConfig.GetWrapperL().AddDummyFileL( iFullPath );
         }
+    CleanupStack::PopAndDestroy( &file );   // - file
 
-    PRINT( _L( "MM MTP <= CSendObject::SaveEmptyFileL" ) );
+    // add playlist to MPX DB
+    TRAPD( err, AddMediaToStoreL() );
+
+    if ( err != KErrNone )
+        {
+        // Ignore err even add into MPX get failed.
+        }
+
+    PRINT1( _L( "MM MTP <= CSendObject::SaveEmptyFileLerr = %d" ), err );
     }
 
 // -----------------------------------------------------------------------------
@@ -1250,16 +1271,20 @@ void CSendObject::AddMediaToStoreL()
     {
     PRINT( _L( "MM MTP => CSendObject::AddMediaToStoreL" ) );
 
+    // SetProtectionStatus here make sure no matter the previous operation is SendObjectInfo
+    // or SendObjectPropList
+    // Might need to set dateadded and datemodify for further extension.
+    SetProtectionStatus();
+
     TBool isVideo = EFalse;
-    TMmMtpSubFormatCode subFormatCode;
+    TMmMtpSubFormatCode subFormatCode = EMTPSubFormatCodeUnknown;
     switch ( iObjectFormat )
         {
         case EMTPFormatCode3GPContainer:
         case EMTPFormatCodeMP4Container:
         case EMTPFormatCodeASF:
             {
-
-            if ( MmMtpDpUtility::IsVideoL( iFullPath ) )
+            if ( MmMtpDpUtility::IsVideo( iFullPath ) )
                 {
                 subFormatCode = EMTPSubFormatCodeVideo;
                 isVideo = ETrue;
@@ -1287,18 +1312,13 @@ void CSendObject::AddMediaToStoreL()
             break;
         }
 
-    TPtrC suid( iReceivedObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
-    PRINT1( _L( "MM MTP <> CSendObject::AddMediaToStoreL suid = %S" ), &suid );
-    TParsePtrC parse( suid );
-    iDpConfig.GetWrapperL().SetStorageRootL( parse.Drive() );
+    iDpConfig.GetWrapperL().SetStorageRootL( iFullPath );
+    PRINT1( _L( "MM MTP <> CSendObject::AddMediaToStoreL iFullPath = %S" ), &iFullPath );
     iDpConfig.GetWrapperL().AddObjectL( iFullPath, iObjectFormat, subFormatCode );
 
     if ( isVideo )
         {
-        TInt err = KErrNone;
-            TRAP( err, iDpConfig.GetWrapperL().SetImageObjPropL( iFullPath, iWidth, iHeight ) );
-
-        PRINT1( _L( "MM MTP <= CSendObject::AddVideoToStoreL err = %d" ), err );
+        iDpConfig.GetWrapperL().SetImageObjPropL( iFullPath, iWidth, iHeight );
         }
 
     PRINT( _L( "MM MTP <= CSendObject::AddMediaToStoreL" ) );

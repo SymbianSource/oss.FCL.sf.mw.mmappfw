@@ -85,7 +85,7 @@ TMTPResponseCode CMediaMtpDataProviderPropertySettingUtility::SetSpecificObjectP
             CMTPTypeString* stringData =
                 CMTPTypeString::NewLC( aElement.StringL( CMTPTypeObjectPropListElement::EValue ) );// + stringData
 
-            responseCode = SetMetaDataToWrapperL( aDpConfig,
+            responseCode = SetMetaDataToWrapper( aDpConfig,
                 aPropCode,
                 *stringData,
                 aObject );
@@ -107,7 +107,7 @@ TMTPResponseCode CMediaMtpDataProviderPropertySettingUtility::SetSpecificObjectP
             {
             CMTPTypeArray* desData = CMTPTypeArray::NewLC( EMTPTypeAUINT16 ); // + desData
             desData->SetByDesL( aElement.ArrayL( CMTPTypeObjectPropListElement::EValue ) );
-            responseCode = SetMetaDataToWrapperL( aDpConfig,
+            responseCode = SetMetaDataToWrapper( aDpConfig,
                 aPropCode,
                 *desData,
                 aObject );
@@ -127,7 +127,7 @@ TMTPResponseCode CMediaMtpDataProviderPropertySettingUtility::SetSpecificObjectP
         case EMTPObjectPropCodeKeyFrameDistance:
             {
             TMTPTypeUint32 uint32( aElement.Uint32L( CMTPTypeObjectPropListElement::EValue ) );
-            responseCode = SetMetaDataToWrapperL( aDpConfig,
+            responseCode = SetMetaDataToWrapper( aDpConfig,
                 aPropCode,
                 uint32,
                 aObject );
@@ -140,7 +140,7 @@ TMTPResponseCode CMediaMtpDataProviderPropertySettingUtility::SetSpecificObjectP
         case EMTPObjectPropCodeDRMStatus:
             {
             TMTPTypeUint16 uint16( aElement.Uint16L( CMTPTypeObjectPropListElement::EValue ) );
-            responseCode = SetMetaDataToWrapperL( aDpConfig,
+            responseCode = SetMetaDataToWrapper( aDpConfig,
                 aPropCode,
                 uint16,
                 aObject );

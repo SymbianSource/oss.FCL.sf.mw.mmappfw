@@ -38,9 +38,8 @@
 #include "mmmtpdputility.h"
 #include "tmmmtpdppanic.h"
 #include "mmmtpvideodbdefs.h"
+#include "tobjectdescription.h"
 
-static const TInt KMtpMaxStringLength = 255;
-static const TInt KMtpMaxDescriptionLength = 0x200;
 const TInt KStorageRootMaxLength = 10;
 
 #ifdef _DEBUG
@@ -1087,18 +1086,8 @@ void CMmMtpDpMetadataVideoAccess::SetObjectMetadataValueL( const TUint16 aPropCo
 
     // Get file path
     TPtrC suid( aObjectMetaData.DesC( CMTPObjectMetaData::ESuid ) );
-    TParsePtrC parse( suid );
     SetRecordL( suid, ERecordWrite );
-    TRAPD( err, SetMetadataL( aPropCode, aNewData ) );
-
-    if ( err < KErrNone ) // EPOC error condition
-        {
-        PRINT1( _L( "MM MTP <> Metadata write failed, with error %d" ), err );
-        SetRecordL( suid, EFailedWrite );
-        }
-
-    if ( err != KErrNone )
-        User::Leave( err );
+    SetMetadataL( aPropCode, aNewData );
 
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataVideoAccess::SetObjectMetadataValueL" ) );
     }
@@ -1150,18 +1139,21 @@ void CMmMtpDpMetadataVideoAccess::SetMetadataL( const TUint16 aObjPropCode,
             desData = CMTPTypeArray::NewLC( EMTPTypeAUINT16 ); // + desData
             MMTPType::CopyL( aNewData, *desData );
             TUint length = desData->NumElements();
-            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataVideoAccess::SetMetadataL length = %d" ), length );
+            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL length = %d" ),
+                length );
             if ( length != 0 )
                 {
-                TBuf<KMtpMaxDescriptionLength> text;
-                text.Zero();
+                length = ( length < KMTPMaxDescriptionLen ) ? length : KMTPMaxDescriptionLen;
+                HBufC* text = HBufC::NewLC( length );    // + text
+                TPtr ptr = text->Des();
+
                 for ( TUint i = 0; i < length; i++ )
-                    {
-                    text.Append( desData->ElementUint( i ) );
-                    }
-                PRINT1( _L( "MM MTP <> CMmMtpDpMetadataVideoAccess::SetMetadataL text = %S" ),
-                    &text );
-                WriteLongTextL( KMtpVideoComment, text );
+                    ptr.Append( desData->ElementUint( i ) );
+                PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL text = %S" ),
+                    text );
+
+                WriteLongTextL( KMtpVideoComment, *text );
+                CleanupStack::PopAndDestroy( text );    // - text
                 }
             else
                 {
@@ -1533,8 +1525,7 @@ void CMmMtpDpMetadataVideoAccess::SetStorageRootL( const TDesC& aStorageRoot )
     PRINT1( _L( "MM MTP => CMmMtpDpMetadataVideoAccess::SetStorageRoot aStoreRoot = %S" ), &aStorageRoot );
 
     // get the drive number
-    TParse pathParser;
-    User::LeaveIfError( pathParser.Set( aStorageRoot, NULL, NULL ) );
+    TParsePtrC pathParser( aStorageRoot );
     TChar driveChar( pathParser.Drive()[0] );
 
     User::LeaveIfError( RFs::CharToDrive( driveChar, iStoreNum ) );

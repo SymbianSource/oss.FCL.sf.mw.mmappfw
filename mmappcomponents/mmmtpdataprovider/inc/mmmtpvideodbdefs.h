@@ -59,7 +59,7 @@ _LIT( KMtpVideoDRM,                  "DRM" );
 _LIT( KMtpVideoDeleted,              "Deleted" );
 
 // field type
-_LIT( KMtpVideoLocationType,         " CHAR (255) NOT NULL" );
+_LIT( KMtpVideoLocationType,         " LONG VARCHAR NOT NULL" );
 _LIT( KMtpVideoNameType,             " LONG VARCHAR" );
 _LIT( KMtpVideoArtistType,           " LONG VARCHAR" );
 _LIT( KMtpVideoTrackType,            " UNSIGNED SMALLINT" );

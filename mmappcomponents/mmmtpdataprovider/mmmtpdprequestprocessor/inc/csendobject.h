@@ -173,7 +173,7 @@ private:
     /*
      * Handle response phase of SetObjectPropListL operation
      */
-    TMTPResponseCode SetObjectPropListL( const CMTPTypeObjectPropList& aPropList );
+    TMTPResponseCode SetObjectPropListL();
 
     /**
      *
@@ -213,7 +213,7 @@ private:
     /**
     * Set protection status of object which could be read/write-only
     */
-    void SetProtectionStatusL();
+    void SetProtectionStatus();
 
     /**
     * Save object information of object whose size is zero

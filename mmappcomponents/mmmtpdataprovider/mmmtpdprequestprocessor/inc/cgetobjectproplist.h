@@ -161,8 +161,6 @@ private:
 
     void GetPropertiesL( RArray<TUint>& aPropArray, TUint32 aGroupCode, TUint16 aFormatCode ) const;
 
-    void SetSubFormatCodeL();
-
 protected:
     CMTPTypeObjectPropListElement* iPropertyElement;  // used by media DP directly
 

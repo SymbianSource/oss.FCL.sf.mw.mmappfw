@@ -248,7 +248,7 @@ void CAbstractMediaMtpDataProvider::SessionClosedL( const TMTPNotificationParams
 
         if ( ( sessionId == aSession.iMTPId )
             && ( processor->Connection().ConnectionId() 
-			== aSession.iConnection.ConnectionId() ) )
+            == aSession.iConnection.ConnectionId() ) )
             {
             processor->UsbDisconnect(); // Rollback
 

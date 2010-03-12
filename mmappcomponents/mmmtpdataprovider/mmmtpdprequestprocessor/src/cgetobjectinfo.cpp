@@ -26,9 +26,8 @@
 #include "tmmmtpdppanic.h"
 #include "mmmtpdplogger.h"
 #include "mmmtpdpconfig.h"
+#include "tobjectdescription.h"
 
-_LIT( KMtpDateTimeFormat, "%F%Y%M%DT%H%T%S" );
-const TInt KMtpMaxDateTimeStringLength = 15;
 
 // -----------------------------------------------------------------------------
 // Verification data for GetObjectInfo request

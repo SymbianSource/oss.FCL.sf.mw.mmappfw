@@ -80,7 +80,7 @@ CRequestChecker::~CRequestChecker()
 
 // -----------------------------------------------------------------------------
 // CRequestChecker::VerifyRequestL
-// Verfiy the request
+// Verify the request
 // -----------------------------------------------------------------------------
 //
 TMTPResponseCode CRequestChecker::VerifyRequestL( const TMTPTypeRequest& aRequest,
@@ -286,7 +286,7 @@ TMTPResponseCode CRequestChecker::VerifyObjectHandleL( TUint32 aHandle,
         // moveObject can be either a file or a directory.
 
         // Other cases.
-        if ( ( EMTPRespCodeOK == ret ) && ( aElementInfo.iElementAttr & EMTPElementAttrFile) )
+        if ( ( EMTPRespCodeOK == ret ) && ( aElementInfo.iElementAttr & EMTPElementAttrFile ) )
             {
             if ( entry.IsDir() )
                 {

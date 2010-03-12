@@ -21,10 +21,10 @@
 
 #include "cmediamtpdataproviderdescriptionutility.h"
 #include "mediamtpdataproviderconst.h"
+#include "tobjectdescription.h"
 #include "mmmtpdpconfig.h"
 #include "mmmtpdplogger.h"
 
-const TUint32 KMTPDescriptionLen = 0x00000200;
 
 // -----------------------------------------------------------------------------
 // CMediaMtpDataProviderDescriptionUtility::NewL
@@ -474,7 +474,7 @@ CMTPTypeObjectPropDesc* CMediaMtpDataProviderDescriptionUtility::NewDescriptionP
     {
     PRINT( _L( "MM MTP => CMediaMtpDataProviderDescriptionUtility::NewDescriptionPropDescL" ) );
 
-    TMTPTypeUint32 uint32Data( KMTPDescriptionLen );
+    TMTPTypeUint32 uint32Data( KMTPMaxDescriptionLen );
     CMTPTypeObjectPropDesc* propertyDesc = CMTPTypeObjectPropDesc::NewL( EMTPObjectPropCodeDescription,
         CMTPTypeObjectPropDesc::ELongStringForm,
         &uint32Data );

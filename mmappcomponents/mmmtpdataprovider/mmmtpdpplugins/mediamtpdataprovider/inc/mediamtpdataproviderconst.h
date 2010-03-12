@@ -25,8 +25,6 @@
 
 _LIT( KMTPTxtColon, ":" );
 
-/** Granularity of the drive list*/
-const TInt KMtpMaxStringLength = 255;
 
 enum TMmMtpNumberOfChannels
     {

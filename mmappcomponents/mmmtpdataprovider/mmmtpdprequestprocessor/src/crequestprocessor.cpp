@@ -414,8 +414,11 @@ EXPORT_C void CRequestProcessor::DoCancel()
 //
 EXPORT_C TInt CRequestProcessor::RunError( TInt aError )
     {
-    PRINT1( _L( "MM MTP <> CRequestProcessor RunError = %d" ), aError );
+    if ( aError != KErrNone )
+        PRINT1( _L( "MM MTP <> CRequestProcessor RunError = %d" ), aError );
+
     TRAP_IGNORE( SendResponseL( EMTPRespCodeGeneralError ) );
+
     return KErrNone;
     }
 

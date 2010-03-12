@@ -44,15 +44,13 @@
 #include "mmmtpdplogger.h"
 #include "mmmtpdputility.h"
 #include "tmmmtpdppanic.h"
+#include "tobjectdescription.h"
 
 static const TInt KMtpInvalidSongID = 0x1FFFFFFF;
 static const TInt KMtpChannelMono = 1;
 static const TInt KMtpChannelStereo = 2;
-static const TInt KMtpDateTimeStringLength = 15;
-static const TInt KMtpMaxStringLength = 255;
-static const TInt KMtpMaxDescriptionLength = 0x200;
 
-_LIT( KMtpDateTimeFormat, "%F%Y%M%DT%H%T%S" );
+
 _LIT( KMtpDateTimeConnector, "T" );
 _LIT( KEmptyText, "" );
 
@@ -206,7 +204,7 @@ void CMmMtpDpMetadataMpxAccess::GetObjectMetadataValueL( const TUint16 aPropCode
         case EMTPObjectPropCodeDateCreated:
             {
             TTime time( *media.Value<TInt64> ( attrib ) );
-            TBuf<KMtpDateTimeStringLength> timeStr;
+            TBuf<KMtpMaxDateTimeStringLength> timeStr;
             time.FormatL( timeStr, KMtpDateTimeFormat );
 
             if ( EMTPTypeString == aNewData.Type() )
@@ -258,7 +256,7 @@ void CMmMtpDpMetadataMpxAccess::GetObjectMetadataValueL( const TUint16 aPropCode
         case EMTPObjectPropCodeOriginalReleaseDate:
             {
             // Compose DateTime string in format YYYYMMDDTHHMMSS
-            TBuf<KMtpDateTimeStringLength> dateTime;
+            TBuf<KMtpMaxDateTimeStringLength> dateTime;
             dateTime.Zero();
 
             // NOTE: Handled specially, shouldn't leave like other property, following S60
@@ -431,7 +429,6 @@ CMPXMedia* CMmMtpDpMetadataMpxAccess::FindWMPMediaLC( TMPXAttributeData aWMPMedi
     searchMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXGroup );
     searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXSong );
     searchMedia->SetTObjectValueL<TBool>( aWMPMediaID, aFlag );
-
     searchMedia->SetTextValueL( KMPXMediaGeneralDrive, iStoreRoot );
 
     RArray<TMPXAttribute> songAttributes;
@@ -440,8 +437,7 @@ CMPXMedia* CMmMtpDpMetadataMpxAccess::FindWMPMediaLC( TMPXAttributeData aWMPMedi
 
     PRINT( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::FindWMPMediaLC searchMedia setup with no problems" ) );
 
-    CMPXMedia* foundMedia = CollectionHelperL()->FindAllL(
-        *searchMedia,
+    CMPXMedia* foundMedia = CollectionHelperL()->FindAllL( *searchMedia,
         songAttributes.Array() );
     PRINT( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::FindWMPMediaLC foundMedia assigned from FindAllL" ) );
 
@@ -842,10 +838,10 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
             MMTPType::CopyL( aNewData, *textData );
 
             TBuf<KMtpMaxStringLength> data;
-            data.Copy( textData->StringChars().Left( KMtpDateTimeStringLength ) );
+            data.Copy( textData->StringChars().Left( KMtpMaxDateTimeStringLength ) );
             PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL 0xDC99 date = %S" ),
                 &data );
-            if ( data.Length() < KMtpDateTimeStringLength )
+            if ( data.Length() < KMtpMaxDateTimeStringLength )
                 {
                 PRINT( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL 0xDC99 date string is too short" ) );
                 break;
@@ -927,13 +923,16 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
                 length );
             if ( length != 0 )
                 {
-                TBuf<KMtpMaxDescriptionLength> text;
-                text.Zero();
+                length = ( length < KMTPMaxDescriptionLen ) ? length : KMTPMaxDescriptionLen;
+                HBufC* text = HBufC::NewLC( length );    // + text
+                TPtr ptr = text->Des();
+
                 for ( TUint i = 0; i < length; i++ )
-                    text.Append( desData->ElementUint( i ) );
+                    ptr.Append( desData->ElementUint( i ) );
                 PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL text = %S" ),
-                    &text );
-                aMediaProp.SetTextValueL( KMPXMediaGeneralComment, text );
+                    text );
+                aMediaProp.SetTextValueL( KMPXMediaGeneralComment, *text );
+                CleanupStack::PopAndDestroy( text );    // - text
                 }
             else
                 {
@@ -984,6 +983,7 @@ void CMmMtpDpMetadataMpxAccess::AddSongL( const TDesC& aFullFileName )
     searchMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXItem );
     searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXSong );
     searchMedia->SetTextValueL( KMPXMediaGeneralUri, aFullFileName );
+    searchMedia->SetTextValueL( KMPXMediaGeneralDrive, iStoreRoot );
 
     RArray<TMPXAttribute> songAttributes;
     CleanupClosePushL( songAttributes ); // + songAttributes
@@ -1274,8 +1274,7 @@ void CMmMtpDpMetadataMpxAccess::SetStorageRootL( const TDesC& aStorageRoot )
     PRINT1( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::SetStorageRoot aStoreRoot = %S" ), &aStorageRoot );
 
     // get the drive number
-    TParse pathParser;
-    User::LeaveIfError( pathParser.Set( aStorageRoot, NULL, NULL ) );
+    TParsePtrC pathParser( aStorageRoot );
     TChar driveChar( pathParser.Drive()[0] );
 
     TInt driveNumber;
@@ -1638,6 +1637,7 @@ TBool CMmMtpDpMetadataMpxAccess::IsExistL( const TDesC& aSuid )
     searchMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXItem );
     searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXPlaylist );
     searchMedia->SetTextValueL( KMPXMediaGeneralUri, aSuid );
+    searchMedia->SetTextValueL( KMPXMediaGeneralDrive, iStoreRoot );
 
     RArray<TMPXAttribute> playlistAttributes;
     CleanupClosePushL( playlistAttributes ); // + playlistAttributes

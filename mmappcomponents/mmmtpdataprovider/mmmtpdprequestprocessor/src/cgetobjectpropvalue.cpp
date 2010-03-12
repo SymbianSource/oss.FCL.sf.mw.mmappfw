@@ -28,9 +28,8 @@
 #include "cmmmtpdpmetadataaccesswrapper.h"
 #include "mmmtpdplogger.h"
 #include "mmmtpdpconfig.h"
+#include "tobjectdescription.h"
 
-_LIT( KMtpDateTimeFormat, "%F%Y%M%DT%H%T%S" );
-const TInt KMtpMaxDateTimeStringLength = 15;
 
 // -----------------------------------------------------------------------------
 // Verification data for the GetObjectPropValue request
@@ -138,15 +137,13 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
     TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
     TUint32 propCode = Request().Uint32( TMTPTypeRequest::ERequestParameter2 );
     PRINT2( _L( "MM MTP <> CGetObjectPropValue::ServiceL objectHandle = 0x%x, propCode = 0x%x" ),
-            objectHandle, propCode );
+        objectHandle, propCode );
 
     // don't have the ownship of the object
     iObjectInfo = iRequestChecker->GetObjectInfo( objectHandle );
     TPtrC suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
     PRINT1( _L( "MM MTP <> CGetObjectPropValue::ServiceL object file name is %S" ), &suid );
     TParsePtrC parse( suid );
-
-    iDpConfig.GetWrapperL().SetStorageRootL( parse.Drive() );
 
     if ( iMTPTypeString != NULL )
         {
@@ -182,7 +179,7 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
             {
             iMTPTypeUint16.Set( 0 );
             iMTPTypeUint16 = MmMtpDpUtility::GetProtectionStatusL( iFramework.Fs(),
-                    iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
+                iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
             SendDataL( iMTPTypeUint16 );
             }
             break;
@@ -232,9 +229,9 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
         case EMTPObjectPropCodeName: // 0xDC44
         case EMTPObjectPropCodeDateAdded: // 0xDC4E
             {
-            if ( ( propCode == EMTPObjectPropCodeName)
+            if ( ( propCode == EMTPObjectPropCodeName )
                 || ( ( !MmMtpDpUtility::IsVideoL(iObjectInfo->DesC( CMTPObjectMetaData::ESuid ), iFramework ) )
-                        && ( propCode == EMTPObjectPropCodeDateAdded ) ) )
+                    && ( propCode == EMTPObjectPropCodeDateAdded ) ) )
                 {
                 iMTPTypeString = CMTPTypeString::NewL();
                 ServiceMetaDataFromWrapperL( propCode, *iMTPTypeString, *iObjectInfo );

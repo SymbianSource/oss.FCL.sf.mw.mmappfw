@@ -40,11 +40,11 @@ EXPORT_C CPropertySettingUtility::~CPropertySettingUtility()
     }
 
 // -----------------------------------------------------------------------------
-// CPropertySettingUtility::SetMetaDataToWrapperL
+// CPropertySettingUtility::SetMetaDataToWrapper
 //
 // -----------------------------------------------------------------------------
 //
-EXPORT_C TMTPResponseCode CPropertySettingUtility::SetMetaDataToWrapperL( MMmMtpDpConfig& aDpConfig,
+EXPORT_C TMTPResponseCode CPropertySettingUtility::SetMetaDataToWrapper( MMmMtpDpConfig& aDpConfig,
     const TUint16 aPropCode,
     MMTPType& aNewData,
     const CMTPObjectMetaData& aObjectMetaData )
@@ -54,14 +54,14 @@ EXPORT_C TMTPResponseCode CPropertySettingUtility::SetMetaDataToWrapperL( MMmMtp
             aNewData,
             aObjectMetaData ) );
 
-    PRINT1( _L("MM MTP <> CPropertySettingUtility::SetMetaDataToWrapperL err = %d"), err);
+    PRINT1( _L("MM MTP <> CPropertySettingUtility::SetMetaDataToWrapper err = %d"), err);
 
     if ( err == KErrNone )
         responseCode = EMTPRespCodeOK;
-    else // Other errors are not SetMetaDataToWrapperL related, should be respond before this calling
+    else // Other errors are not SetMetaDataToWrapper related, should be respond before this calling
         responseCode = EMTPRespCodeGeneralError;
 
-    PRINT1( _L( "MM MTP <= CPropertySettingUtility::SetMetaDataToWrapperL resCode = 0x%x" ), responseCode );
+    PRINT1( _L( "MM MTP <= CPropertySettingUtility::SetMetaDataToWrapper resCode = 0x%x" ), responseCode );
 
     return responseCode;
     }

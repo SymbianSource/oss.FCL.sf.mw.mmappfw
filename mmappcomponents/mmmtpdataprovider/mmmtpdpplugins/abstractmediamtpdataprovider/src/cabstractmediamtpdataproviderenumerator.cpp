@@ -314,7 +314,7 @@ void CAbstractMediaMtpDataProviderEnumerator::RunL()
     
     // Increase the index first in case of leave
     iCurrentIndex++;
-    
+
     HBufC* abstractMedia = iDataProvider.GetWrapperL().GetAbstractMediaNameL( media, EMPXPlaylist );
     CleanupStack::PushL( abstractMedia ); // + abstractMedia
     AddEntryL( *abstractMedia );
@@ -427,13 +427,13 @@ void CAbstractMediaMtpDataProviderEnumerator::AddReferencesL( const TDesC& aAbst
     for ( TInt i = 0; i < count; i++ )
         {
         TInt index = i - removeCount;
-        PRINT2( _L( "MM MTP <> CAbstractMediaMtpDataProviderEnumerator::AddReferencesL ref[%d]'s name = %S" ), index, &( aReferences[index] ) );
+        TPtrC temp( aReferences[index] );
+        PRINT2( _L( "MM MTP <> CAbstractMediaMtpDataProviderEnumerator::AddReferencesL ref[%d]'s name = %S" ), index, &temp );
         PERFLOGSTART( KObjectManagerHandle );
-        TUint32 handle = iFramework.ObjectMgr().HandleL( aReferences[index] );
+        TUint32 handle = iFramework.ObjectMgr().HandleL( temp );
         PERFLOGSTOP( KObjectManagerHandle );
         if ( handle == KMTPHandleNone ) // object doesn't exist
             {
-            TPtrC temp( aReferences[index] );
             PRINT1( _L( "MM MTP <> CAbstractMediaMtpDataProviderEnumerator::AddReferencesL, [%S] doesn't existed in handle db, remove this from reference array" ), &temp );
 
             // if handle is invalid, remove from reference array
