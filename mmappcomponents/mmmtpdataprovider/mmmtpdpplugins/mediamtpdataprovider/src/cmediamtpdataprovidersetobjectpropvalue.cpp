@@ -54,7 +54,7 @@ MMmRequestProcessor* CMediaMtpDataProviderSetObjectPropValue::NewL( MMTPDataProv
 //
 void CMediaMtpDataProviderSetObjectPropValue::ConstructL()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -65,9 +65,9 @@ void CMediaMtpDataProviderSetObjectPropValue::ConstructL()
 CMediaMtpDataProviderSetObjectPropValue::CMediaMtpDataProviderSetObjectPropValue( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
-    CSetObjectPropValue( aFramework, aConnection, aDpConfig )
+        CSetObjectPropValue( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -77,7 +77,7 @@ CMediaMtpDataProviderSetObjectPropValue::CMediaMtpDataProviderSetObjectPropValue
 //
 CMediaMtpDataProviderSetObjectPropValue::~CMediaMtpDataProviderSetObjectPropValue()
     {
-
+    // Do nothing
     }
 
 TBool CMediaMtpDataProviderSetObjectPropValue::IsSpecificPropCodeReadOnly( TUint16 aPropCode ) const
@@ -221,12 +221,10 @@ TMTPResponseCode CMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectP
                 }
             else
                 {
-                TMTPTypeUint8 newValue( iMTPTypeUint8 );
-
                 // there's no DB field to remember the value, so return an error
                 // if there's a mismatch to CAF protection status
-                if ( ( ( drmStatus == EMTPDrmStatusProtected) && ( newValue.Value() == 0 ) ) ||
-                    ( ( drmStatus == EMTPDrmStatusNotProtected ) && ( newValue.Value() == 1 ) ) )
+                if ( ( ( drmStatus == EMTPDrmStatusProtected) && ( iMTPTypeUint8.Value() == 0 ) ) ||
+                    ( ( drmStatus == EMTPDrmStatusNotProtected ) && ( iMTPTypeUint8.Value() == 1 ) ) )
                     {
                     responseCode = EMTPRespCodeAccessDenied;
                     }

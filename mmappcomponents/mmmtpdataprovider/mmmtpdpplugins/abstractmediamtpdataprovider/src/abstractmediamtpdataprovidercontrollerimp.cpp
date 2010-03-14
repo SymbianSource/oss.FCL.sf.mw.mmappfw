@@ -26,15 +26,14 @@
 //
 static const TImplementationProxy ImplementationTable[] =
     {
-    {{0x10207C53}, (TProxyNewLPtr) ( CAbstractMediaMtpDataProvider::NewL )}
+    { { 0x10207C53 }, ( TProxyNewLPtr ) ( CAbstractMediaMtpDataProvider::NewL ) }
     };
 
 // -----------------------------------------------------------------------------
 //  ECOM entry point
 // -----------------------------------------------------------------------------
 //
-EXPORT_C const TImplementationProxy* ImplementationGroupProxy(
-        TInt& aTableCount )
+EXPORT_C const TImplementationProxy* ImplementationGroupProxy( TInt& aTableCount )
     {
     aTableCount = sizeof( ImplementationTable ) / sizeof( TImplementationProxy );
     return ImplementationTable;

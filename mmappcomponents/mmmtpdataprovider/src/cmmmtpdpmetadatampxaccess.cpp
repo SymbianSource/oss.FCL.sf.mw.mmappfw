@@ -56,6 +56,19 @@ _LIT( KMtpDateTimeFormat, "%F%Y%M%DT%H%T%S" );
 _LIT( KMtpDateTimeConnector, "T" );
 _LIT( KEmptyText, "" );
 
+#if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
+_LIT( KMpxCollectionNewL, "MpxCollectionNewL" );
+_LIT( KMpxCollectionAddL, "MpxCollectionAddL" );
+_LIT( KMpxCollectionGetL, "MpxCollectionGetL" );
+_LIT( KMpxCollectionSetL, "MpxCollectionSetL" );
+_LIT( KMpxCollectionSetReferenceL, "MpxCollectionSetReferenceL" );
+_LIT( KMpxCollectionGetAbstractMedia, "MpxCollectionGetAbstractMedia" );
+_LIT( KMpxCollectionGetReference, "MpxCollectionGetReference" );
+_LIT( KMpxCollectionFindAllLValidate, "MpxCollectionValidate" );
+_LIT( KMpxCollectionFindAllLBeforeAdd, "MpxCollectionFindAllLBeforeAdd" );
+_LIT( KSetMetadataValue, "SetMetadataValueL" );
+#endif
+
 #ifdef  _DEBUG
 _LIT( KMtpMpxPanic, "CMmMtpDpMetadataMpxAccess" );
 #endif
@@ -76,7 +89,7 @@ CMmMtpDpMetadataMpxAccess::CMmMtpDpMetadataMpxAccess( RFs& aRfs,
     iRfs( aRfs ),
     iFramework( aFramework )
     {
-
+    // Do nothing
     }
 
 // ---------------------------------------------------------------------------
@@ -134,7 +147,7 @@ void CMmMtpDpMetadataMpxAccess::GetObjectMetadataValueL( const TUint16 aPropCode
 
     CleanupStack::PopAndDestroy( suid ); // - suid
 
-    TMPXAttributeData attrib( MpxAttribFromPropL( media, aPropCode ) );
+    TMPXAttributeData attrib( MpxAttribFromPropL( aPropCode ) );
     TBool isSupported = media.IsSupported( attrib );
     PRINT1(_L( "MM MTP <> CMmMtpDpMetadataMpxAccess::GetObjectMetadataValueL isSupported = %d" ), isSupported);
 
@@ -346,9 +359,9 @@ MMPXCollectionHelper* CMmMtpDpMetadataMpxAccess::CollectionHelperL()
     // as a General Error
     if ( iCollectionHelper == NULL )
         {
-        PERFLOGSTART(KMpxCollectionNewL);
+        PERFLOGSTART( KMpxCollectionNewL );
         iCollectionHelper = CMPXCollectionHelperFactory::NewCollectionCachedHelperL();
-        PERFLOGSTOP(KMpxCollectionNewL);
+        PERFLOGSTOP( KMpxCollectionNewL );
 
         // Do a search for a song ID that does not exist
         // This is to validate the presence of the media database.
@@ -543,9 +556,9 @@ void CMmMtpDpMetadataMpxAccess::UpdateMusicCollectionL()
                 KMPXMediaGeneralModified,
                 EFalse );
             // Update the song's metadata with the media object
-            PERFLOGSTART(KMpxCollectionSetL);
+            PERFLOGSTART( KMpxCollectionSetL );
             CollectionHelperL()->SetL( media );
-            PERFLOGSTOP(KMpxCollectionSetL);
+            PERFLOGSTOP( KMpxCollectionSetL );
 
             CleanupStack::PopAndDestroy( media ); // - media
             }
@@ -596,7 +609,8 @@ void CMmMtpDpMetadataMpxAccess::RenameObjectL( const TDesC& aOldFileName,
     TUint aFormatCode )
     {
     PRINT2( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::RenameObjectL aOldFileName = %S, aNewFileName = %S" ),
-            &aOldFileName, &aNewFileName );
+            &aOldFileName,
+            &aNewFileName );
 
     TInt err = KErrNone;
 
@@ -604,10 +618,7 @@ void CMmMtpDpMetadataMpxAccess::RenameObjectL( const TDesC& aOldFileName,
         || ( aFormatCode == EMTPFormatCodeM3UPlaylist ) )
         {
         PRINT( _L( "MM MTP <> Playlist" ) );
-        TRAP( err, CollectionHelperL()->RenameL(
-            aOldFileName,
-            aNewFileName,
-            EMPXPlaylist ) );
+        TRAP( err, CollectionHelperL()->RenameL( aOldFileName, aNewFileName, EMPXPlaylist ) );
         }
     else // Not a playlist
         {
@@ -703,14 +714,13 @@ void CMmMtpDpMetadataMpxAccess::SetObjectMetadataValueL( const TUint16 aPropCode
     if ( ( format == EMTPFormatCodeAbstractAudioVideoPlaylist )
         || ( format == EMTPFormatCodeM3UPlaylist ) )
         {
-        PRINT( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetObjectMetadataValueL format is playlist" ) );
+        PRINT( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetObjectMetadataValueL format is abstract media" ) );
         contentIDs.AppendL( KMPXMediaIdGeneral );
 
         media = CMPXMedia::NewL( contentIDs.Array() );
         CleanupStack::PushL( media ); // + media
 
-        media->SetTObjectValueL<TMPXGeneralCategory>(
-            KMPXMediaGeneralCategory,
+        media->SetTObjectValueL<TMPXGeneralCategory>( KMPXMediaGeneralCategory,
             EMPXPlaylist );
         }
     else
@@ -739,12 +749,14 @@ void CMmMtpDpMetadataMpxAccess::SetObjectMetadataValueL( const TUint16 aPropCode
     media->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
     CleanupStack::PopAndDestroy( suid ); // - suid
 
+    PERFLOGSTART( KSetMetadataValue );
     SetMetadataValueL( aPropCode, aNewData, *media );
+    PERFLOGSTOP( KSetMetadataValue );
 
     // Update the song's metadata with the media object
-    PERFLOGSTART(KMpxCollectionSetL);
+    PERFLOGSTART( KMpxCollectionSetL );
     CollectionHelperL()->SetL( media );
-    PERFLOGSTOP(KMpxCollectionSetL);
+    PERFLOGSTOP( KMpxCollectionSetL );
 
     CleanupStack::PopAndDestroy( 2, &contentIDs ); // - media, contentIDs
 
@@ -765,7 +777,7 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
     TMTPTypeUint16 uint16Data;
     TMTPTypeUint32 uint32Data;
 
-    TMPXAttributeData attrib( MpxAttribFromPropL( aMediaProp, aPropCode ) );
+    TMPXAttributeData attrib( MpxAttribFromPropL( aPropCode ) );
 
     switch ( aPropCode )
         {
@@ -906,7 +918,7 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
         case EMTPObjectPropCodeDescription:
             {
 #ifdef __MUSIC_ID_SUPPORT
-            //WriteMusicIdsL(*longString);
+            // WriteMusicIdsL(*longString);
 #else
             desData = CMTPTypeArray::NewLC( EMTPTypeAUINT16 ); // + desData
             MMTPType::CopyL( aNewData, *desData );
@@ -970,9 +982,7 @@ void CMmMtpDpMetadataMpxAccess::AddSongL( const TDesC& aFullFileName )
     CleanupStack::PushL( searchMedia ); // + searchMedia
 
     searchMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXItem );
-
     searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXSong );
-
     searchMedia->SetTextValueL( KMPXMediaGeneralUri, aFullFileName );
 
     RArray<TMPXAttribute> songAttributes;
@@ -981,11 +991,10 @@ void CMmMtpDpMetadataMpxAccess::AddSongL( const TDesC& aFullFileName )
 
     PRINT( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::AddSongL searchMedia setup with no problems" ) );
 
-    PERFLOGSTART(KMpxCollectionFindAllLBeforeAdd);
-    CMPXMedia* foundMedia = CollectionHelperL()->FindAllL(
-        *searchMedia,
+    PERFLOGSTART( KMpxCollectionFindAllLBeforeAdd );
+    CMPXMedia* foundMedia = CollectionHelperL()->FindAllL( *searchMedia,
         songAttributes.Array() );
-    PERFLOGSTOP(KMpxCollectionFindAllLBeforeAdd);
+    PERFLOGSTOP( KMpxCollectionFindAllLBeforeAdd );
 
     CleanupStack::PopAndDestroy( &songAttributes ); // - songAttributes
     CleanupStack::PopAndDestroy( searchMedia ); // - searchMedia
@@ -1022,11 +1031,9 @@ void CMmMtpDpMetadataMpxAccess::AddSongL( const TDesC& aFullFileName )
         CleanupStack::PushL( media ); // + media
 
         // MPXMedia default types
-        media->SetTObjectValueL<TMPXGeneralType>(
-            KMPXMediaGeneralType,
+        media->SetTObjectValueL<TMPXGeneralType>( KMPXMediaGeneralType,
             EMPXItem );
-        media->SetTObjectValueL<TMPXGeneralCategory>(
-            KMPXMediaGeneralCategory,
+        media->SetTObjectValueL<TMPXGeneralCategory>( KMPXMediaGeneralCategory,
             EMPXSong );
         // File Path
         //
@@ -1050,17 +1057,17 @@ void CMmMtpDpMetadataMpxAccess::AddSongL( const TDesC& aFullFileName )
 
         if ( foundItemCount == 0 )
             {
-            PERFLOGSTART(KMpxCollectionAddL);
+            PERFLOGSTART( KMpxCollectionAddL );
             CollectionHelperL()->AddL( media );
-            PERFLOGSTOP(KMpxCollectionAddL);
+            PERFLOGSTOP( KMpxCollectionAddL );
 
             PRINT( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::AddSongL Media added into collection" ) );
             }
         else
             {
-            PERFLOGSTART(KMpxCollectionSetL);
+            PERFLOGSTART( KMpxCollectionSetL );
             CollectionHelperL()->SetL( media );
-            PERFLOGSTOP(KMpxCollectionSetL);
+            PERFLOGSTOP( KMpxCollectionSetL );
 
             PRINT( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::AddSongL Media metadata updated in collection" ) );
             }
@@ -1074,15 +1081,15 @@ void CMmMtpDpMetadataMpxAccess::AddSongL( const TDesC& aFullFileName )
     }
 
 // -----------------------------------------------------------------------------
-// CMmMtpDpMetadataMpxAccess::AddPlaylistL
-// Adds Playlist to Mpx DB
+// CMmMtpDpMetadataMpxAccess::AddAbstractMediaL
+// Adds abstract media to Mpx DB
 // -----------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataMpxAccess::AddPlaylistL( const TDesC& aFullFileName )
+void CMmMtpDpMetadataMpxAccess::AddAbstractMediaL( const TDesC& aFullFileName, TMPXGeneralCategory aCategory )
     {
-    PRINT1( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::AddPlaylistL aFullFileName = %S" ), &aFullFileName );
+    PRINT1( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::AddAbstractMediaL aFullFileName = %S" ), &aFullFileName );
 
-    // Does a record already exist for this playlist?
+    // Does a record already exist for this AbstractMedia?
     RArray<TInt> contentIDs;
     CleanupClosePushL( contentIDs ); // + contentIDs
     contentIDs.AppendL( KMPXMediaIdGeneral );
@@ -1092,21 +1099,24 @@ void CMmMtpDpMetadataMpxAccess::AddPlaylistL( const TDesC& aFullFileName )
     CleanupStack::PushL( searchMedia ); // + searchMedia
 
     searchMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXItem );
-    searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXPlaylist );
+    searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, aCategory );
     searchMedia->SetTextValueL( KMPXMediaGeneralUri, aFullFileName );
 
-    RArray<TMPXAttribute> playlistAttributes;
-    CleanupClosePushL( playlistAttributes ); // + playlistAttributes
-    playlistAttributes.AppendL( KMPXMediaGeneralId );
-    playlistAttributes.AppendL( KMPXMediaGeneralTitle );
-    playlistAttributes.AppendL( KMPXMediaGeneralUri );
+    RArray<TMPXAttribute> abstractMediaAttributes;
+    CleanupClosePushL( abstractMediaAttributes ); // + abstractMediaAttributes
+    abstractMediaAttributes.AppendL( KMPXMediaGeneralId );
+    abstractMediaAttributes.AppendL( KMPXMediaGeneralTitle );
+    if ( aCategory == EMPXPlaylist )
+        {
+        abstractMediaAttributes.AppendL( KMPXMediaGeneralUri );
+        }
 
-    PERFLOGSTART(KMpxCollectionFindAllLBeforeAdd);
+    PERFLOGSTART( KMpxCollectionFindAllLBeforeAdd );
     CMPXMedia* foundMedia = CollectionHelperL()->FindAllL( *searchMedia,
-        playlistAttributes.Array() );
-    PERFLOGSTOP(KMpxCollectionFindAllLBeforeAdd);
+        abstractMediaAttributes.Array() );
+    PERFLOGSTOP( KMpxCollectionFindAllLBeforeAdd );
 
-    CleanupStack::PopAndDestroy( &playlistAttributes ); // - playlistAttributes
+    CleanupStack::PopAndDestroy( &abstractMediaAttributes ); // - abstractMediaAttributes
     CleanupStack::PopAndDestroy( searchMedia ); // - searchMedia
     CleanupStack::PushL( foundMedia ); // + foundMedia
 
@@ -1117,12 +1127,12 @@ void CMmMtpDpMetadataMpxAccess::AddPlaylistL( const TDesC& aFullFileName )
 
     if ( foundItemCount != 0 )
         {
-        PRINT( _L( "MM MTP <> Playlist Media already exists in the collection" ) );
+        PRINT( _L( "MM MTP <> Abstract Media already exists in the collection" ) );
         }
     else
         {
-        // Creat media properties for the playlist
-        PRINT( _L( "MM MTP <> Create playlist media properties" ) );
+        // Creat media properties for the abstractMedia
+        PRINT( _L( "MM MTP <> Create abstract media properties" ) );
         RArray<TInt> contentIDs;
         CleanupClosePushL( contentIDs ); // + contentIDs
         contentIDs.AppendL( KMPXMediaIdGeneral );
@@ -1131,14 +1141,14 @@ void CMmMtpDpMetadataMpxAccess::AddPlaylistL( const TDesC& aFullFileName )
         CleanupStack::PopAndDestroy( &contentIDs ); // - contentIDs
         CleanupStack::PushL( media ); // + media
 
-        CMPXMediaArray* playlistArray = CMPXMediaArray::NewL();
-        CleanupStack::PushL( playlistArray ); // + playlistArray;
+        CMPXMediaArray* abstractMediaArray = CMPXMediaArray::NewL();
+        CleanupStack::PushL( abstractMediaArray ); // + abstractMediaArray;
 
         // MPXMedia default types
         media->SetTObjectValueL<TMPXGeneralType>( KMPXMediaGeneralType,
             EMPXItem );
         media->SetTObjectValueL<TMPXGeneralCategory>( KMPXMediaGeneralCategory,
-            EMPXPlaylist );
+            aCategory );
         // File Path
         //
         media->SetTextValueL( KMPXMediaGeneralUri, aFullFileName );
@@ -1146,37 +1156,40 @@ void CMmMtpDpMetadataMpxAccess::AddPlaylistL( const TDesC& aFullFileName )
         TParsePtrC parse( aFullFileName );
 
         media->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
-        media->SetTextValueL( KMPXMediaGeneralTitle, parse.Name() );
+        if ( aCategory == EMPXPlaylist )
+            {
+            media->SetTextValueL( KMPXMediaGeneralTitle, parse.Name() );
+            }
         media->SetTObjectValueL<TBool>( KMPXMediaGeneralSynchronized, ETrue );
-        media->SetCObjectValueL( KMPXMediaArrayContents, playlistArray );
-        media->SetTObjectValueL( KMPXMediaArrayCount, playlistArray->Count() );
+        media->SetCObjectValueL( KMPXMediaArrayContents, abstractMediaArray );
+        media->SetTObjectValueL( KMPXMediaArrayCount, abstractMediaArray->Count() );
 
-        PERFLOGSTART(KMpxCollectionAddL);
+        PERFLOGSTART( KMpxCollectionAddL );
         CollectionHelperL()->AddL( media );
-        PERFLOGSTOP(KMpxCollectionAddL);
+        PERFLOGSTOP( KMpxCollectionAddL );
 
         // Clear the array
-        CleanupStack::PopAndDestroy( playlistArray ); // - playlistArray
+        CleanupStack::PopAndDestroy( abstractMediaArray ); // - abstractMediaArray
 
         CleanupStack::PopAndDestroy( media ); // - media
         }
 
     CleanupStack::PopAndDestroy( foundMedia ); // - foundMedia
 
-    PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::AddPlaylistL" ) );
+    PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::AddAbstractMediaL" ) );
     }
 
 // -----------------------------------------------------------------------------
-// CMmMtpDpMetadataMpxAccess::SetPlaylistL
-// Set playlist to DB
+// CMmMtpDpMetadataMpxAccess::SetAbstractMediaL
+// Set abstract media to DB
 // -----------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataMpxAccess::SetPlaylistL( const TDesC& aPlaylistFileName,
-    CDesCArray& aRefFileArray )
+void CMmMtpDpMetadataMpxAccess::SetAbstractMediaL( const TDesC& aAbstractMediaFileName,
+    CDesCArray& aRefFileArray, TMPXGeneralCategory aCategory )
     {
-    PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::SetPlaylistL" ) );
-    CMPXMediaArray* playlistArray = CMPXMediaArray::NewL();
-    CleanupStack::PushL( playlistArray ); // + playlistArray
+    PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::SetAbstractMediaL" ) );
+    CMPXMediaArray* abstractMediaArray = CMPXMediaArray::NewL();
+    CleanupStack::PushL( abstractMediaArray ); // + abstractMediaArray
 
     TUint count = aRefFileArray.Count();
     for ( TUint j = 0; j < count; j++ )
@@ -1211,7 +1224,7 @@ void CMmMtpDpMetadataMpxAccess::SetPlaylistL( const TDesC& aPlaylistFileName,
         media->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
 
         // Add media into array contents
-        playlistArray->AppendL( media );
+        abstractMediaArray->AppendL( media );
 
         CleanupStack::Pop( media ); // - media
         }
@@ -1220,35 +1233,35 @@ void CMmMtpDpMetadataMpxAccess::SetPlaylistL( const TDesC& aPlaylistFileName,
     CleanupClosePushL( contentIDs ); // + contentIDs
     contentIDs.AppendL( KMPXMediaIdGeneral );
 
-    CMPXMedia* playlistMedia = CMPXMedia::NewL( contentIDs.Array() );
+    CMPXMedia* abstractMedia = CMPXMedia::NewL( contentIDs.Array() );
     CleanupStack::PopAndDestroy( &contentIDs ); // - contentIDs
-    CleanupStack::PushL( playlistMedia ); // + playlistMedia
+    CleanupStack::PushL( abstractMedia ); // + abstractMedia
 
-    playlistMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXItem );
+    abstractMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXItem );
 
-    playlistMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXPlaylist );
+    abstractMedia->SetTObjectValueL( KMPXMediaGeneralCategory, aCategory );
 
-    playlistMedia->SetTextValueL( KMPXMediaGeneralUri, aPlaylistFileName );
+    abstractMedia->SetTextValueL( KMPXMediaGeneralUri, aAbstractMediaFileName );
 
-    TParsePtrC parse( aPlaylistFileName );
-    playlistMedia->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
-    playlistMedia->SetTObjectValueL<TBool>( KMPXMediaGeneralSynchronized,
+    TParsePtrC parse( aAbstractMediaFileName );
+    abstractMedia->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
+    abstractMedia->SetTObjectValueL<TBool>( KMPXMediaGeneralSynchronized,
         ETrue );
-    playlistMedia->SetCObjectValueL( KMPXMediaArrayContents, playlistArray );
-    playlistMedia->SetTObjectValueL( KMPXMediaArrayCount,
-        playlistArray->Count() );
+    abstractMedia->SetCObjectValueL( KMPXMediaArrayContents, abstractMediaArray );
+    abstractMedia->SetTObjectValueL( KMPXMediaArrayCount,
+        abstractMediaArray->Count() );
 
-    // Update the duplicate playlist(s) with the new playlist array
-    PERFLOGSTART(KMpxCollectionSetL);
-    CollectionHelperL()->SetL( playlistMedia );
-    PERFLOGSTOP(KMpxCollectionSetL);
+    // Update the duplicate abstractMedia(s) with the new abstractMedia array
+    PERFLOGSTART( KMpxCollectionSetReferenceL );
+    CollectionHelperL()->SetL( abstractMedia );
+    PERFLOGSTOP( KMpxCollectionSetReferenceL );
 
-    CleanupStack::PopAndDestroy( playlistMedia ); // - playlistMedia
+    CleanupStack::PopAndDestroy( abstractMedia ); // - abstractMedia
 
     // Clear the array
-    CleanupStack::PopAndDestroy( playlistArray ); // - playlistArray
+    CleanupStack::PopAndDestroy( abstractMediaArray ); // - abstractMediaArray
 
-    PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::SetPlaylistL" ) );
+    PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::SetAbstractMediaL" ) );
     }
 
 // ---------------------------------------------------------------------------
@@ -1303,32 +1316,50 @@ void CMmMtpDpMetadataMpxAccess::SetDefaultL( CMPXMedia& aMediaProp )
     aMediaProp.SetTextValueL( KMPXMediaMusicAlbumArtFileName, KNullDesC );
     // URL
     aMediaProp.SetTextValueL( KMPXMediaMusicURL, KNullDesC );
+
+    // add below for P4S failed case, that get metadata from cached CMPXMedia object
+    // DateAdded
+    TTime time;
+    time.HomeTime();
+    aMediaProp.SetTObjectValueL( KMPXMediaGeneralDate, time.Int64() );
+    // SampleRate
+    aMediaProp.SetTObjectValueL<TUint32>( KMPXMediaAudioSamplerate, 0 );
+    // AudioBitrate
+    aMediaProp.SetTObjectValueL<TUint32>( KMPXMediaAudioBitrate, 0 );
+    // Duration
+    aMediaProp.SetTObjectValueL<TInt>( KMPXMediaGeneralDuration, 0 );
+    // DrmStatus
+    aMediaProp.SetTObjectValueL<TUint16>( KMPXMediaMTPDrmStatus, 0 );
+    // NumberOfChannels
+    aMediaProp.SetTObjectValueL<TUint32>( KMPXMediaAudioNumberOfChannels, 0 );
+    // AudioCodec
+    aMediaProp.SetTObjectValueL<TUint32>( KMPXMediaAudioAudioCodec, 0 );
+
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::SetDefaultL" ) );
     }
 
-TMPXAttributeData CMmMtpDpMetadataMpxAccess::MpxAttribFromPropL( const CMPXMedia& aMedia,
-    const TUint16 aPropCode )
+TMPXAttributeData CMmMtpDpMetadataMpxAccess::MpxAttribFromPropL( const TUint16 aPropCode )
     {
     const TMetadataTable KMetadataTable[] =
-    {
-        { EMTPObjectPropCodeName,                    KMPXMediaGeneralTitle },
-        { EMTPObjectPropCodeArtist,                  KMPXMediaMusicArtist },
-        { EMTPObjectPropCodeAlbumName,               KMPXMediaMusicAlbum },
-        { EMTPObjectPropCodeDateModified,            KMPXMediaGeneralDate },
-        { EMTPObjectPropCodeDateAdded,               KMPXMediaGeneralDate },
-        { EMTPObjectPropCodeDuration,                KMPXMediaGeneralDuration },
-        { EMTPObjectPropCodeTrack,                   KMPXMediaMusicAlbumTrack },
-        { EMTPObjectPropCodeComposer,                KMPXMediaMusicComposer },
-        { EMTPObjectPropCodeOriginalReleaseDate,     KMPXMediaMusicYear },
-        { EMTPObjectPropCodeGenre,                   KMPXMediaMusicGenre },
-        { EMTPObjectPropCodeDRMStatus,               KMPXMediaMTPDrmStatus },
-        { EMTPObjectPropCodeDescription,             KMPXMediaGeneralComment },
-        { EMTPObjectPropCodeNumberOfChannels,        KMPXMediaAudioNumberOfChannels },
-        { EMTPObjectPropCodeAudioBitRate,            KMPXMediaAudioBitrate },
-        { EMTPObjectPropCodeSampleRate,              KMPXMediaAudioSamplerate },
-        { EMTPObjectPropCodeAudioWAVECodec,          KMPXMediaAudioAudioCodec },
-        { EMTPObjectPropCodeAlbumArtist,             KMPXMediaMusicArtist }
-    };
+        {
+            { EMTPObjectPropCodeName,                    KMPXMediaGeneralTitle },
+            { EMTPObjectPropCodeArtist,                  KMPXMediaMusicArtist },
+            { EMTPObjectPropCodeAlbumName,               KMPXMediaMusicAlbum },
+            { EMTPObjectPropCodeDateModified,            KMPXMediaGeneralDate },
+            { EMTPObjectPropCodeDateAdded,               KMPXMediaGeneralDate },
+            { EMTPObjectPropCodeDuration,                KMPXMediaGeneralDuration },
+            { EMTPObjectPropCodeTrack,                   KMPXMediaMusicAlbumTrack },
+            { EMTPObjectPropCodeComposer,                KMPXMediaMusicComposer },
+            { EMTPObjectPropCodeOriginalReleaseDate,     KMPXMediaMusicYear },
+            { EMTPObjectPropCodeGenre,                   KMPXMediaMusicGenre },
+            { EMTPObjectPropCodeDRMStatus,               KMPXMediaMTPDrmStatus },
+            { EMTPObjectPropCodeDescription,             KMPXMediaGeneralComment },
+            { EMTPObjectPropCodeNumberOfChannels,        KMPXMediaAudioNumberOfChannels },
+            { EMTPObjectPropCodeAudioBitRate,            KMPXMediaAudioBitrate },
+            { EMTPObjectPropCodeSampleRate,              KMPXMediaAudioSamplerate },
+            { EMTPObjectPropCodeAudioWAVECodec,          KMPXMediaAudioAudioCodec },
+            { EMTPObjectPropCodeAlbumArtist,             KMPXMediaMusicArtist }
+        };
 
     TInt i = 0;
     TInt count = sizeof( KMetadataTable ) / sizeof( KMetadataTable[0] );
@@ -1349,14 +1380,14 @@ TMPXAttributeData CMmMtpDpMetadataMpxAccess::MpxAttribFromPropL( const CMPXMedia
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataMpxAccess::GetAllPlaylistL
-// Get all playlists from MPX database in the assigned store
+// CMmMtpDpMetadataMpxAccess::GetAllAbstractMediaL
+// Get all abstract medias from MPX database in the assigned store
 // ---------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataMpxAccess::GetAllPlaylistL( const TDesC& aStoreRoot,
-        CMPXMediaArray** aPlaylists )
+void CMmMtpDpMetadataMpxAccess::GetAllAbstractMediaL( const TDesC& aStoreRoot,
+        CMPXMediaArray** aAbstractMedias, TMPXGeneralCategory aCategory )
     {
-    PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::GetAllPlaylistL" ) );
+    PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::GetAllAbstractMediaL" ) );
 
     SetStorageRootL( aStoreRoot );
 
@@ -1369,21 +1400,24 @@ void CMmMtpDpMetadataMpxAccess::GetAllPlaylistL( const TDesC& aStoreRoot,
     CleanupStack::PushL( searchMedia ); // + searchMedia
 
     searchMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXItem );
-    searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXPlaylist );
+    searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, aCategory );
     searchMedia->SetTextValueL( KMPXMediaGeneralDrive, iStoreRoot );
 
-    RArray<TMPXAttribute> playlistAttributes;
-    CleanupClosePushL( playlistAttributes ); // + playlistAttributes
-    playlistAttributes.AppendL( KMPXMediaGeneralId );
-    playlistAttributes.AppendL( KMPXMediaGeneralTitle );
-    playlistAttributes.AppendL( KMPXMediaGeneralUri );
+    RArray<TMPXAttribute> abstractMediaAttributes;
+    CleanupClosePushL( abstractMediaAttributes ); // + abstractMediaAttributes
+    abstractMediaAttributes.AppendL( KMPXMediaGeneralId );
+    abstractMediaAttributes.AppendL( KMPXMediaGeneralTitle );
+    if ( aCategory == EMPXPlaylist )
+        {
+        abstractMediaAttributes.AppendL( KMPXMediaGeneralUri );
+        }
 
-    PERFLOGSTART(KMpxCollectionGetPlaylist);
+    PERFLOGSTART( KMpxCollectionGetAbstractMedia );
     CMPXMedia* foundMedia = CollectionHelperL()->FindAllL( *searchMedia,
-        playlistAttributes.Array() );
-    PERFLOGSTOP(KMpxCollectionGetPlaylist);
+        abstractMediaAttributes.Array() );
+    PERFLOGSTOP( KMpxCollectionGetAbstractMedia );
 
-    CleanupStack::PopAndDestroy( &playlistAttributes ); // - playlistAttributes
+    CleanupStack::PopAndDestroy( &abstractMediaAttributes ); // - abstractMediaAttributes
     CleanupStack::PopAndDestroy( searchMedia ); // - searchMedia
     CleanupStack::PushL( foundMedia ); // + foundMedia
 
@@ -1392,9 +1426,9 @@ void CMmMtpDpMetadataMpxAccess::GetAllPlaylistL( const TDesC& aStoreRoot,
         User::Leave( KErrNotSupported );
         }
 
-    TInt count = *foundMedia->Value<TInt> ( KMPXMediaArrayCount );
+    TInt count = *foundMedia->Value<TInt>( KMPXMediaArrayCount );
 
-    PRINT1( _L("MM MTP <> CMmMtpDpMetadataMpxAccess::GetAllPlaylistL [%d] playlists found in Playlist Database"), count );
+    PRINT1( _L("MM MTP <> CMmMtpDpMetadataMpxAccess::GetAllAbstractMediaL [%d] abstractMedias found in Database"), count );
 
     if ( count > 0 )
         {
@@ -1403,13 +1437,13 @@ void CMmMtpDpMetadataMpxAccess::GetAllPlaylistL( const TDesC& aStoreRoot,
             User::Leave( KErrNotSupported );
             }
 
-        *aPlaylists = CMPXMediaArray::NewL( *( foundMedia->Value<CMPXMediaArray> (
-                KMPXMediaArrayContents ) ) );
+        *aAbstractMedias =
+            CMPXMediaArray::NewL( *( foundMedia->Value<CMPXMediaArray> ( KMPXMediaArrayContents ) ) );
         }
 
     CleanupStack::PopAndDestroy( foundMedia ); // - foundMedia
 
-    PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::GetAllPlaylistL" ) );
+    PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::GetAllAbstractMediaL" ) );
     }
 
 // ---------------------------------------------------------------------------
@@ -1417,15 +1451,15 @@ void CMmMtpDpMetadataMpxAccess::GetAllPlaylistL( const TDesC& aStoreRoot,
 // Get all references of specified playlist
 // ---------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataMpxAccess::GetAllReferenceL( CMPXMedia* aPlaylist,
-        CDesCArray& aReferences )
+void CMmMtpDpMetadataMpxAccess::GetAllReferenceL( CMPXMedia* aAbstractMedia,
+    CDesCArray& aReferences )
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::GetAllReferenceL" ) );
 
-    __ASSERT_DEBUG( aPlaylist, User::Panic( KMtpMpxPanic, KErrArgument ) );
+    __ASSERT_DEBUG( aAbstractMedia, User::Panic( KMtpMpxPanic, KErrArgument ) );
 
     // Extract the playlist id from the found object
-    TUint32 playlistId = *(*aPlaylist).Value<TMPXItemId> ( KMPXMediaGeneralId );
+    TUint32 abstractMediaId = *( *aAbstractMedia ).Value<TMPXItemId>( KMPXMediaGeneralId );
 
     // find the media object that contains a list of songs in the playlist
     RArray<TInt> contentIDs;
@@ -1438,17 +1472,17 @@ void CMmMtpDpMetadataMpxAccess::GetAllReferenceL( CMPXMedia* aPlaylist,
 
     searchMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXGroup );
     searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXSong );
-    searchMedia->SetTObjectValueL<TMPXItemId> ( KMPXMediaGeneralId, playlistId );
+    searchMedia->SetTObjectValueL<TMPXItemId>( KMPXMediaGeneralId, abstractMediaId );
 
     RArray<TMPXAttribute> songAttributes;
     CleanupClosePushL( songAttributes ); // + songAttributes
     songAttributes.AppendL( KMPXMediaGeneralId );
     songAttributes.AppendL( KMPXMediaGeneralUri );
 
-    PERFLOGSTART(KMpxCollectionGetReference);
+    PERFLOGSTART( KMpxCollectionGetReference );
     CMPXMedia* foundMedia = CollectionHelperL()->FindAllL( *searchMedia,
         songAttributes.Array() );
-    PERFLOGSTOP(KMpxCollectionGetReference);
+    PERFLOGSTOP( KMpxCollectionGetReference );
 
     CleanupStack::PopAndDestroy( &songAttributes ); // - songAttributes
     CleanupStack::PopAndDestroy( searchMedia ); // - searchMedia
@@ -1498,23 +1532,30 @@ void CMmMtpDpMetadataMpxAccess::GetAllReferenceL( CMPXMedia* aPlaylist,
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataMpxAccess::GetPlaylistNameL
+// CMmMtpDpMetadataMpxAccess::GetAbstractMediaNameL
 //
 // ---------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataMpxAccess::GetPlaylistNameL( CMPXMedia* aPlaylist,
-    TDes& aPlaylistName )
+HBufC* CMmMtpDpMetadataMpxAccess::GetAbstractMediaNameL( CMPXMedia* aAbstractMedia,
+    TMPXGeneralCategory aCategory )
     {
-    PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::GetPlaylistNameL" ) );
-
-    if ( !aPlaylist->IsSupported( KMPXMediaGeneralUri ) )
+    PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::GetAbstractMediaNameL" ) );
+    HBufC* name = NULL;
+    if ( aCategory == EMPXPlaylist )
+        {
+        if( !aAbstractMedia->IsSupported( KMPXMediaGeneralUri ) )
+            {
+            User::Leave( KErrNotSupported );
+            }
+        name = aAbstractMedia->ValueText( KMPXMediaGeneralUri ).AllocL();
+        }
+    else
         {
         User::Leave( KErrNotSupported );
         }
 
-    aPlaylistName.Copy( aPlaylist->ValueText( KMPXMediaGeneralUri ) );
-
-    PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::GetPlaylistNameL" ) );
+    PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::GetAbstractMediaNameL" ) );
+    return name;
     }
 
 // ---------------------------------------------------------------------------
@@ -1523,7 +1564,7 @@ void CMmMtpDpMetadataMpxAccess::GetPlaylistNameL( CMPXMedia* aPlaylist,
 // ---------------------------------------------------------------------------
 //
 void CMmMtpDpMetadataMpxAccess::GetModifiedContentL( TInt& arrayCount,
-        CDesCArray& aModifiedcontent )
+    CDesCArray& aModifiedcontent )
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::GetModifiedContentL" ) );
     CMPXMedia* foundMedia;

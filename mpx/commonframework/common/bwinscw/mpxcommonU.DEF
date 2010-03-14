@@ -284,4 +284,7 @@ EXPORTS
 	?AddClientL@CMPXClientList@@QAEXVTThreadId@@HPAVCMPXMessageQueue@@H@Z @ 283 NONAME ; void CMPXClientList::AddClientL(class TThreadId, int, class CMPXMessageQueue *, int)
 	?ClientCategory@CMPXClientList@@QBEHH@Z @ 284 NONAME ; int CMPXClientList::ClientCategory(int) const
 	?SelectPlugin64L@CMPXPluginHandlerBase@@UAEXABVRFile64@@@Z @ 285 NONAME ; void CMPXPluginHandlerBase::SelectPlugin64L(class RFile64 const &)
+	?SendSyncMsg@CMPXClientList@@QAEHPBVCMPXMedia@@@Z @ 286 NONAME ; int CMPXClientList::SendSyncMsg(class CMPXMedia const *)
+	?AddFirst@CMPXMessageQueue@@QAEHPBVCMPXMedia@@H@Z @ 287 NONAME ; int CMPXMessageQueue::AddFirst(class CMPXMedia const *, int)
+	?SetPrimaryClient@CMPXClientList@@QAEHAAVCMPXMessageQueue@@@Z @ 288 NONAME ; int CMPXClientList::SetPrimaryClient(class CMPXMessageQueue &)
 

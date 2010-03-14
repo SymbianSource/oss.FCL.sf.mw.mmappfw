@@ -11,7 +11,7 @@
 *
 * Contributors:
 *
-* Description: 
+* Description:
 *
 */
 
@@ -62,14 +62,9 @@ private:
     void ConstructL();
 
 protected:
-
     void ServiceGetSpecificObjectPropertyL( TUint16 aPropCode,
         TUint32 aHandle,
         const CMTPObjectMetaData& aObject );
-
-    TMTPResponseCode ServiceSetSpecificObjectPropertyL( TUint16 aPropCode,
-        const CMTPObjectMetaData& aObject,
-        const CMTPTypeObjectPropListElement& aElement );
 
     };
 

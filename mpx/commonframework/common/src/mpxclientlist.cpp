@@ -46,7 +46,8 @@ EXPORT_C CMPXClientList* CMPXClientList::NewL(
 //
 CMPXClientList::CMPXClientList(MMPXClientlistObserver* aObserver)
     : iIdentity(CMPXClientList::ClientsMatch),
-    iObserver(aObserver)
+    iObserver(aObserver), 
+    iPrimaryClient(NULL)
     {}
 
 // ----------------------------------------------------------------------------
@@ -155,7 +156,15 @@ EXPORT_C void CMPXClientList::RemoveClient(TInt aIndex)
     CClientId* id( iClients[aIndex] );
     iClients.Remove(aIndex);
 
-    CClientId removeId( id->iPid );
+    //set primary client to NULL if primary client is removed
+  	if (iPrimaryClient != NULL)
+    {
+		if (aIndex == Find(*iPrimaryClient))
+        	{
+        	iPrimaryClient = NULL;
+        	}
+	}    
+	CClientId removeId( id->iPid );
     if ( iClients.Find( &removeId, iIdentity ) == KErrNotFound )
         //
         // There's no other client from the same process, so
@@ -601,4 +610,46 @@ void CMPXClientList::CClientId::RemoveAllSubscriptionsL()
     iSubscriptions.ResetAndDestroy();
     }
 
+// -----------------------------------------------------------------------------
+// CMPClientList::SetPrimaryClient
+// Set the primary client
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TInt CMPXClientList::SetPrimaryClient(CMPXMessageQueue& aMsgQueue)
+    {
+    MPX_FUNC("CMPXClientList::SetPrimaryClient");
+    TInt index = Find(aMsgQueue);
+    MPX_DEBUG2("CMPXClientList::SetPrimaryClient, index = %d", index);
+    if (index >= 0)
+        {
+        iPrimaryClient = &aMsgQueue;
+        return KErrNone;
+        }
+    return index;
+    }
+// -----------------------------------------------------------------------------
+// CMPClientList::SendSyncMsg
+// Send a sync message to the primary client
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TInt CMPXClientList::SendSyncMsg(const CMPXMessage* aMsg)
+    {
+    MPX_FUNC("CMPXClientList::SendSyncMsg");
+    TInt err = KErrNone;
+    if (iPrimaryClient == NULL)
+        {
+        return KErrNotFound;
+        }
+    TInt index = Find(*iPrimaryClient);
+    MPX_DEBUG2("CMPXClientList::SendSyncMsg, index = %d", index);
+    if (index >= 0)
+        {
+        err = iClients[index]->iMsgQueue->AddFirst(aMsg, KErrNone);
+        }
+    else
+        {
+        err = KErrNotFound;
+        }
+    return err;
+    }
 // End of File

@@ -34,10 +34,19 @@
 #include "cmmmtpdpmetadatampxaccess.h"
 
 
-/** Number of objects to insert into the object manager in one go*/
 const TInt KMTPDriveGranularity = 5;
+const TInt KAbstractMediaDpArrayGranularity = 2;
 
 _LIT( KPlaylistFilePath, "Playlists\\" );
+
+#if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
+_LIT( KMpxGetAllAbstractMedia, "MpxGetAllAbstractMedia" );
+_LIT( KMpxQueryAbstractMediaReference, "MpxQueryAbstractMediaReference" );
+_LIT( KObjectManagerObjectUid, "ObjectManagerObjectUid" );
+_LIT( KObjectManagerInsert, "ObjectManagerInsert" );
+_LIT( KObjectManagerHandle, "ObjectManagerHandle" );
+_LIT( KReferenceManagerSetReference, "ReferenceManagerSetReference" );
+#endif
 
 // -----------------------------------------------------------------------------
 // CAbstractMediaMtpDataProviderEnumerator::NewL
@@ -69,7 +78,7 @@ CAbstractMediaMtpDataProviderEnumerator::CAbstractMediaMtpDataProviderEnumerator
     iObjectMgr( aFramework.ObjectMgr() ),
     iDataProviderId( aFramework.DataProviderId() ),
     iDataProvider( aDataProvider ),
-    iStorages( 2 ),
+    iStorages( KAbstractMediaDpArrayGranularity ),
     iAbstractMedias( NULL ),
     iCount( 0 ),
     iCurrentIndex( 0 )
@@ -105,6 +114,7 @@ CAbstractMediaMtpDataProviderEnumerator::~CAbstractMediaMtpDataProviderEnumerato
 
     delete iAbstractMedias;
     iAbstractMedias = NULL;
+
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     delete iPerfLog;
 #endif // _DEBUG
@@ -202,7 +212,8 @@ void CAbstractMediaMtpDataProviderEnumerator::ScanStorageL( TUint32 aStorageId )
     PRINT1( _L( "MM MTP <> CAbstractMediaMtpDataProviderEnumerator::ScanStorageL StorageSuid = %S" ), &root );
 
     // created by windows media player, or else return responsecode is Access denied
-    // Create abstract media directory if it does not exist
+    // Create playlist directory if it does not exist
+    // NOTE: Only playlist need to create directory here, for the dummy files
     HBufC* tempBuf = HBufC::NewLC( KMaxFileName );  // + tempBuf
     TPtr folder = tempBuf->Des();
     folder.Zero();
@@ -232,9 +243,9 @@ void CAbstractMediaMtpDataProviderEnumerator::ScanStorageL( TUint32 aStorageId )
     // find all abstract medias stored in MPX
     delete iAbstractMedias;
     iAbstractMedias = NULL;
-    PERFLOGSTART( KMpxGetAllPlaylist );
-    TRAPD( err, iDataProvider.GetWrapperL().GetAllPlaylistL( root, &iAbstractMedias ) );
-    PERFLOGSTOP( KMpxGetAllPlaylist );
+    PERFLOGSTART( KMpxGetAllAbstractMedia );
+    TRAPD( err, iDataProvider.GetWrapperL().GetAllAbstractMediaL( root, &iAbstractMedias, EMPXPlaylist  ) );
+    PERFLOGSTOP( KMpxGetAllAbstractMedia );
 
     if ( iAbstractMedias != NULL && err == KErrNone )
         {
@@ -262,7 +273,7 @@ void CAbstractMediaMtpDataProviderEnumerator::ScanStorageL( TUint32 aStorageId )
 //
 void CAbstractMediaMtpDataProviderEnumerator::ScanNextL()
     {
-    PRINT1( _L( "MM MTP = > CAbstractMediaMtpDataProviderEnumerator::ScanNextStorageL iStorages.Count = %d" ), iStorages.Count() );
+    PRINT1( _L( "MM MTP => CAbstractMediaMtpDataProviderEnumerator::ScanNextL iStorages.Count = %d" ), iStorages.Count() );
     if ( iCurrentIndex < iCount )
         {
         TRequestStatus* status = &iStatus;
@@ -296,28 +307,31 @@ void CAbstractMediaMtpDataProviderEnumerator::ScanNextL()
 //
 void CAbstractMediaMtpDataProviderEnumerator::RunL()
     {
-    TBuf<KMaxFileName> playlist;
+    PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderEnumerator::RunL" ) );
 
-    // insert all playlists into handle db of framework
+    // insert all abstract medias into handle db of framework
     CMPXMedia* media = ( *iAbstractMedias )[iCurrentIndex];
-    PERFLOGSTART( KMpxGetPlaylistName );
-    iDataProvider.GetWrapperL().GetPlaylistNameL( media, playlist );
-    PERFLOGSTOP( KMpxGetPlaylistName );
-    AddEntryL( playlist );
+    
+    // Increase the index first in case of leave
+    iCurrentIndex++;
+    
+    HBufC* abstractMedia = iDataProvider.GetWrapperL().GetAbstractMediaNameL( media, EMPXPlaylist );
+    CleanupStack::PushL( abstractMedia ); // + abstractMedia
+    AddEntryL( *abstractMedia );
 
-    // find all reference of each playlist and create dummy files for each playlist
+    // find all reference of each abstract media
     CDesCArray* references = new ( ELeave ) CDesCArrayFlat( KMTPDriveGranularity );
     CleanupStack::PushL( references ); // + references
 
-    PERFLOGSTART( KMpxQueryPlaylistReference );
+    PERFLOGSTART( KMpxQueryAbstractMediaReference );
     iDataProvider.GetWrapperL().GetAllReferenceL( media, *references );
-    PERFLOGSTOP( KMpxQueryPlaylistReference );
+    PERFLOGSTOP( KMpxQueryAbstractMediaReference );
 
     // insert references into reference db
-    AddReferencesL( playlist, *references );
+    AddReferencesL( *abstractMedia, *references );
 
     CleanupStack::PopAndDestroy( references ); // - references
-    iCurrentIndex++;
+    CleanupStack::PopAndDestroy( abstractMedia ); // - abstractMedia
 
     ScanNextL();
     }
@@ -343,7 +357,7 @@ TInt CAbstractMediaMtpDataProviderEnumerator::RunError( TInt aError )
 //
 void CAbstractMediaMtpDataProviderEnumerator::DoCancel()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -380,9 +394,9 @@ void CAbstractMediaMtpDataProviderEnumerator::AddEntryL( const TDesC& aSuid )
     PERFLOGSTOP( KObjectManagerObjectUid );
     object->SetUint( CMTPObjectMetaData::EParentHandle, parentHandle );
 
-    PERFLOGSTART(KObjectManagerInsert);
+    PERFLOGSTART( KObjectManagerInsert );
     iObjectMgr.InsertObjectL( *object );
-    PERFLOGSTOP(KObjectManagerInsert);
+    PERFLOGSTOP( KObjectManagerInsert );
 
     CleanupStack::PopAndDestroy( object );// - object
 

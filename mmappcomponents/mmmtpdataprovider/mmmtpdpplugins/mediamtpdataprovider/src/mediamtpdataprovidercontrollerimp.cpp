@@ -26,7 +26,7 @@
 //
 static const TImplementationProxy ImplementationTable[] =
     {
-    {{0x10207C4B}, (TProxyNewLPtr) ( CMediaMtpDataProvider::NewL )}
+    { { 0x10207C4B }, ( TProxyNewLPtr ) ( CMediaMtpDataProvider::NewL ) }
     };
 
 // ----------------------------------------------------------------------------- 
@@ -36,7 +36,7 @@ static const TImplementationProxy ImplementationTable[] =
 EXPORT_C const TImplementationProxy* ImplementationGroupProxy(
         TInt& aTableCount )
     {
-    aTableCount = sizeof(ImplementationTable) / sizeof(TImplementationProxy);
+    aTableCount = sizeof( ImplementationTable ) / sizeof( TImplementationProxy );
     return ImplementationTable;
     }
 

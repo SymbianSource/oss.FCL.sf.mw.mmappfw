@@ -1337,4 +1337,13 @@ RFile64* CMPXPlaybackUtility::File64L()
 
 #endif // SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 
+// ----------------------------------------------------------------------------
+// Set primary client
+// ----------------------------------------------------------------------------
+//
+TInt CMPXPlaybackUtility::SetPrimaryClientL()
+    {
+    MPX_FUNC("CMPXPlaybackUtility::SetPrimaryClientL");
+    return iPbs.SendReceiveL(EPbsSetPrimaryClient);
+    }
 // End of file

@@ -38,47 +38,46 @@ class CMmMtpDpPerfLog;
 
 class TMmMtpDpOverflowHandler : public TDesOverflow
     {
-    public:
-        
-        inline void SetOwner( CMmMtpDpPerfLog* aOwner );
-        inline void Overflow( TDes& aDes );
-         
-    private:
-    
-        CMmMtpDpPerfLog* iOwner;
+public:
+    inline void SetOwner( CMmMtpDpPerfLog* aOwner );
+    inline void Overflow( TDes& aDes );
+
+private:
+    CMmMtpDpPerfLog* iOwner;
+
     };
 
 class CMmMtpDpPerfLog : public CBase
     {
-    public:
-        
-        inline static CMmMtpDpPerfLog* NewL( const TDesC& aTitle );
-        inline ~CMmMtpDpPerfLog();
-        
-        inline void Write( const TDesC& aText);
-        inline void WriteFormat( TRefByValue<const TDesC> aFmt, ... );
+public:
 
-        inline void Start( const TDesC& aDescription );
-        inline void Stop( const TDesC& aDescription );
-        
-    private:
-        
-        inline CMmMtpDpPerfLog();
-        inline void ConstructL( const TDesC& aTitle );
+    inline static CMmMtpDpPerfLog* NewL( const TDesC& aTitle );
+    inline ~CMmMtpDpPerfLog();
 
-    private:
-        
-        TMmMtpDpOverflowHandler iOverflowHandler;
+    inline void Write( const TDesC& aText );
+    inline void WriteFormat( TRefByValue<const TDesC> aFmt, ... );
 
-        HBufC16* iTitle;
-        CDesC16ArrayFlat iDescription;
-        CArrayFixFlat<TUint32> iStartTick;
-        CArrayFixFlat<TUint64> iTotalTime;
-        CArrayFixFlat<TUint32> iTotalUsage;
-        
-        TInt iNTickPeriod;
-        TInt iLastIndex;
-        
+    inline void Start( const TDesC& aDescription );
+    inline void Stop( const TDesC& aDescription );
+
+private:
+
+    inline CMmMtpDpPerfLog();
+    inline void ConstructL( const TDesC& aTitle );
+
+private:
+
+    TMmMtpDpOverflowHandler iOverflowHandler;
+
+    HBufC16* iTitle;
+    CDesC16ArrayFlat iDescription;
+    CArrayFixFlat<TUint32> iStartTick;
+    CArrayFixFlat<TUint64> iTotalTime;
+    CArrayFixFlat<TUint32> iTotalUsage;
+
+    TInt iNTickPeriod;
+    TInt iLastIndex;
+
     };
 
 #include "cmmmtpdpperflog.inl"

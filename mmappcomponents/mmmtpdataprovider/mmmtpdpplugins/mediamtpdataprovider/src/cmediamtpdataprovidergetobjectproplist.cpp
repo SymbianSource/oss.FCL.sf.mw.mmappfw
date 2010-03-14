@@ -54,7 +54,7 @@ MMmRequestProcessor* CMediaMtpDataProviderGetObjectPropList::NewL( MMTPDataProvi
 //
 CMediaMtpDataProviderGetObjectPropList::~CMediaMtpDataProviderGetObjectPropList()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -63,10 +63,11 @@ CMediaMtpDataProviderGetObjectPropList::~CMediaMtpDataProviderGetObjectPropList(
 // -----------------------------------------------------------------------------
 //
 CMediaMtpDataProviderGetObjectPropList::CMediaMtpDataProviderGetObjectPropList( MMTPDataProviderFramework& aFramework,
-        MMTPConnection& aConnection,
-        MMmMtpDpConfig& aDpConfig ) :
-    CGetObjectPropList( aFramework, aConnection, aDpConfig )
+    MMTPConnection& aConnection,
+    MMmMtpDpConfig& aDpConfig ) :
+        CGetObjectPropList( aFramework, aConnection, aDpConfig )
     {
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------

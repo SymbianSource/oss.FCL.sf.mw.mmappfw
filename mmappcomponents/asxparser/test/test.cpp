@@ -12,12 +12,10 @@
 * Contributors:
 *
 * Description:  Simple v2/v3 ASX-fileparser
- *
+*
 */
 
-// Version : %version: e003sa33#6 %
-
-
+// Version : %version: 7 %
 
 #include <e32base.h>
 #include <e32cons.h>
@@ -25,7 +23,6 @@
 
 #include <e32svr.h>
 #include <e32def.h>
-#include <flogger.h>
 
 #include <utf.h>
 

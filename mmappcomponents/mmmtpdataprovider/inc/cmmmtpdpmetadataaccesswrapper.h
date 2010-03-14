@@ -38,7 +38,7 @@ class MMTPDataProviderFramework;
 class CMmMtpDpMetadataAccessWrapper : public CBase
     {
 public:
-    static CMmMtpDpMetadataAccessWrapper* NewL( RFs& aRfs, 
+    static CMmMtpDpMetadataAccessWrapper* NewL( RFs& aRfs,
         MMTPDataProviderFramework& aFramework );
 
     /**
@@ -48,43 +48,48 @@ public:
 
 public:
     /**
-    * Get all playlists from MPX database in the assigned store
-    * @param aStoreRoot, specify in which drive playlists are stored
-    * @param aPlaylists, return result array
+    * Get all abstract medias from MPX database in the assigned store
+    * @param aStoreRoot, specify in which drive abstract medias are stored
+    * @param aAbstractMedias, return result array
+    * @param aCategory, indicate the category of abstract medias
     */
-    IMPORT_C void GetAllPlaylistL( const TDesC& aStoreRoot,
-        CMPXMediaArray** aPlaylists );
+    IMPORT_C void GetAllAbstractMediaL( const TDesC& aStoreRoot,
+        CMPXMediaArray** aAbstractMedias,
+        TMPXGeneralCategory aCategory );
 
     /**
-    * Get all references of specified playlist
-    * @param aPlaylist, specify of which reference should be get
+    * Get all references of specified abstract medias
+    * @param aAbstractMedia, specify of which reference should be get
     * @param aReferences, return result array which stored handles of all references
     */
-    IMPORT_C void GetAllReferenceL( CMPXMedia* aPlaylist,
+    IMPORT_C void GetAllReferenceL( CMPXMedia* aAbstractMedia,
         CDesCArray& aReferences );
 
     /**
-    * Get an playlist name from CMPXMedia object
-    * @param aPlaylist, specify the source
-    * @param aPlaylistName, return result
+    * Get an abstract media name from CMPXMedia object
+    * @param aAbstractMedia, specify the source
+    * @param aCategory, specify the category
+    * @return, name of the source, ownership transferred
     */
-    IMPORT_C void GetPlaylistNameL( CMPXMedia* aPlaylist, TDes& aPlaylistName );
-
+    IMPORT_C HBufC* GetAbstractMediaNameL( CMPXMedia* aAbstractMedia,
+        TMPXGeneralCategory aCategory );
     /**
-    * Add object (music, video and playlist) info to DB
+    * Add object (music, video, playlist and abstract album) info to DB
     * @param aFullFileName, full file name of file
     * @return void
     */
-    void AddObjectL( const TDesC& aFullFileName, TBool aIsVideo = EFalse );
+    void AddObjectL( const TDesC& aFullFileName, TUint aFormatCode, TUint aSubFormatCode );
 
     /**
-    * Set playlist to DB
-    * @param aPlaylistFileName, full file name of playlist file
+    * Set abstract media to DB
+    * @param aAbstractMediaFileName, full file name of abstract media file
     * @param aRefFileArray, a array to store the full file name of media files
+    * @param aCategory, the category of abstract media
     * @return void
     */
-    IMPORT_C void SetPlaylistL( const TDesC& aPlaylistFileName,
-        CDesCArray& aRefFileArray );
+    IMPORT_C void SetAbstractMediaL( const TDesC& aAbstractMediaFileName,
+        CDesCArray& aRefFileArray,
+        TMPXGeneralCategory aCategory );
 
     /**
     * Gets a piece of metadata from the collection
@@ -140,8 +145,8 @@ public:
     * @parem aHeight,  the height of an object in pixels to set
     */
     void SetImageObjPropL( const TDesC& aFullFileName,
-           const TUint32 aWidth,
-           const TUint32 aHeight );
+        const TUint32 aWidth,
+        const TUint32 aHeight );
 
     /*
     * get image specific properties specific to videos
@@ -150,9 +155,9 @@ public:
     * @parem aHeight,  the height of an object in pixels to get
     */
     void GetImageObjPropL( const TDesC& aFullFileName,
-            TUint32& aWidth,
-            TUint32& aHeight );
-    
+        TUint32& aWidth,
+        TUint32& aHeight );
+
     /**
     * Get Modified object from DB
     * @param aStorageRoot, the root path of storage
@@ -160,16 +165,16 @@ public:
     * @param aRefFileArray, a array to store the full file name of media files
     * @return void
     */
-    IMPORT_C void GetModifiedContentL( const TDesC& aStorageRoot, 
+    IMPORT_C void GetModifiedContentL( const TDesC& aStorageRoot,
         TInt& arrayCount,
         CDesCArray& aRefFileArray );
- 
+
     /**
     * Updated Music DB
     * @return void
     */
-    IMPORT_C void UpdateMusicCollectionL(); 
-    
+    IMPORT_C void UpdateMusicCollectionL();
+
     /*
     * Called when the MTP session is initialised
     */
@@ -179,35 +184,35 @@ public:
     * clean up db resource especially for video dp
     */
     void CloseSessionL();
-    
+
     /**
     * Cleanup database
     */
     IMPORT_C void CleanupDatabaseL();
-    
+
     /**
     * if the playlsit exist in the MPX DB
     * @param aSuid, the suid of playlsit
     */
     TBool IsExistL( const TDesC& aSuid );
-    
+
     // related to dummy files
     /**
     * Add one dummy file to dummy files array
     */
     IMPORT_C void AddDummyFileL( const TDesC& aDummyFileName );
-    
+
     /**
     * Delete one dummy file from dummy files array
-    */    
+    */
     IMPORT_C void DeleteDummyFile( const TDesC& aDummyFileName );
-    
+
     /**
     * Create a Dummy File from the virtual playlist URI
     * @param aPlaylistName, specify the filename of the dummy file
     */
     IMPORT_C void CreateDummyFile( const TDesC& aPlaylistName );
-    
+
 private:
 
     CMmMtpDpMetadataAccessWrapper( RFs& aRfs, MMTPDataProviderFramework& aFramework );
@@ -215,7 +220,7 @@ private:
     void ConstructL();
 
     TMPXGeneralCategory Category( const TUint aFormatCode );
-    
+
     /**
     * Remove all dummy file of which format is "pla", and leave the "m3u"
     */
@@ -227,11 +232,11 @@ private:
     CMmMtpDpMetadataMpxAccess* iMmMtpDpMetadataMpxAccess;
     CMmMtpDpMetadataVideoAccess* iMmMtpDpMetadataVideoAccess;
     TBool iOpenSession;
-    
-    MMTPDataProviderFramework& iFramework;  
-    
-    CDesCArray* iPlaylistArray;
-    
+
+    MMTPDataProviderFramework& iFramework;
+
+    CDesCArray* iAbstractMediaArray;
+
     };
 
 #endif // CMMMTPDPMETADATAACCESSWRAPPER_H

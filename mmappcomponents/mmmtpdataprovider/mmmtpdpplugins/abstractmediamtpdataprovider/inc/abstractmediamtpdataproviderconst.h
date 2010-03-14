@@ -11,10 +11,9 @@
 *
 * Contributors:
 *
-* Description: 
+* Description:
 *
 */
-
 
 #ifndef ABSTRACTMEDIAMTPDATAPROVIDERCONST_H
 #define ABSTRACTMEDIAMTPDATAPROVIDERCONST_H
@@ -55,39 +54,14 @@ static const TUint16 KAbstractMediaMtpDataProviderSupportedOperations[] =
     EMTPOpCodeGetObjectPropList,
     EMTPOpCodeSetObjectPropList,
     EMTPOpCodeGetInterdependentPropDesc,
-    
+
     EMTPExtOpCodeAbstractMediaPreference, // 0x9203
-    
+
     EMTPOpCodeCopyObject,
     EMTPOpCodeMoveObject,
-    
-    EMTPOpCodeSendObjectPropList, 
+
+    EMTPOpCodeSendObjectPropList,
     EMTPOpCodeGetFormatCapabilities
     };
-
-#if 0
-/**
-* define all the object properties that are supported by the abstract media data provider
-*/
-static const TUint16 KAbstractMediaMtpDataProviderSupportedProperties[] =
-    {
-    // Mandatory for all objects
-    EMTPObjectPropCodeStorageID,
-    EMTPObjectPropCodeObjectFormat,
-    EMTPObjectPropCodeProtectionStatus,
-    EMTPObjectPropCodeObjectSize,
-    EMTPObjectPropCodeObjectFileName,
-    EMTPObjectPropCodeParentObject,
-    EMTPObjectPropCodePersistentUniqueObjectIdentifier,
-    EMTPObjectPropCodeName,
-    EMTPObjectPropCodeNonConsumable,
-
-    // additional for all
-    EMTPObjectPropCodeDateAdded,
-    EMTPObjectPropCodeDateCreated,
-    EMTPObjectPropCodeDateModified,
-    };
-#endif
-
 
 #endif // ABSTRACTMEDIAMTPDATAPROVIDERCONST_H

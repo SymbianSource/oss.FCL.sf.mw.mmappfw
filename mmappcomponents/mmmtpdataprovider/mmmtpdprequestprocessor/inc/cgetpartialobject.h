@@ -22,8 +22,6 @@
 #include "crequestprocessor.h"
 
 class MMTPDataProviderFramework;
-class RFs;
-class TMTPTypeFlatBase;
 class CMTPTypeFile;
 class CMmMtpDpMetadataAccessWrapper;
 class MMmMtpDpConfig;
@@ -100,16 +98,11 @@ private:
 
 private:
     MMTPDataProviderFramework& iFramework;
-    RFs&                    iFs;
-    TMTPTypeFlatBase*       iPartialData;
-    HBufC8*                 iBuffer;
-    TPtr8                   iBufferPtr8;
-    TInt                    iOffset;
-    TInt                    iPartialDataLength;
-    TBool                   iCompleteFile;
-    CMTPTypeFile*           iFileObject;
-    TBuf<KMaxFileName>      iFileSuid;
-    TUint32                 iObjectHandle;
+    TUint iOffset;
+    TUint iPartialDataLength;
+
+    CMTPTypeFile* iFileObject;
+    TUint32 iObjectHandle;
 
     };
 

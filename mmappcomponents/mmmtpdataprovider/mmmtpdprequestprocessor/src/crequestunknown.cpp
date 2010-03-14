@@ -42,7 +42,7 @@ EXPORT_C MMmRequestProcessor* CRequestUnknown::NewL( MMTPDataProviderFramework& 
 //
 void CRequestUnknown::ConstructL()
     {
-    
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -52,7 +52,7 @@ void CRequestUnknown::ConstructL()
 //
 EXPORT_C CRequestUnknown::~CRequestUnknown()
     {
-    
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -62,7 +62,7 @@ EXPORT_C CRequestUnknown::~CRequestUnknown()
 //
 EXPORT_C CRequestUnknown::CRequestUnknown( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection ) :
-    CRequestProcessor( aFramework, aConnection, 0, NULL )
+        CRequestProcessor( aFramework, aConnection, 0, NULL )
     {
     PRINT( _L( "Operation: Unknown" ) );
     }

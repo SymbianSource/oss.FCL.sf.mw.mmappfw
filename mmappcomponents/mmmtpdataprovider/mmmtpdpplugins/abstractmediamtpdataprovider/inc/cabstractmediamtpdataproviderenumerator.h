@@ -25,15 +25,6 @@
 #include "mmmtpenumerationcallback.h"
 #include "cmmmtpdpperflog.h"
 
-// keep here to avoid warning on urel
-_LIT( KMpxGetAllPlaylist, "MpxGetAllPlaylist" );
-_LIT( KMpxGetPlaylistName, "MpxGetPlaylistName" );
-_LIT( KMpxQueryPlaylistReference, "MpxQueryPlaylistReference" );
-_LIT( KObjectManagerObjectUid, "ObjectManagerObjectUid" );
-_LIT( KObjectManagerInsert, "ObjectManagerInsert" );
-_LIT( KObjectManagerHandle, "ObjectManagerHandle" );
-_LIT( KReferenceManagerSetReference, "ReferenceManagerSetReference" );
-
 // Forward declarations
 class MMTPDataProviderFramework;
 class MMTPObjectMgr;

@@ -83,6 +83,7 @@ private:
     
 private:
     CMmMtpDpMetadataAccessWrapper* iWrapper;
+
     };
 
 #endif // CMMMTPDPACCESSSINGLETON_H

@@ -15,7 +15,6 @@
 *
 */
 
-
 #include <mtp/mmtpconnection.h>
 #include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpstoragemgr.h>
@@ -36,6 +35,8 @@
 #include "crenameobject.h"
 #include "mmmtpdpdefs.h"
 #include "mmmtpdpfiledefs.h"
+#include "cmediamtpdataproviderpropertysettingutility.h"
+#include "cmediamtpdataproviderdescriptionutility.h"
 
 // Class constants.
 // Defines the number of MTP Active Processors allowed
@@ -77,6 +78,7 @@ CMediaMtpDataProvider::CMediaMtpDataProvider( TAny* aParams ) :
     iSupportedPropVideo( KMediaMtpDpArrayGranularity ),
     iSupportedPropAll( KMediaMtpDpArrayGranularity )
     {
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -90,6 +92,8 @@ CMediaMtpDataProvider::~CMediaMtpDataProvider()
 
     CMmMtpDpAccessSingleton::Release();
     delete iMediaEnumerator;
+    delete iPropSettingUtility;
+    delete iDescriptionUtility;
 
     iPendingEnumerations.Close();
     TInt count = iActiveProcessors.Count();
@@ -132,6 +136,9 @@ void CMediaMtpDataProvider::ConstructL()
     GetSupportedPropL();
     GetAllSupportedPropL();
 
+    iPropSettingUtility = CMediaMtpDataProviderPropertySettingUtility::NewL();
+    iDescriptionUtility = CMediaMtpDataProviderDescriptionUtility::NewL();
+
     PRINT( _L( "MM MTP <= CMediaMtpDataProvider::ConstructL" ) );
     }
 
@@ -162,13 +169,11 @@ void CMediaMtpDataProvider::ProcessNotificationL( TMTPNotification aNotification
         {
         case EMTPSessionClosed:
             PRINT( _L( "MM MTP <> CMediaMtpDataProvider::ProcessNotificationL EMTPSessionClosed event recvd" ) );
-
             SessionClosedL( *reinterpret_cast<const TMTPNotificationParamsSessionChange*> ( aParams ) );
             break;
 
         case EMTPSessionOpened:
             PRINT( _L( "MM MTP <> CMediaMtpDataProvider::ProcessNotificationL EMTPSessionOpened event recvd" ) );
-
             SessionOpenedL( *reinterpret_cast<const TMTPNotificationParamsSessionChange*> ( aParams ) );
             break;
 
@@ -205,14 +210,19 @@ void CMediaMtpDataProvider::ProcessRequestPhaseL( TMTPTransactionPhase aPhase,
 
     MMmRequestProcessor* processor = iActiveProcessors[index];
     iActiveProcessor = index;
-    // iActiveProcessorRemoved = EFalse;
+    iActiveProcessorRemoved = EFalse;
     TBool result = processor->HandleRequestL( aRequest, aPhase );
 
-    if( !iIsSessionOpen )
+    if ( !iIsSessionOpen )
         {
         processor->Release();
         }
-
+    // iActiveProcessorRemoved will be set to ETrue in the above function
+    // HandleRequestL(),such as SessionClose()
+    else if ( iActiveProcessorRemoved )
+        {
+        processor->Release(); // destroy the processor
+        }
     else if ( result ) // destroy the processor
         {
         processor->Release();
@@ -246,7 +256,14 @@ void CMediaMtpDataProvider::SessionClosedL( const TMTPNotificationParamsSessionC
             processor->UsbDisconnect(); // Rollback
 
             iActiveProcessors.Remove( i );
-            processor->Release();
+            if ( i == iActiveProcessor )
+                {
+                iActiveProcessorRemoved = ETrue;
+                }
+            else
+                {
+                processor->Release();
+                }
             }
         }
 
@@ -500,12 +517,32 @@ TInt CMediaMtpDataProvider::LocateRequestProcessorL( const TMTPTypeEvent& aEvent
 
 // -----------------------------------------------------------------------------
 // CMediaMtpDataProvider::GetWrapper
-// return the reference of CMmMtpDpMetadataAccessWrapper to enumerator
+// return wrapper references
 // -----------------------------------------------------------------------------
 //
 CMmMtpDpMetadataAccessWrapper& CMediaMtpDataProvider::GetWrapperL()
     {
     return CMmMtpDpAccessSingleton::GetAccessWrapperL();
+    }
+
+// -----------------------------------------------------------------------------
+// CMediaMtpDataProvider::PropSettingUtility
+// return The utility to setting properties
+// -----------------------------------------------------------------------------
+//
+CPropertySettingUtility* CMediaMtpDataProvider::PropSettingUtility()
+    {
+    return iPropSettingUtility;
+    }
+
+// -----------------------------------------------------------------------------
+// CMediaMtpDataProvider::DescriptionUtility
+// return The utiltiy to setting descriptions
+// -----------------------------------------------------------------------------
+//
+CDescriptionUtility* CMediaMtpDataProvider::DescriptionUtility()
+    {
+    return iDescriptionUtility;
     }
 
 // ---------------------------------------------------------------------------

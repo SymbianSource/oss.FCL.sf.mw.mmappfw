@@ -84,12 +84,12 @@ EXPORT_C CGetObject::~CGetObject()
 //
 CGetObject::CGetObject( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection ) :
-    CRequestProcessor( aFramework,
-        aConnection,
-        sizeof( KMTPGetObjectPolicy ) / sizeof( TMTPRequestElementInfo ),
-        KMTPGetObjectPolicy ),
-    iFs( iFramework.Fs() ),
-    iError( EMTPRespCodeOK )
+        CRequestProcessor( aFramework,
+            aConnection,
+            sizeof( KMTPGetObjectPolicy ) / sizeof( TMTPRequestElementInfo ),
+            KMTPGetObjectPolicy ),
+        iFs( iFramework.Fs() ),
+        iError( EMTPRespCodeOK )
     {
     PRINT( _L( "Operation: GetObject(0x1009)" ) );
     }

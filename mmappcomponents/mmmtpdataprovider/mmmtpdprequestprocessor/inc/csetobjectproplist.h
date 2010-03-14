@@ -36,38 +36,46 @@ class CSetObjectPropList : public CRequestProcessor
 public:
     /**
     * Two-phase construction method
-    * @param aFramework, The data provider framework
-    * @param aConnection, The connection from which the request comes
-    * @param aWrapper    medadata access interface
-    * @return a pointer to the created request processor object
+    * @param aFramework The data provider framework
+    * @param aConnection The connection from which the request comes
+    * @param aDpConfig Configuration of data provider
+    * @return The pointer to the created request processor object
     */
-    //IMPORT_C static MMmRequestProcessor* NewL( MMTPDataProviderFramework& aFramework,
-    //    MMTPConnection& aConnection,
-    //   CMmMtpDpMetadataAccessWrapper& aWrapper );
+    IMPORT_C static MMmRequestProcessor* NewL( MMTPDataProviderFramework& aFramework,
+        MMTPConnection& aConnection,
+        MMmMtpDpConfig& aDpConfig );
 
     /**
     * Destructor
     */
     IMPORT_C virtual ~CSetObjectPropList();
 
-protected:
+private:
     /**
     * Standard c++ constructor
-    * @param aFramework    The data provider framework
-    * @param aConnection    The connection from which the request comes
-    * @param aWrapper    medadata access interface
+    * @param aFramework The data provider framework
+    * @param aConnection The connection from which the request comes
+    * @param aDpConfig Configuration of data provider
+    * @return The pointer to the created request processor object
     */
-    IMPORT_C CSetObjectPropList( MMTPDataProviderFramework& aFramework,
+    CSetObjectPropList( MMTPDataProviderFramework& aFramework,
         MMTPConnection& aConnection,
         MMmMtpDpConfig& aDpConfig );
 
     /**
     * 2nd Phase Constructor
     */
-    IMPORT_C void ConstructL();
+    void ConstructL();
 
 protected:
     // from CRequestProcessor
+    /**
+    * Verify the reqeust
+    * @return EMTPRespCodeOK if request is verified, otherwise one of
+    *     the error response codes
+    */
+    IMPORT_C TMTPResponseCode CheckRequestL();
+
     /**
     * SetObjectPropList request handler
     */
@@ -99,28 +107,6 @@ protected:
     * Ignore the error, continue with the next one
     */
     IMPORT_C TInt RunError( TInt aError );
-
-protected:
-    // new virtuals
-    /**
-    * Set MetaData to CMetadataAccessWrapper, for internal use
-    * @param aPropCode, specify property code of aMediaProp
-    * @param aNewData, object property value which will be get from
-    *    aObjectMetaData
-    * @param aObjectMetaData, owner of the property which should be
-    *    inserted or updated into database
-    * @return response code
-    */
-    IMPORT_C TMTPResponseCode ServiceMetaDataToWrapperL( const TUint16 aPropCode,
-        MMTPType& aNewData,
-        const CMTPObjectMetaData& aObjectMetaData );
-
-    virtual TMTPResponseCode ServiceSpecificObjectPropertyL( TUint16 aPropCode,
-        const CMTPObjectMetaData& aObject,
-        const CMTPTypeObjectPropListElement& aElement ) = 0;
-
-    virtual TInt HandleSpecificWrapperError( TInt aError,
-        const CMTPObjectMetaData& aObject) = 0;
 
 private:
     /*

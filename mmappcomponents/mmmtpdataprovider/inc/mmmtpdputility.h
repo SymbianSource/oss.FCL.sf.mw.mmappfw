@@ -45,6 +45,13 @@ public:
     static TBool HasMetadata( TUint16 aObjFormatCode );
 
     /**
+    * Utility function to decide if there is any reference
+    * @param aObjFormatCode, object format code
+    * @return TBool for decide if there are some references
+    */
+    static TBool HasReference( TUint16 aObjFormatCode );
+
+    /**
     * Utility function to decide if the file is video.
     * @param aFullFileName, the full file name
     * @return TBool for decide if the file is video
@@ -59,6 +66,15 @@ public:
     * @return TBool for decide if the file is video
     */
     static TBool IsVideoL( const TDesC& aFullFileName, const MMTPDataProviderFramework& aFramework );
+
+    /**
+    * Utility function to decide if the file is video.
+    * For internal use, this is fast version by querying framework DB
+    * @param aFormatCode,
+    * @param aSubFormatCode,
+    * @return TBool for decide if the file is video
+    */
+    static TBool IsVideoL( TUint aFormatCode, TUint aSubFormatCode );
 
     /**
     * Check the filename length to see if it exceeds Symbian 256 limit.

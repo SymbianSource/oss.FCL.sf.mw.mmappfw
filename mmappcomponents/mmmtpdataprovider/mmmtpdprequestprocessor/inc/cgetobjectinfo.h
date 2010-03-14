@@ -78,10 +78,10 @@ private:
     void BuildObjectInfoL();
 
 private:
-
     CMTPTypeObjectInfo* iObjectInfo;
 
     MMmMtpDpConfig& iDpConfig;
+
     };
 
 #endif // CGETOBJECTINFO_H

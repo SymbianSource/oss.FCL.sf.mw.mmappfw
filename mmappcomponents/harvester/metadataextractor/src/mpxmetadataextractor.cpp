@@ -337,14 +337,21 @@ void CMPXMetadataExtractor::SetMediaPropertiesL( CMPXMedia& aMedia,
         TMetaDataFieldId fieldType;
 
         HBufC* value = NULL;
-        TRAPD( err, value = metaCont.At( i, fieldType ).AllocL() );
-        CleanupStack::PushL(value);
-        if ( KErrNone != err )
-        {
-            CleanupStack::PopAndDestroy(value);
-            continue;
-        }
-
+        metaCont.FieldIdAt( i, fieldType );  // get the field type
+        
+        // get the value, except for album art
+        if ( fieldType != EMetaDataJpeg )
+           {
+           TRAPD( err, value = metaCont.At( i, fieldType ).AllocL() );
+           CleanupStack::PushL( value );
+           if ( KErrNone != err )
+               {
+               MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL - error = %i", err);           
+               CleanupStack::PopAndDestroy( value );
+               continue;
+               }     
+           }
+        
         switch( fieldType )
             {
             case EMetaDataSongTitle:
@@ -445,10 +452,17 @@ void CMPXMetadataExtractor::SetMediaPropertiesL( CMPXMedia& aMedia,
                 {
 #ifdef RD_MPX_TNM_INTEGRATION
                 MPX_PERF_START(CMPXMetadataExtractor_SetMediaPropertiesL_JPEG_TNM);
-                HBufC8* value8 = MPXUser::Alloc8L(metaCont.At( i, fieldType ));
+                TPtrC8 ptr8 = metaCont.Field8( EMetaDataJpeg );
+                HBufC8* value8; 
+                TRAPD( err, value8 = ptr8.AllocL() );
+                if ( KErrNone != err )
+                    {
+                    MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL - error jpeg = %i", err);           
+                    User::Leave( err );  
+                    }                 
                 CleanupStack::PushL( value8 );
                 AddMediaAlbumArtL( aMedia, aFile, *value8 );
-                CleanupStack::Pop(value8);
+                CleanupStack::Pop( value8 );
                 MPX_PERF_END(CMPXMetadataExtractor_SetMediaPropertiesL_JPEG_TNM);
 #else //RD_MPX_TNM_INTEGRATION
                 aMedia.SetTextValueL( KMPXMediaMusicAlbumArtFileName,
@@ -478,7 +492,10 @@ void CMPXMetadataExtractor::SetMediaPropertiesL( CMPXMedia& aMedia,
                 break;
                 }
             }
-        CleanupStack::PopAndDestroy(value);
+        if (fieldType != EMetaDataJpeg)
+            {
+            CleanupStack::PopAndDestroy( value );       
+            }
         }
 
     MPX_DEBUG1("CMPXMetadataExtractor::SetMediaPropertiesL --->" );
@@ -761,16 +778,23 @@ TInt CMPXMetadataExtractor::GetMediaAlbumArtL( CMPXMedia& aMedia,
     // get metadata container.
     const CMetaDataFieldContainer& metaCont = iMetadataUtility->MetaDataFieldsL();
 
-    TPtrC data = metaCont.Field( EMetaDataJpeg );
+    TPtrC8 data8 = metaCont.Field8( EMetaDataJpeg );
     
-    if ( data.Length() )
+    if ( data8.Length() )
         {
         MPX_DEBUG1("CMPXMetadataExtractor::GetMediaAlbumArtL(): Album art exist.");
+
 #ifdef RD_MPX_TNM_INTEGRATION
-        HBufC8* value8 = MPXUser::Alloc8L( data );       
+        HBufC8* value8; 
+        TRAPD( err, value8 = data8.AllocL() );
+        if ( KErrNone != err )
+            {
+            MPX_DEBUG2("CMPXMetadataExtractor::GetMediaAlbumArtL - error jpeg = %i", err);           
+            User::Leave( err );  
+            }              
         CleanupStack::PushL( value8 );
         AddMediaAlbumArtL( aMedia, aFile, *value8 );
-        CleanupStack::Pop(value8);
+        CleanupStack::Pop( value8 );
 #else // RD_MPX_TNM_INTEGRATION
         aMedia.SetTextValueL( KMPXMediaMusicAlbumArtFileName, aFile );
 #endif // RD_MPX_TNM_INTEGRATION          

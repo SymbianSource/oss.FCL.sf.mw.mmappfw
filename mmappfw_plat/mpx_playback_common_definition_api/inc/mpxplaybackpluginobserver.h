@@ -110,6 +110,18 @@ public:
      */
     virtual void HandlePlaybackMessage(CMPXMessage* /*aMsg*/, 
                                        TInt /*aErr*/) {}
+    
+    
+    /** 
+     * Handle message from plug-in.
+     *
+     * @since S60 9.2
+     * @param aMsg message from the plug-in
+     * @return system error
+    */
+    virtual TInt HandlePlaybackSyncMessage (const CMPXMessage& /*aMsg*/) {return KErrNotSupported;}
+
+    
     };
 
 #endif      // MMPXMPLAYBACKPLUGINOBSERVER_H

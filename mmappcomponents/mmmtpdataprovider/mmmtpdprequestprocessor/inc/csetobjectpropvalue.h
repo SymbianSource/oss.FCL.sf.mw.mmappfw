@@ -30,6 +30,7 @@ class TMTPTypeUint32;
 class CMTPObjectMetaData;
 class MMTPObjectMgr;
 class MMmMtpDpConfig;
+class RFs;
 
 /**
 * Defines SetObjectPropValue request processor for common
@@ -127,6 +128,7 @@ protected:
     CMTPObjectMetaData* iObjectInfo;
     MMTPObjectMgr& iObjectMgr;
     MMmMtpDpConfig& iDpConfig;
+    RFs& iFs;
 
     };
 

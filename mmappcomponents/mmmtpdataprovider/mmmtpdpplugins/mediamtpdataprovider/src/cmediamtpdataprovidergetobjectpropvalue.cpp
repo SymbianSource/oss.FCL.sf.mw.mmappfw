@@ -54,7 +54,7 @@ MMmRequestProcessor* CMediaMtpDataProviderGetObjectPropValue::NewL( MMTPDataProv
 //
 void CMediaMtpDataProviderGetObjectPropValue::ConstructL()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -64,7 +64,7 @@ void CMediaMtpDataProviderGetObjectPropValue::ConstructL()
 //
 CMediaMtpDataProviderGetObjectPropValue::~CMediaMtpDataProviderGetObjectPropValue()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -77,7 +77,7 @@ CMediaMtpDataProviderGetObjectPropValue::CMediaMtpDataProviderGetObjectPropValue
     MMmMtpDpConfig& aDpConfig ) :
     CGetObjectPropValue( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
 void CMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL(TUint16 aPropCode)

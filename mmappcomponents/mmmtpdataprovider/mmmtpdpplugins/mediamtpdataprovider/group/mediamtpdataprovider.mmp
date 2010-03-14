@@ -40,16 +40,15 @@ SOURCE          cmediamtpdataprovider.cpp
 SOURCE          mediamtpdataprovidercontrollerimp.cpp
 SOURCE          mediamtpdataproviderprocessor.cpp
 SOURCE          cmediamtpdataproviderenumerator.cpp
-SOURCE          cmediamtpdataprovidergetobjectpropdesc.cpp
-SOURCE          cmediamtpdataprovidergetinterdependentpropdesc.cpp
 SOURCE          cmediamtpdataprovidergetobjectpropvalue.cpp 
 SOURCE          cmediamtpdataprovidergetobjectproplist.cpp 
 SOURCE          cmediamtpdataprovidersetobjectpropvalue.cpp
-SOURCE          cmediamtpdataprovidersetobjectproplist.cpp
+
 SOURCE          cmediamtpdataprovidercopyobject.cpp
 SOURCE          cmediamtpdataprovidermoveobject.cpp
-SOURCE          cmediamtpdataprovidersendobject.cpp
-SOURCE          cmediamtpdataprovidergetformatcapabilities.cpp
+SOURCE          cmediamtpdataproviderpropertysettingutility.cpp 
+SOURCE          cmediamtpdataproviderdescriptionutility.cpp
+
 
 SOURCEPATH      ../data 
 START RESOURCE  mediamtpdataprovider.rss

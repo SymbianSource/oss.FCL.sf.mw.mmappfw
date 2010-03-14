@@ -72,7 +72,8 @@ EXPORT_C CSetObjectPropValue::CSetObjectPropValue(
         sizeof(KMTPSetObjectPropValuePolicy) / sizeof(TMTPRequestElementInfo),
         KMTPSetObjectPropValuePolicy ),
     iObjectMgr( aFramework.ObjectMgr() ),
-    iDpConfig( aDpConfig )
+    iDpConfig( aDpConfig ),
+    iFs( aFramework.Fs() )
     {
     SetPSStatus();
     PRINT( _L( "Operation: SetObjectPropValue(0x9804)" ) );
@@ -107,12 +108,14 @@ TBool CSetObjectPropValue::IsPropCodeReadonly( TUint16 aPropCode )
         case EMTPObjectPropCodeObjectSize:
         case EMTPObjectPropCodeParentObject:
         case EMTPObjectPropCodePersistentUniqueObjectIdentifier:
-        case EMTPObjectPropCodeNonConsumable:
         case EMTPObjectPropCodeDateAdded:
         case EMTPObjectPropCodeDateCreated:
         case EMTPObjectPropCodeDateModified:
         //case EMTPObjectPropCodeVideoBitRate:  // move to specific dp
             returnCode = ETrue;
+            break;
+        case EMTPObjectPropCodeNonConsumable:
+            // It's settable, return EFalse here.
             break;
 
         default:
@@ -133,43 +136,46 @@ EXPORT_C TMTPResponseCode CSetObjectPropValue::CheckRequestL()
     PRINT( _L( "MM MTP => CSetObjectPropValue::CheckRequestL" ) );
 
     TMTPResponseCode result = CRequestProcessor::CheckRequestL();
+    if ( result == EMTPRespCodeObjectWriteProtected )
+        {
+        // Return AccessDenied for P4S pass rate, instead of EMTPRespCodeObjectWriteProtected
+        result = EMTPRespCodeAccessDenied;
+        }
 
     // Check if property is supported
     if ( result == EMTPRespCodeOK )
         {
         iPropCode = Request().Uint32( TMTPTypeRequest::ERequestParameter2 );
         PRINT1( _L( "MM MTP <> CSetObjectPropValue::CheckRequestL iPropCode = 0x%x" ), iPropCode );
-        result = EMTPRespCodeInvalidObjectPropCode;
 
         TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
         CMTPObjectMetaData* objectInfo = iRequestChecker->GetObjectInfo( objectHandle );
-
-        if (!objectInfo)
+        if ( objectInfo == NULL )
             {
-            PRINT(_L("MM MTP <> CGetObjectPropValue::CheckRequestL, objectInfo is NULL"));
+            PRINT( _L("MM MTP <> CGetObjectPropValue::CheckRequestL, objectInfo is NULL" ) );
             return EMTPRespCodeInvalidObjectHandle;
             }
 
-        TFileName fileName = objectInfo->DesC(CMTPObjectMetaData::ESuid);
-        TUint32 formatCode = objectInfo->Uint(CMTPObjectMetaData::EFormatCode);
-
+        TFileName fileName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
+        TUint32 formatCode = objectInfo->Uint( CMTPObjectMetaData::EFormatCode );
         PRINT3( _L( "MM MTP <> CGetObjectPropValue::CheckRequestL, handle = 0x%x, filename = %S, formatCode = 0x%x" ),
-                objectHandle,
-                &fileName,
-                formatCode );
+            objectHandle,
+            &fileName,
+            formatCode );
         const RArray<TUint>* properties = iDpConfig.GetSupportedPropertiesL( formatCode );
         TInt count = properties->Count();
+
+        result = EMTPRespCodeInvalidObjectPropCode;
         for ( TInt i = 0; i < count; i++ )
             {
             // Object property code is supported, but can not be set which is read only.
-            if ( (*properties)[i] == iPropCode
-                && IsPropCodeReadonly( iPropCode ) )
+            if ( ( *properties )[i] == iPropCode && IsPropCodeReadonly( iPropCode ) )
                 {
                 result = EMTPRespCodeAccessDenied;
                 break;
                 }
             // Object property code is supported and can be set.
-            else if ( iPropCode == (*properties)[i] )
+            else if ( iPropCode == ( *properties )[i] )
                 {
                 result = EMTPRespCodeOK;
                 break;
@@ -212,11 +218,14 @@ EXPORT_C void CSetObjectPropValue::ServiceL()
         case EMTPObjectPropCodeDateAdded:       // 0xDC4E
         case EMTPObjectPropCodeDateCreated:     // Date Created(0xDC08)
         case EMTPObjectPropCodeDateModified:    // Modified Date(0xDC09)
-        case EMTPObjectPropCodeNonConsumable:   // Non Consumable(0xDC4F)
         case EMTPObjectPropCodeVideoBitRate: // 0xDE9C
             {
             SendResponseL( EMTPRespCodeAccessDenied );
             }
+            break;
+
+        case EMTPObjectPropCodeNonConsumable:   // Non Consumable(0xDC4F)
+            ReceiveDataL( iMTPTypeUint8 );
             break;
 
         // Get Data for String objects
@@ -252,6 +261,11 @@ EXPORT_C TBool CSetObjectPropValue::DoHandleResponsePhaseL()
 
     switch ( iPropCode )
         {
+        case EMTPObjectPropCodeNonConsumable:
+            iObjectInfo->SetUint( CMTPObjectMetaData::ENonConsumable, iMTPTypeUint8.Value() );
+            iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
+            break;
+
         case EMTPObjectPropCodeObjectFileName:
             {
             TPtrC suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
@@ -273,7 +287,9 @@ EXPORT_C TBool CSetObjectPropValue::DoHandleResponsePhaseL()
                 // it is ok if file is not found in DB, following S60 solution
                 if ( KErrNotFound == err )
                     {
-                    TRAP( err, iDpConfig.GetWrapperL().AddObjectL( newSuid ) );
+                    TUint formatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatCode );
+                    TUint subFormatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatSubCode );
+                    TRAP( err, iDpConfig.GetWrapperL().AddObjectL( newSuid, formatCode, subFormatCode ) );
                     PRINT1( _L( "MM MTP <> Add MPX object file name err = %d" ), err );
                     }
 
@@ -343,12 +359,8 @@ EXPORT_C TMTPResponseCode CSetObjectPropValue::ServiceMetaDataToWrapperL( const 
         }
     else if ( err == KErrNotFound )
         {
-//        TMTPFormatCode formatCode =
-//            MmMtpDpUtility::FormatFromFilename( aObjectMetaData.DesC( CMTPObjectMetaData::ESuid ) );
         if( MmMtpDpUtility::HasMetadata( aObjectMetaData.Uint( CMTPObjectMetaData::EFormatCode ) ) )
             SendResponseL( EMTPRespCodeAccessDenied );
-        else
-            SendDataL( aNewData );
         }
     else
         {

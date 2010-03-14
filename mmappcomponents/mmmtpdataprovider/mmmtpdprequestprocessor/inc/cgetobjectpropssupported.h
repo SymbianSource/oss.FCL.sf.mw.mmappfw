@@ -70,6 +70,7 @@ protected:
 private:
     CMTPTypeArray* iObjectPropsSupported;
     MMmMtpDpConfig& iDpConfig;
+
     };
 
 #endif // CGETOBJECTPROPSSUPPORTED_H

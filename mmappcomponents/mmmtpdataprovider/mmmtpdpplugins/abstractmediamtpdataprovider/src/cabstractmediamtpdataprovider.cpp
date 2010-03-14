@@ -38,6 +38,8 @@
 #include "cabstractmediamtpdataproviderrenameobject.h"
 #include "mmmtpdpdefs.h"
 #include "mmmtpdpfiledefs.h"
+#include "cabstractmediamtpdataproviderpropertysettingutility.h"
+#include "cabstractmediamtpdataproviderdescriptionutility.h"
 
 // Class constants.
 // Defines the number of MTP Active Processors allowed
@@ -76,6 +78,7 @@ CAbstractMediaMtpDataProvider::CAbstractMediaMtpDataProvider( TAny* aParams ) :
     iSupportedFormat( KAbstractMediaMtpDpArrayGranularity ),
     iSupportedProperties( KAbstractMediaMtpDpArrayGranularity )
     {
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -86,6 +89,9 @@ CAbstractMediaMtpDataProvider::CAbstractMediaMtpDataProvider( TAny* aParams ) :
 CAbstractMediaMtpDataProvider::~CAbstractMediaMtpDataProvider()
     {
     PRINT( _L( "MM MTP => CAbstractMediaMtpDataProvider::~CAbstractMediaMtpDataProvider" ) );
+
+    delete iPropSettingUtility;
+    delete iDescriptionUtility;
 
     iPendingEnumerations.Close();
     TInt count = iActiveProcessors.Count();
@@ -128,6 +134,9 @@ void CAbstractMediaMtpDataProvider::ConstructL()
     GetSupportedFormatL();
     GetSupportedPropertiesL();
 
+    iPropSettingUtility = CAbstractMediaMtpDataProviderPropertySettingUtility::NewL();
+    iDescriptionUtility = CAbstractMediaMtpDataProviderDescriptionUtility::NewL();
+
     PRINT( _L( "MM MTP <= CAbstractMediaMtpDataProvider::ConstructL" ) );
     }
 
@@ -158,13 +167,11 @@ void CAbstractMediaMtpDataProvider::ProcessNotificationL( TMTPNotification aNoti
         {
         case EMTPSessionClosed:
             PRINT( _L( "MM MTP <> CAbstractMediaMtpDataProvider::ProcessNotificationL EMTPSessionClosed event recvd" ) );
-
             SessionClosedL( *reinterpret_cast<const TMTPNotificationParamsSessionChange*> ( aParams ) );
             break;
 
         case EMTPSessionOpened:
             PRINT( _L( "MM MTP <> CAbstractMediaMtpDataProvider::ProcessNotificationL EMTPSessionOpened event recvd" ) );
-
             SessionOpenedL( *reinterpret_cast<const TMTPNotificationParamsSessionChange*> ( aParams ) );
             break;
 
@@ -201,18 +208,18 @@ void CAbstractMediaMtpDataProvider::ProcessRequestPhaseL( TMTPTransactionPhase a
 
     MMmRequestProcessor* processor = iActiveProcessors[index];
     iActiveProcessor = index;
-    // iActiveProcessorRemoved = EFalse;
+    iActiveProcessorRemoved = EFalse;
     TBool result = processor->HandleRequestL( aRequest, aPhase );
-    if( !iIsSessionOpen )
+    if ( !iIsSessionOpen )
         {
         processor->Release();
         }
     // iActiveProcessorRemoved will be set to ETrue in the above function
-    // HandleRequestL(),such as SessionClose()
-    // else if ( iActiveProcessorRemoved )
-    //     {
-    //     processor->Release(); // destroy the processor
-    //     }
+    // HandleRequestL(), such as SessionClose()
+    else if ( iActiveProcessorRemoved )
+        {
+        processor->Release(); // destroy the processor
+        }
     else if ( result ) // destroy the processor
         {
         processor->Release();
@@ -231,7 +238,7 @@ void CAbstractMediaMtpDataProvider::SessionClosedL( const TMTPNotificationParams
     iIsSessionOpen = EFalse;
     TInt count = iActiveProcessors.Count();
     PRINT1( _L( "MM MTP => CAbstractMediaMtpDataProvider::SessionClosedL, total processor count = %d" ), count );
-    for( TInt i = 0; i < count; i++ )
+    for ( TInt i = 0; i < count; i++ )
         {
         MMmRequestProcessor* processor = iActiveProcessors[i];
 
@@ -240,17 +247,17 @@ void CAbstractMediaMtpDataProvider::SessionClosedL( const TMTPNotificationParams
         TUint32 sessionId = processor->SessionId();
 
         if ( ( sessionId == aSession.iMTPId )
-                && ( processor->Connection().ConnectionId()
-                == aSession.iConnection.ConnectionId() ) )
+            && ( processor->Connection().ConnectionId() 
+			== aSession.iConnection.ConnectionId() ) )
             {
             processor->UsbDisconnect(); // Rollback
 
             iActiveProcessors.Remove( i );
-            // if ( i == iActiveProcessor )
-            //     {
-            //     iActiveProcessorRemoved = ETrue;
-            //     }
-            //     else
+            if ( i == iActiveProcessor )
+                {
+                iActiveProcessorRemoved = ETrue;
+                }
+            else
                 {
                 processor->Release();
                 }
@@ -472,12 +479,32 @@ TInt CAbstractMediaMtpDataProvider::LocateRequestProcessorL( const TMTPTypeEvent
 
 // -----------------------------------------------------------------------------
 // CAbstractMediaMtpDataProvider::GetWrapper
-// return the reference of CMmMtpDpMetadataAccessWrapper to enumerator
+// return wrapper references
 // -----------------------------------------------------------------------------
 //
 CMmMtpDpMetadataAccessWrapper& CAbstractMediaMtpDataProvider::GetWrapperL()
     {
     return CMmMtpDpAccessSingleton::GetAccessWrapperL();
+    }
+
+// -----------------------------------------------------------------------------
+// CAbstractMediaMtpDataProvider::PropSettingUtility
+// return The utility to setting properties
+// -----------------------------------------------------------------------------
+//
+CPropertySettingUtility* CAbstractMediaMtpDataProvider::PropSettingUtility()
+    {
+    return iPropSettingUtility;
+    }
+
+// -----------------------------------------------------------------------------
+// CAbstractMediaMtpDataProvider::DescriptionUtility
+// return The utiltiy to setting descriptions
+// -----------------------------------------------------------------------------
+//
+CDescriptionUtility* CAbstractMediaMtpDataProvider::DescriptionUtility()
+    {
+    return iDescriptionUtility;
     }
 
 // ---------------------------------------------------------------------------
@@ -501,8 +528,9 @@ void CAbstractMediaMtpDataProvider::GetSupportedFormatL()
         }
     }
 
-const RArray<TUint>* CAbstractMediaMtpDataProvider::GetSupportedPropertiesL( TUint32 aFormatCode ) const
+const RArray<TUint>* CAbstractMediaMtpDataProvider::GetSupportedPropertiesL( TUint32 /*aFormatCode*/ ) const
     {
+    // May need add more implementation here for further extension.
     return &iSupportedProperties;
     }
 
@@ -552,10 +580,19 @@ TUint32 CAbstractMediaMtpDataProvider::GetDefaultStorageIdL() const
 
     TDriveInfo driveInfo;
     User::LeaveIfError( Framework().Fs().Drive( driveInfo, driveNum ) );
+    PRINT3( _L( "driveInfo.iType = 0x%x, driveInfo.iDriveAtt = 0x%x, driveInfo.iMediaAtt = 0x%x" ),
+        driveInfo.iType,
+        driveInfo.iDriveAtt,
+        driveInfo.iMediaAtt );
     if( driveInfo.iType == EMediaNotPresent || driveInfo.iType == EMediaUnknown )
         {
-        err = DriveInfo::GetDefaultDrive( DriveInfo::EDefaultPhoneMemory, driveNum );
-        PRINT( _L( "MM MTP <> Memory card doesn't exist, set PhoneMemory to default" ) );
+        err = DriveInfo::GetDefaultDrive( DriveInfo::EDefaultRemovableMassStorage, driveNum );
+        User::LeaveIfError( Framework().Fs().Drive( driveInfo, driveNum ) );
+        if( driveInfo.iType == EMediaNotPresent || driveInfo.iType == EMediaUnknown )
+            {
+            err = DriveInfo::GetDefaultDrive( DriveInfo::EDefaultPhoneMemory, driveNum );
+            PRINT( _L( "MM MTP <> Memory card doesn't exist, set PhoneMemory to default" ) );
+            }
         }
 
     return Framework().StorageMgr().FrameworkStorageId( TDriveNumber( driveNum ) );

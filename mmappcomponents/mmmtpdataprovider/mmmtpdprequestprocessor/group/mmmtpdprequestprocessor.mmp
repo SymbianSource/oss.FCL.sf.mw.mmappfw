@@ -54,6 +54,9 @@ SOURCE              ccopyobject.cpp
 SOURCE              cmoveobject.cpp
 SOURCE              crenameobject.cpp
 SOURCE              cgetformatcapabilities.cpp
+SOURCE              cgetinterdependentpropdesc.cpp
+SOURCE              cdescriptionutility.cpp 
+SOURCE              cpropertysettingutility.cpp 
 
 SOURCEPATH          ../../src
 SOURCE              cmmmtpdpmetadatampxaccess.cpp
@@ -79,7 +82,6 @@ LIBRARY             edbms.lib
 LIBRARY             contentlistingframework.lib 
 LIBRARY             caf.lib
 
-
 #if defined(__WINDOWS_MEDIA)
 STATICLIBRARY       hxmetadatautil.lib
 #endif
@@ -90,4 +92,3 @@ LIBRARY             hal.lib
 #else
 DEBUGLIBRARY        hal.lib
 #endif
-

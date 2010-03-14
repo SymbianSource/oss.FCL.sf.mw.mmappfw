@@ -25,6 +25,17 @@
 // FORWARD DECLARATIONS
 class CMPXHarvesterDatabaseTable;
 
+// ENUMS
+#ifdef __RAMDISK_PERF_ENABLE
+// enum for database state
+enum TDbState
+    {
+    EDbClose,
+    EDbOpen,
+    EDbInTransaction
+    };
+#endif // __RAMDISK_PERF_ENABLE
+
 /**
  *  Database class for the Harvester Component
  *
@@ -51,6 +62,8 @@ public:
 
     /**
     * Open the database
+    * @return State of the opened database: KErrNone or KErrCorrupt
+    * Leaves if cannot open the database
     */
     TInt OpenL();
 
@@ -141,6 +154,27 @@ public:
     */
     void Rollback();
     
+#ifdef __RAMDISK_PERF_ENABLE
+    /**
+     * Set RAM drive info
+     */
+    void SetRamDriveInfo(TDriveNumber aDrive, TBool aUseRamDrive);
+    
+    /**
+     * Get UseRamDrive
+     */
+    TBool IsUseRamDrive();
+    
+    /**
+     * Get the state of the database.
+     */
+    TDbState GetDbState();
+    
+    /**
+     * Set the state of the database.
+     */
+    void SetDbStateL( TDbState aState );
+#endif // __RAMDISK_PERF_ENABLE
     
 private: // private functions
 
@@ -151,7 +185,8 @@ private: // private functions
 
     /**
     * Opens a database
-    * @return error for the operation
+    * @return State of the opened database: KErrNone or KErrCorrupt
+    * Leaves if cannot open the database
     */
     TInt OpenDBL();
 
@@ -163,6 +198,12 @@ private: // private functions
     void FindAndReplaceSingleQuote(const TDesC& aSrc,
                                    TDes& aTrg);
 
+    /**
+     * Generate the database name.
+     * @return the database file name.
+     */
+    TFileName GenerateDbName();
+    
 private:
 
     /**
@@ -182,6 +223,10 @@ private: // data
     CFileStore*       iStore;
     RDbStoreDatabase* iDatabase;  // Local single client db
     TBool             iDBOpen;    // Is the db open and ready
+#ifdef __RAMDISK_PERF_ENABLE
+    TDriveNumber      iRamDrive;
+    TBool             iUseRamDrive;
+#endif // __RAMDISK_PERF_ENABLE
     };
 
 #endif // CMPXHARVESTERDB_H

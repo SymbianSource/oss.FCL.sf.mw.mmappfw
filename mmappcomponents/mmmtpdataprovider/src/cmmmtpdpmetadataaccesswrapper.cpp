@@ -16,11 +16,12 @@
 */
 
 
+#include <mtp/mmtpdataproviderframework.h>
+#include <mtp/mmtpobjectmgr.h>
 #include <bautils.h>
 #include <e32math.h>
-#include <mtp/mmtpdataproviderframework.h>
 #include <e32property.h>
-#include <MtpPrivatePSKeys.h>
+#include <mtpprivatepskeys.h>
 
 #include "cmmmtpdpmetadataaccesswrapper.h"
 #include "cmmmtpdpmetadatampxaccess.h"
@@ -30,23 +31,23 @@
 
 const TInt KMMMTPDummyFileArrayGranularity = 5;
 
-CMmMtpDpMetadataAccessWrapper* CMmMtpDpMetadataAccessWrapper::NewL( RFs& aRfs, 
+CMmMtpDpMetadataAccessWrapper* CMmMtpDpMetadataAccessWrapper::NewL( RFs& aRfs,
     MMTPDataProviderFramework& aFramework )
     {
     CMmMtpDpMetadataAccessWrapper* me = new (ELeave) CMmMtpDpMetadataAccessWrapper( aRfs, aFramework );
     CleanupStack::PushL( me );
     me->ConstructL();
     CleanupStack::Pop( me );
-    
+
     return me;
     }
 
-CMmMtpDpMetadataAccessWrapper::CMmMtpDpMetadataAccessWrapper( RFs& aRfs, 
+CMmMtpDpMetadataAccessWrapper::CMmMtpDpMetadataAccessWrapper( RFs& aRfs,
     MMTPDataProviderFramework& aFramework ) :
     iRfs( aRfs ),
     iFramework( aFramework )
     {
-    
+    // Do nothing
     }
 
 // ---------------------------------------------------------------------------
@@ -61,16 +62,16 @@ void CMmMtpDpMetadataAccessWrapper::ConstructL()
     iMmMtpDpMetadataMpxAccess = CMmMtpDpMetadataMpxAccess::NewL( iRfs, iFramework );
 
     iMmMtpDpMetadataVideoAccess = CMmMtpDpMetadataVideoAccess::NewL( iRfs );
-    
-    iPlaylistArray = new ( ELeave ) CDesCArrayFlat( KMMMTPDummyFileArrayGranularity );
-    
+
+    iAbstractMediaArray = new ( ELeave ) CDesCArrayFlat( KMMMTPDummyFileArrayGranularity );
+
     // Create the PS key to notify subscribers that MTP mode is activated
     _LIT_SECURITY_POLICY_C1(KKeyReadPolicy, ECapabilityReadUserData);
     _LIT_SECURITY_POLICY_C1(KKeyWritePolicy, ECapabilityWriteUserData);
-    RProperty::Define( KMtpPSUid, 
-                       KMtpPSStatus, 
-                       RProperty::EInt, 
-                       KKeyReadPolicy, 
+    RProperty::Define( KMtpPSUid,
+                       KMtpPSStatus,
+                       RProperty::EInt,
+                       KKeyReadPolicy,
                        KKeyWritePolicy);
 
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::ConstructL" ) );
@@ -86,37 +87,39 @@ CMmMtpDpMetadataAccessWrapper::~CMmMtpDpMetadataAccessWrapper()
     PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::~CMmMtpDpMetadataAccessWrapper" ) );
     RemoveDummyFiles();
 
-    delete iPlaylistArray;
+    delete iAbstractMediaArray;
 
     delete iMmMtpDpMetadataVideoAccess;
     delete iMmMtpDpMetadataMpxAccess;
-    
+
     // unblock MPX
-    RProperty::Set( KMtpPSUid, 
-                    KMtpPSStatus, 
-                    EMtpPSStatusUninitialized);
+    RProperty::Set( KMtpPSUid,
+                    KMtpPSStatus,
+                    EMtpPSStatusUninitialized );
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::~CMmMtpDpMetadataAccessWrapper" ) );
     }
 
 // -----------------------------------------------------------------------------
-// CMmMtpDpMetadataAccessWrapper::SetPlaylist
-// Set playlist to DB
+// CMmMtpDpMetadataAccessWrapper::SetAbstractMediaL
+// Set abstract media to DB
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CMmMtpDpMetadataAccessWrapper::SetPlaylistL( const TDesC& aPlaylistFileName, CDesCArray& aRefFileArray )
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::SetAbstractMediaL( const TDesC& aAbstractMediaFileName, 
+    CDesCArray& aRefFileArray, 
+    TMPXGeneralCategory aCategory )
     {
-    PRINT1( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::SetPlaylistL aPlaylistFileName = %S" ), &aPlaylistFileName );
+    PRINT1( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::SetAbstractMediaL aAbstractMediaFileName = %S" ), &aAbstractMediaFileName );
 
-    if ( !MmMtpDpUtility::IsVideoL( aPlaylistFileName, iFramework ) )
+    if ( !MmMtpDpUtility::IsVideoL( aAbstractMediaFileName, iFramework ) )
         {
-        iMmMtpDpMetadataMpxAccess->SetPlaylistL( aPlaylistFileName, aRefFileArray );
+        iMmMtpDpMetadataMpxAccess->SetAbstractMediaL( aAbstractMediaFileName, aRefFileArray, aCategory );
         }
 
-    PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::SetPlaylistL" ) );
+    PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::SetAbstractMediaL" ) );
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataAccessWrapper::AddMediaL
+// CMmMtpDpMetadataAccessWrapper::GetObjectMetadataValueL
 // Gets a piece of metadata from the collection
 // ---------------------------------------------------------------------------
 //
@@ -154,8 +157,15 @@ void CMmMtpDpMetadataAccessWrapper::SetObjectMetadataValueL( const TUint16 aProp
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::SetObjectMetadataValueL" ) );
 
-    TPtrC fullFileName( aObjectMetaData.DesC( CMTPObjectMetaData::ESuid ) );
-    if ( MmMtpDpUtility::IsVideoL( fullFileName, iFramework ) )
+    // In SendObjectPropList, formatCode has already know, but object handle has not been committed into db
+    // In that case, format couldn't be get from object manager
+    TUint formatCode = aObjectMetaData.Uint( CMTPObjectMetaData::EFormatCode );
+    TUint formatSubCode = aObjectMetaData.Uint( CMTPObjectMetaData::EFormatSubCode );
+
+    TBool isVideo = EFalse;
+    isVideo = MmMtpDpUtility::IsVideoL( formatCode, formatSubCode );
+
+    if ( isVideo )
         {
         iMmMtpDpMetadataVideoAccess->SetObjectMetadataValueL( aPropCode,
             aNewData,
@@ -167,7 +177,6 @@ void CMmMtpDpMetadataAccessWrapper::SetObjectMetadataValueL( const TUint16 aProp
             aNewData,
             aObjectMetaData );
         }
-
 
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::SetObjectMetadataValueL" ) );
     }
@@ -183,22 +192,19 @@ EXPORT_C void CMmMtpDpMetadataAccessWrapper::RenameObjectL( const TDesC& aOldFil
     PRINT2( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::RenameObjectL old = %S, new = %S" ),
         &aOldFileName,
         &aNewFileName );
-    
-   TMTPFormatCode formatCode = MmMtpDpUtility::FormatFromFilename( aOldFileName );
-    if ( formatCode == EMTPFormatCodeWMV )
+
+    if ( MmMtpDpUtility::IsVideoL( aOldFileName, iFramework ) )
         {
         iMmMtpDpMetadataVideoAccess->RenameRecordL( aOldFileName, aNewFileName );
         }
     else
         {
-        if ( !MmMtpDpUtility::IsVideoL( aNewFileName , iFramework ) )
-            {
-            iMmMtpDpMetadataMpxAccess->RenameObjectL( aOldFileName, aNewFileName, formatCode );
-            }
-        else
-            {
-            iMmMtpDpMetadataVideoAccess->RenameRecordL( aOldFileName, aNewFileName );
-            }
+        CMTPObjectMetaData* object = CMTPObjectMetaData::NewLC();
+        iFramework.ObjectMgr().ObjectL( aOldFileName, *object );
+        iMmMtpDpMetadataMpxAccess->RenameObjectL( aOldFileName,
+            aNewFileName,
+            object->Uint( CMTPObjectMetaData::EFormatCode ) );
+        CleanupStack::PopAndDestroy( object );
         }
 
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::RenameObjectL" ) );
@@ -215,8 +221,8 @@ void CMmMtpDpMetadataAccessWrapper::DeleteObjectL( const TDesC& aFullFileName,
     PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::DeleteObjectL" ) );
 
     TMPXGeneralCategory category = Category( aFormatCode );
-    
-    // Have to do this.  File might not be in file system anymore, have to 
+
+    // Have to do this.  File might not be in file system anymore, have to
     // reply on ObjectManager
     if ( ( aFormatCode == EMTPFormatCodeMP4Container )
         || ( aFormatCode == EMTPFormatCode3GPContainer )
@@ -231,7 +237,7 @@ void CMmMtpDpMetadataAccessWrapper::DeleteObjectL( const TDesC& aFullFileName,
             category = EMPXSong;
             }
         }
-    
+
     switch ( category )
         {
         case EMPXPlaylist:
@@ -300,7 +306,7 @@ void CMmMtpDpMetadataAccessWrapper::GetImageObjPropL( const TDesC& aFullFileName
         iMmMtpDpMetadataVideoAccess->GetImageObjPropL( aFullFileName, aWidth, aHeight );
         }
     }
-// ----------------------------------------------------------------------------- 
+// -----------------------------------------------------------------------------
 // CMmMtpDpMetadataAccessWrapper::OpenSessionL
 // Called when the MTP session is initialised
 // -----------------------------------------------------------------------------
@@ -370,79 +376,70 @@ TMPXGeneralCategory CMmMtpDpMetadataAccessWrapper::Category( const TUint aFormat
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataAccessWrapper::GetAllPlaylistL
-// 
+// CMmMtpDpMetadataAccessWrapper::GetAllAbstractMediaL
+//
 // ---------------------------------------------------------------------------
-EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetAllPlaylistL( const TDesC& aStoreRoot, CMPXMediaArray** aPlaylists )
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetAllAbstractMediaL( const TDesC& aStoreRoot, CMPXMediaArray** aAbstractMedias, TMPXGeneralCategory aCategory )
     {
-    iMmMtpDpMetadataMpxAccess->GetAllPlaylistL( aStoreRoot, aPlaylists );
+    iMmMtpDpMetadataMpxAccess->GetAllAbstractMediaL( aStoreRoot, aAbstractMedias, aCategory );
     }
 
 // ---------------------------------------------------------------------------
 // CMmMtpDpMetadataAccessWrapper::GetAllReferenceL
-// 
-// ---------------------------------------------------------------------------
-//s
-EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetAllReferenceL( CMPXMedia* aPlaylist, CDesCArray& aReferences )
-    {
-    iMmMtpDpMetadataMpxAccess->GetAllReferenceL( aPlaylist, aReferences );
-    }
-
-// ---------------------------------------------------------------------------
-// CMmMtpDpMetadataAccessWrapper::GetPlaylistNameL
-// 
+//
 // ---------------------------------------------------------------------------
 //
-EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetPlaylistNameL( CMPXMedia* aPlaylist, TDes& aPlaylistName )
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetAllReferenceL( CMPXMedia* aAbstractMedia, CDesCArray& aReferences )
     {
-    iMmMtpDpMetadataMpxAccess->GetPlaylistNameL( aPlaylist, aPlaylistName );
+    iMmMtpDpMetadataMpxAccess->GetAllReferenceL( aAbstractMedia, aReferences );
     }
 
-// ----------------------------------------------------------------------------- 
+// ---------------------------------------------------------------------------
+// CMmMtpDpMetadataAccessWrapper::GetAbstractMediaNameL
+//
+// ---------------------------------------------------------------------------
+//
+EXPORT_C HBufC* CMmMtpDpMetadataAccessWrapper::GetAbstractMediaNameL( CMPXMedia* aAbstractMedia, TMPXGeneralCategory aCategory )
+    {
+    return iMmMtpDpMetadataMpxAccess->GetAbstractMediaNameL( aAbstractMedia, aCategory );
+    }
+
+// -----------------------------------------------------------------------------
 // CMmMtpDpMetadataAccessWrapper::AddObjectL
-// Add object (music, video and playlist) info to DB
+// Add object (music, video, playlist and abstract media) info to DB
 // -----------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataAccessWrapper::AddObjectL( const TDesC& aFullFileName, TBool aIsVideo /*= EFalse */ )
+void CMmMtpDpMetadataAccessWrapper::AddObjectL( const TDesC& aFullFileName, TUint aFormatCode, TUint aSubFormatCode )
     {
     PRINT1( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::AddObjectL aFullFileName = %S" ), &aFullFileName );
 
-    if ( aFullFileName.Length() <= 0)
+    if ( aFullFileName.Length() <= 0 )
         {
         User::Leave( KErrArgument );
         }
-    if ( aIsVideo )
+    if ( MmMtpDpUtility::IsVideoL( aFormatCode, aSubFormatCode ) )
         {
         PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::AddObjectL Addvideo" ) );
         iMmMtpDpMetadataVideoAccess->AddVideoL( aFullFileName );
         }
     else
         {
-        if ( MmMtpDpUtility::IsVideoL( aFullFileName, iFramework ) )
+        if ( aFormatCode == EMTPFormatCodeM3UPlaylist
+            || aFormatCode == EMTPFormatCodeMPLPlaylist
+            || aFormatCode == EMTPFormatCodeAbstractAudioVideoPlaylist
+            || aFormatCode == EMTPFormatCodeAbstractAudioPlaylist
+            || aFormatCode == EMTPFormatCodeAbstractVideoPlaylist
+            || aFormatCode == EMTPFormatCodeASXPlaylist
+            || aFormatCode == EMTPFormatCodePLSPlaylist )
             {
-            PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::AddObjectL Addvideo" ) );
-            iMmMtpDpMetadataVideoAccess->AddVideoL( aFullFileName );
+            PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::AddObjectL AddPlaylist" ) );
+            iMmMtpDpMetadataMpxAccess->AddAbstractMediaL( aFullFileName,
+                EMPXPlaylist );
             }
         else
             {
-            TMTPFormatCode formatCode = MmMtpDpUtility::FormatFromFilename( aFullFileName );
-
-            if ( formatCode == EMTPFormatCodeM3UPlaylist
-                || formatCode == EMTPFormatCodeMPLPlaylist
-                || formatCode == EMTPFormatCodeAbstractAudioVideoPlaylist
-                || formatCode == EMTPFormatCodeAbstractAudioPlaylist
-                || formatCode == EMTPFormatCodeAbstractVideoPlaylist
-                || formatCode == EMTPFormatCodeASXPlaylist
-                || formatCode == EMTPFormatCodePLSPlaylist )
-                {
-                PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::AddObjectL AddPlaylist" ) );
-                iMmMtpDpMetadataMpxAccess->AddPlaylistL( aFullFileName );
-                }
-            else
-                {
-                PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::AddObjectL AddSong" ) );
-                iMmMtpDpMetadataMpxAccess->AddSongL( aFullFileName );
-                }
+            PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::AddObjectL AddSong" ) );
+            iMmMtpDpMetadataMpxAccess->AddSongL( aFullFileName );
             }
         }
 
@@ -454,8 +451,8 @@ void CMmMtpDpMetadataAccessWrapper::AddObjectL( const TDesC& aFullFileName, TBoo
 // Get Modified content
 // ---------------------------------------------------------------------------
 //
-EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetModifiedContentL( const TDesC& aStorageRoot, 
-    TInt& arrayCount, 
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetModifiedContentL( const TDesC& aStorageRoot,
+    TInt& arrayCount,
     CDesCArray& aModifiedcontent )
     {
     iMmMtpDpMetadataMpxAccess->SetStorageRootL( aStorageRoot );
@@ -479,7 +476,7 @@ TBool CMmMtpDpMetadataAccessWrapper::IsExistL( const TDesC& aSuid )
     return iMmMtpDpMetadataMpxAccess->IsExistL( aSuid );
     }
 
-// ----------------------------------------------------------------------------- 
+// -----------------------------------------------------------------------------
 // CMmMtpDpMetadataAccessWrapper::AddDummyFile
 // Add one dummy file to dummy files array
 // -----------------------------------------------------------------------------
@@ -487,10 +484,10 @@ TBool CMmMtpDpMetadataAccessWrapper::IsExistL( const TDesC& aSuid )
 EXPORT_C void CMmMtpDpMetadataAccessWrapper::AddDummyFileL( const TDesC& aDummyFileName )
     {
     PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::AddDummyFile aDummyFileName(%S)" ), &aDummyFileName );
-    iPlaylistArray->AppendL( aDummyFileName );
+    iAbstractMediaArray->AppendL( aDummyFileName );
     }
 
-// ----------------------------------------------------------------------------- 
+// -----------------------------------------------------------------------------
 // CMmMtpDpMetadataAccessWrapper::DeleteDummyFile
 // Delete one dummy file from dummy files array
 // -----------------------------------------------------------------------------
@@ -499,12 +496,12 @@ EXPORT_C void CMmMtpDpMetadataAccessWrapper::DeleteDummyFile( const TDesC& aDumm
     {
     PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::DeleteDummyFile aDummyFileName(%S)" ), &aDummyFileName );
     TInt pos = 0;
-    if ( iPlaylistArray->Count() > 0 )
+    if ( iAbstractMediaArray->Count() > 0 )
         {
-        if ( 0 == iPlaylistArray->Find( aDummyFileName, pos ) )
+        if ( 0 == iAbstractMediaArray->Find( aDummyFileName, pos ) )
             {
             PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::DeleteDummyFile pos = %d" ), pos );
-            iPlaylistArray->Delete( pos );
+            iAbstractMediaArray->Delete( pos );
             }
         }
     }
@@ -549,26 +546,26 @@ EXPORT_C void CMmMtpDpMetadataAccessWrapper::CreateDummyFile( const TDesC& aPlay
 void CMmMtpDpMetadataAccessWrapper::RemoveDummyFiles()
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::RemoveDummyFiles" ) );
-    
-    TInt count = iPlaylistArray->Count();
+
+    TInt count = iAbstractMediaArray->Count();
     // Check if playlist file is a dummy file or an imported file
     for ( TInt i = 0; i < count; i++ )
         {
-        if ( MmMtpDpUtility::FormatFromFilename( (*iPlaylistArray)[i] ) !=
+        if ( MmMtpDpUtility::FormatFromFilename( (*iAbstractMediaArray)[i] ) !=
             EMTPFormatCodeM3UPlaylist )
             {
             // delete the virtual playlist
             // iFramework has release don't use iFramework.FS()
-            TInt err = iRfs.Delete( (*iPlaylistArray)[i] );
+            TInt err = iRfs.Delete( ( *iAbstractMediaArray )[i] );
 
             PRINT2( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::RemoveDummyFile filename = %S, err %d" ),
-                &( (*iPlaylistArray)[i] ),
+                &( (*iAbstractMediaArray)[i] ),
                 err );
             }
         else
             {
             // leave the Imported playlist in the file system
-            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::RemoveDummyFile, Don't delete m3u file [%S]" ), &( (*iPlaylistArray)[i] ) );
+            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::RemoveDummyFile, Don't delete m3u file [%S]" ), &( (*iAbstractMediaArray)[i] ) );
             }
         }
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::RemoveDummyFiles" ) );
@@ -579,7 +576,7 @@ void CMmMtpDpMetadataAccessWrapper::RemoveDummyFiles()
 // Update Music collection
 // ---------------------------------------------------------------------------
 //
-EXPORT_C void CMmMtpDpMetadataAccessWrapper::UpdateMusicCollectionL() 
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::UpdateMusicCollectionL()
     {
     iMmMtpDpMetadataMpxAccess->UpdateMusicCollectionL( );
     }

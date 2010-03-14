@@ -258,6 +258,26 @@ public:
     */
     inline void SendMsgL(TInt aIndex, const TMPXMessage& aMsg);
 
+    
+    /**
+    * Sets the primary client
+    *
+    * @since S60 9.2
+    * @return system error
+    */        
+    IMPORT_C TInt SetPrimaryClient(CMPXMessageQueue& aMsgQueue);
+        
+
+
+    /**
+    * Send a sync message to the primary client
+    *
+    * @since S60 9.2
+    * @return system error
+    */    
+    IMPORT_C TInt SendSyncMsg(const CMPXMessage* aMsg);
+
+    
 private:
     /**
     *  Encapsulates a client: all the information associated with a client of
@@ -433,6 +453,7 @@ private:
     RPointerArray<CClientId> iClients;
     RArray<TProcessId> iClientProcesses;
     MMPXClientlistObserver* iObserver;
+    CMPXMessageQueue* iPrimaryClient;
     };
 
 #include "mpxclientlist.inl"
