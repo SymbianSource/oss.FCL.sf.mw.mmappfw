@@ -15,4 +15,5 @@ EXPORTS
 	?SetItemL@CMPXCollectionMediator@@QAEXAAPAVCMPXMedia@@@Z @ 14 NONAME ; void CMPXCollectionMediator::SetItemL(class CMPXMedia * &)
 	?SetItemL@CMPXCollectionMediator@@QAEXAAV?$TArray@PAVCMPXMedia@@@@AAVCMPXCollectionPath@@AAV?$RArray@H@@@Z @ 15 NONAME ; void CMPXCollectionMediator::SetItemL(class TArray<class CMPXMedia *> &, class CMPXCollectionPath &, class RArray<int> &)
 	?SetItemL@CMPXCollectionMediator@@QAEXAAVCMPXMediaArray@@@Z @ 16 NONAME ; void CMPXCollectionMediator::SetItemL(class CMPXMediaArray &)
+	?AddItemAsyncL@CMPXCollectionMediator@@QAEXAAPAVCMPXMedia@@@Z @ 17 NONAME ; void CMPXCollectionMediator::AddItemAsyncL(class CMPXMedia * &)
 

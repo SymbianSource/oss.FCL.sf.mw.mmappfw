@@ -531,11 +531,16 @@ CMTPTypeObjectPropDesc* CMediaMtpDataProviderDescriptionUtility::NewEncodingProf
     CMTPTypeObjectPropDescEnumerationForm* expectedForm =
         CMTPTypeObjectPropDescEnumerationForm::NewLC( EMTPTypeString ); // + expectedForm
 
-    CMTPTypeString* string = CMTPTypeString::NewLC( _L( "SP@LL" ) );    // + string
+    CMTPTypeString* string = CMTPTypeString::NewLC( _L("SP@LL") );    // + string
     expectedForm->AppendSupportedValueL( *string );
-    string->SetL( _L("SP@ML"));
+    string->SetL( _L("SP@ML") );
     expectedForm->AppendSupportedValueL( *string );
-    string->SetL( _L("MP@LL"));
+    string->SetL( _L("MP@LL") );
+    expectedForm->AppendSupportedValueL( *string );
+
+    string->SetL( _L("MP@ML") );
+    expectedForm->AppendSupportedValueL( *string );
+    string->SetL( _L("MP@HL") );
     expectedForm->AppendSupportedValueL( *string );
 
     CMTPTypeObjectPropDesc::TPropertyInfo propertyInfo;

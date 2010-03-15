@@ -238,12 +238,10 @@ void CAbstractMediaMtpDataProvider::SessionClosedL( const TMTPNotificationParams
     iIsSessionOpen = EFalse;
     TInt count = iActiveProcessors.Count();
     PRINT1( _L( "MM MTP => CAbstractMediaMtpDataProvider::SessionClosedL, total processor count = %d" ), count );
-    for ( TInt i = 0; i < count; i++ )
+    while ( count-- )
         {
-        MMmRequestProcessor* processor = iActiveProcessors[i];
+        MMmRequestProcessor* processor = iActiveProcessors[count];
 
-        // replaced for the Request() is invalid sometimes
-        // TUint32 sessionId( processor->Request().Uint32( TMTPTypeRequest::ERequestSessionID ) );
         TUint32 sessionId = processor->SessionId();
 
         if ( ( sessionId == aSession.iMTPId )
@@ -252,10 +250,11 @@ void CAbstractMediaMtpDataProvider::SessionClosedL( const TMTPNotificationParams
             {
             processor->UsbDisconnect(); // Rollback
 
-            iActiveProcessors.Remove( i );
-            if ( i == iActiveProcessor )
+            iActiveProcessors.Remove( count );
+            if ( count == iActiveProcessor )
                 {
                 iActiveProcessorRemoved = ETrue;
+                iActiveProcessor = -1;  // update iActiveProcessor
                 }
             else
                 {

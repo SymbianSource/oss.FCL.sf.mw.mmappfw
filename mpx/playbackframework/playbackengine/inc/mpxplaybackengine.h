@@ -857,10 +857,15 @@ private:  // New functions
     void SavePlaybackCompleteInfoL();
 
     /**
-    * Restore playback position and state if it was saved previously
+    * Restore playback position if it was saved previously
     */
-    void RestorePlaybackPositionAndStateL( const CMPXMedia& aMedia );
+    void RestorePlaybackPositionL( const CMPXMedia& aMedia );
 
+    /**
+    * Restore playback state if it was saved previously
+    */
+    void RestorePlaybackStateL();
+  
     /**
     * Sets the volume increment depending on accessory state
     */
@@ -1031,6 +1036,9 @@ private:
 #ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
     RFile64 iFile64;
 #endif // SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
+    
+    TInt iPositionFromMedia; 
+    
     };
 
 #include "mpxplaybackengine.inl"

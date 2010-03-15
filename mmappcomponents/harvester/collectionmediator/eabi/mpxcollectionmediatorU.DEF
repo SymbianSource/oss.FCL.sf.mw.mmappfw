@@ -19,4 +19,5 @@ EXPORTS
 	_ZTI22CMPXCollectionMediator @ 18 NONAME ; #<TI>#
 	_ZTV18CMPXMoveItemHelper @ 19 NONAME ; #<VT>#
 	_ZTV22CMPXCollectionMediator @ 20 NONAME ; #<VT>#
+	_ZN22CMPXCollectionMediator13AddItemAsyncLERP9CMPXMedia @ 21 NONAME
 

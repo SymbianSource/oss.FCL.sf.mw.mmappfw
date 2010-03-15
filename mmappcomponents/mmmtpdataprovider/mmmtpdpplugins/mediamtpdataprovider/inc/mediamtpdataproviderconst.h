@@ -78,21 +78,21 @@ enum TMmMtpDuration
 enum TMmMtpWidthRange
     {
     EMTPMinWidth  = 0x000000b0,  // 176 pixels
-    EMTPMaxWidth  = 0x00000140,  // 320 pixels
+    EMTPMaxWidth  = 0x00000500,  // 1280 pixels
     EMTPStepWidth = 0x00000001,
     };
 
 enum TMmMtpHeightRange
     {
     EMTPMinHeight  = 0x00000090,  // 144 pixels
-    EMTPMaxHeight  = 0x000000F0,  // 240 pixels
+    EMTPMaxHeight  = 0x000002D0,  // 720 pixels
     EMTPStepHeight = 0x00000001,
     };
 
 enum TMmMtpVideoBitRateRange
     {
     EMTPWMVMinBitrate  = 0x00000000,
-    EMTPWMVMaxBitrate  = 0x0005dc00,        // 384 kbps
+    EMTPWMVMaxBitrate  = 0x01312D00,        // 20 Mbps
     EMTPVideoBitrateStep = 0x00000001
     };
 
@@ -111,7 +111,7 @@ enum TMmMtpVideoFourCCCodec
 enum TMmMtpFramesPerThousandSecondsRange
     {
     EMTPMinFramesPerThousandSeconds  = 0x00000000,
-    EMTPMaxFramesPerThousandSeconds  = 0x00003a98,  // 15000 frame per ms
+    EMTPMaxFramesPerThousandSeconds  = 0x00007530,  // 30000 frame per thousand seconds (30 frame/s)
     EMTPStepFramesPerThousandSeconds = 0x00000001
     };
 

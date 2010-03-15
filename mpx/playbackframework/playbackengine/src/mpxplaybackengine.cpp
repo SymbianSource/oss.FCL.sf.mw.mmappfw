@@ -109,6 +109,7 @@ CMPXPlaybackEngine::CMPXPlaybackEngine(
     iState(EPbStateNotInitialised),
     iNextState(EPbStateNotInitialised),
     iPluginState(EPbStateNotInitialised),
+    iCategory(EMPXCategoryUndefined),
     iModeId(aModeId),
     iObserver(aObserver),
     iPreservedState( EPbStateNotInitialised ),
@@ -116,7 +117,8 @@ CMPXPlaybackEngine::CMPXPlaybackEngine(
     iSkipping(EFalse),
     iPluginUid(KNullUid),
     iLastActiveProcess(KNullProcessId),
-    iLastInactiveProcess(KNullProcessId)
+    iLastInactiveProcess(KNullProcessId),
+    iPositionFromMedia( KErrNotFound ) 
     {
     iProperties[EPbPropertyVolumeRamp]=KPbFadeInDurationMicroSeconds;
     }
@@ -140,6 +142,7 @@ CMPXPlaybackEngine::CMPXPlaybackEngine(
     iNextState(EPbStateNotInitialised),
     iPluginState(EPbStateNotInitialised),
     iModeId(aModeId),
+    iCategory(aCategory),
     iObserver(aObserver),
     iPreservedState( EPbStateNotInitialised ),
     iPreservedPosition( KErrNotFound ),
@@ -147,7 +150,7 @@ CMPXPlaybackEngine::CMPXPlaybackEngine(
     iPluginUid(KNullUid),
     iLastActiveProcess(KNullProcessId),
     iLastInactiveProcess(KNullProcessId),
-    iCategory(aCategory)
+    iPositionFromMedia( KErrNotFound ) 
     {
     iProperties[EPbPropertyVolumeRamp]=KPbFadeInDurationMicroSeconds;
     }
@@ -180,16 +183,24 @@ void CMPXPlaybackEngine::ConstructL(MMPXClientlistObserver* aClientListObserver)
 
     iMediaHelper = CMPXPlaybackMediaHelper::NewL( *this );
     iDummyMediaObserver = new(ELeave) CMPXPlaybackDummyMediaObserver();
-    // Select local plugin by default if none selected
-    iPluginHandler->SelectPlayersL( EPbLocal );
-    iInitVolume = ETrue;
+    iInitVolume = EFalse;
+    
+    if (iCategory != EMPXCategoryVideo)
+        {
+        // Select local plugin by default if none selected
+        iPluginHandler->SelectPlayersL( EPbLocal );
+        iInitVolume = ETrue;
+        iPluginHandler->Plugin()->PropertyL( EPbPropertyVolume );
+        }
+    
 #if defined(__HIGH_RESOLUTION_VOLUME)
     iVolRoundedUp = EFalse;
 #endif
-    iPluginHandler->Plugin()->PropertyL( EPbPropertyVolume );
+    
     iSyncMsgTimer = CPeriodic::NewL( CActive::EPriorityIdle ); 
     iSyncMsgWait = new (ELeave) CActiveSchedulerWait; 
-    }
+    iProperties[EPbPropertyPosition] = 0; 
+    	}
 
 // ----------------------------------------------------------------------------
 // Destructor
@@ -304,8 +315,11 @@ EXPORT_C void CMPXPlaybackEngine::InitL(
                 TMPXPlaybackMessage::EInitializeComplete,
                 0,
                 EFalse));
-
-        iPluginUid = iPluginHandler->Plugin()->Uid();
+				
+        if ( iPluginHandler->PlayerFound() )
+        {
+        	iPluginUid = iPluginHandler->Plugin()->Uid();
+        }
 
         RArray<TMPXAttribute> dummy;
         CleanupClosePushL( dummy );
@@ -1464,10 +1478,6 @@ void CMPXPlaybackEngine::HandlePluginEventInitialisedL(TMPXPlaybackState& s, TIn
             iProperties[EPbPropertyPosition] = 0;
             }
 
-    // Set position to restore saved position.
-    TRAP_IGNORE( // uPnP leaves if set position in stop state
-            PluginL()->SetL( EPbPropertyPosition, iProperties[EPbPropertyPosition] ));
-
     iAutoResumeHandler->HandleOpenFileComplete();
     
     // Check if playback should not be started automatically.
@@ -1995,6 +2005,18 @@ void CMPXPlaybackEngine::InitL(const TDesC* aSong,
     SetStateL( msg );
     iProperties[EPbPropertyPosition]=0;
     
+    if ( KErrNotFound != iPreservedPosition )
+          {
+          iProperties[EPbPropertyPosition] = iPreservedPosition;
+          iPreservedPosition = KErrNotFound;
+          }
+    else if ( KErrNotFound != iPositionFromMedia )
+        {
+        iProperties[EPbPropertyPosition] = iPositionFromMedia;
+        iPositionFromMedia = KErrNotFound;
+        }
+    MPX_DEBUG2("CMPXPlaybackEngine::InitL iPropertyPosition %d", iProperties[EPbPropertyPosition] );
+      
     // make sure our interface is supported
     CDesCArray* interfaces = iPluginHandler->SupportedInterfacesL( p->Uid() );
     TBool version2InterfaceSupported = EFalse;
@@ -2018,22 +2040,22 @@ void CMPXPlaybackEngine::InitL(const TDesC* aSong,
                 {
                 if (aSong && aType)
                     {
-                    plugin->InitStreamingL( *aSong, *aType, aAccessPoint );
+                    plugin->InitStreamingL( *aSong, *aType, aAccessPoint, iProperties[EPbPropertyPosition] ); 
                     }
                 else if (aFile)
                     {
-                    plugin->InitStreamingL( *aFile, aAccessPoint );
+                    plugin->InitStreamingL( *aFile, aAccessPoint, iProperties[EPbPropertyPosition] ); 
                     }
                 }
             else
                 {
                 if (aSong && aType)
                     {
-                    plugin->InitialiseL( *aSong );
+                    plugin->InitialiseWithPositionL( *aSong, iProperties[EPbPropertyPosition] ); 
                     }
                 else if (aFile)
                     {
-                    plugin->InitialiseL( *aFile );
+                    plugin->InitialiseWithPositionL( *aFile, iProperties[EPbPropertyPosition] ); 
                     }        
                 }
             }
@@ -2256,6 +2278,7 @@ void CMPXPlaybackEngine::HandleCollectionMediaL(
             }
         else
             {
+            RestorePlaybackPositionL( aMedia );  
             TRAP( aError, InitL( iUri, mimeType, NULL, iAccessPoint) );
             /*
             // 20 steps  fix
@@ -2284,7 +2307,7 @@ void CMPXPlaybackEngine::HandleCollectionMediaL(
                */
             if ( KErrNone == aError )
                 {
-                RestorePlaybackPositionAndStateL( aMedia );
+                RestorePlaybackStateL(); 
                 }
             else
                 {
@@ -3468,36 +3491,37 @@ void CMPXPlaybackEngine::SavePlaybackCompleteInfoL()
 // Restore playback position if it was saved previously
 // ----------------------------------------------------------------------------
 //
-void CMPXPlaybackEngine::RestorePlaybackPositionAndStateL(
+void CMPXPlaybackEngine::RestorePlaybackPositionL(
     const CMPXMedia& aMedia )
     {
-    MPX_DEBUG1("CMPXPlaybackEngine::RestorePlaybackPositionAndStateL() entering");
+    MPX_FUNC("CMPXPlaybackEngine::RestorePlaybackPositionL() ");
 
     // Restore Position
     iProperties[EPbPropertyPosition] = 0;
-    if ( KErrNotFound != iPreservedPosition )
-        {
-        iProperties[EPbPropertyPosition] = iPreservedPosition;
-        iPreservedPosition = KErrNotFound;
-        }
-    else
-        {
+
         // Check media
         if (aMedia.IsSupported(KMPXMediaGeneralLastPlaybackPosition))
             {
-            iProperties[EPbPropertyPosition] =
-                aMedia.ValueTObjectL<TInt>( KMPXMediaGeneralLastPlaybackPosition );
+            iPositionFromMedia =
+                aMedia.ValueTObjectL<TInt>( KMPXMediaGeneralLastPlaybackPosition ); 
             }
-        }
+        MPX_DEBUG2("CMPXPlaybackEngine::RestorePlaybackPositionL iPositionFromMedia %d", iPositionFromMedia ); 
+    }
 
+
+// ----------------------------------------------------------------------------
+// Restore playback state if it was saved previously
+// ----------------------------------------------------------------------------
+//
+void CMPXPlaybackEngine::RestorePlaybackStateL()
+    {
+    MPX_FUNC("CMPXPlaybackEngine::RestorePlaybackStateL() ");
     // Restore State
     if ( EPbStateNotInitialised != iPreservedState )
         {
         iNextState = iPreservedState;
         iPreservedState = EPbStateNotInitialised;
-        }
-
-    MPX_DEBUG1("CMPXPlaybackEngine::RestorePlaybackPositionAndStateL() exiting");
+        }   
     }
 
 // ----------------------------------------------------------------------------
@@ -3832,6 +3856,18 @@ void CMPXPlaybackEngine::Init64L(RFile64* aFile, TInt aAccessPoint)
     SetStateL( msg );
     iProperties[EPbPropertyPosition]=0;
     
+        if ( KErrNotFound != iPreservedPosition )
+              {
+              iProperties[EPbPropertyPosition] = iPreservedPosition;
+              iPreservedPosition = KErrNotFound;
+              }
+        else if ( KErrNotFound != iPositionFromMedia )
+            {
+            iProperties[EPbPropertyPosition] = iPositionFromMedia;
+            iPositionFromMedia = KErrNotFound;
+            }
+        MPX_DEBUG2("CMPXPlaybackEngine::InitL iPropertyPosition %d", iProperties[EPbPropertyPosition] );
+            
     // Check if version2 interface is supported.
     CDesCArray* interfaces = iPluginHandler->SupportedInterfacesL( p->Uid() );
     TBool version2InterfaceSupported = EFalse;
@@ -3853,11 +3889,11 @@ void CMPXPlaybackEngine::Init64L(RFile64* aFile, TInt aAccessPoint)
             {
             if ( iAccessPointSet )
                 {
-                plugin->InitStreaming64L( *aFile, aAccessPoint );
+                plugin->InitStreaming64L( *aFile, aAccessPoint, iProperties[EPbPropertyPosition] ); 
                 }
             else
                 {
-                plugin->Initialise64L( *aFile );
+                plugin->Initialise64L( *aFile, iProperties[EPbPropertyPosition] ); 
                 }
             }
         else

@@ -2440,7 +2440,11 @@ void CMPXCollectionClientContext::DoPluginOpenL()
     // Check for open playlist only mode.  If in that mode, do not return the media
     // from the cache but call the plugin to open, as that will callback a
     // different HandleOpenL() with the collection path instead.
-    TMPXOpenMode mode( iBrowsePath->OpenNextMode() );
+    TMPXOpenMode mode = EMPXOpenDefault;
+    if(iBrowsePath)
+        {
+        mode = iBrowsePath->OpenNextMode();
+        }
     CMPXCollectionPlugin* plugin = LoadedPlugin(EContextBrowse);
     if ( !iFilter && mode != EMPXOpenPlaylistOnly )
         {
