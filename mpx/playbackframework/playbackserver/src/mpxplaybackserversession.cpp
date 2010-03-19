@@ -515,6 +515,11 @@ void CMPXPlaybackSession::DispatchMessageL( const RMessage2& aMessage, TInt& aMs
             break;
             }
 #endif // SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
+        case EPbsSetPrimaryClient:
+            {
+            aMsgHandleResult = iPlayer->ClientList()->SetPrimaryClient(*iMessageQueue);            
+            break;
+            }
         default:
             {
             PanicClient(aMessage,KErrNotSupported);

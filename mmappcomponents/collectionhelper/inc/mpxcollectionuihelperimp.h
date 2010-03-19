@@ -848,7 +848,6 @@ private: // data
     TInt                                iEmbeddedPluginInfo;
     TBool                               iInitialized;  // collection db merging
     TBool                               iIncAdding;  // Incremental adding guard
-    TInt 								iRefCount;
     };
 
 #endif // CMPX_COLLECTION_UI_HELPER_H

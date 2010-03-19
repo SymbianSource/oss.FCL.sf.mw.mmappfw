@@ -164,8 +164,7 @@ enum TMPXPlaybackAccessoryMode
     EPbAccessoryLoopset            = 0x00000020,
     EPbAccessoryMusicStand         = 0x00000040,
     EPbAccessoryTVOut              = 0x00000080,
-    EPbAccessoryHeadphones         = 0x00000100,
-    EPbAccessoryHDMI               = 0x00000200
+    EPbAccessoryHeadphones         = 0x00000100
     };
 #else
 /**
@@ -247,6 +246,7 @@ enum TMPXPlaybackServerOp
     EPbsInitFromFile64,             // 42
     EPbsInitStreamingFromFile64,    // 43
     EPbsGetFile64,                  // 44
+    EPbsSetPrimaryClient,            //45 set primary client
     EPbsServerOpEnd                 // End of operation     
     };
 

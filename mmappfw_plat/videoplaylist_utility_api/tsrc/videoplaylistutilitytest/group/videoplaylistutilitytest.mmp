@@ -15,7 +15,7 @@
 *
 */
 
-// Version : %version: 2 %
+// Version : %version: 3 %
 
 
 #include <platform_paths.hrh>
@@ -49,7 +49,6 @@ LIBRARY         libc.lib
 LIBRARY         libglib.lib
 LIBRARY         libpthread.lib
 LIBRARY         efsrv.lib
-LIBRARY         flogger.lib
 LIBRARY         ServiceHandler.lib
 LIBRARY         ecom.lib
 LIBRARY         estor.lib

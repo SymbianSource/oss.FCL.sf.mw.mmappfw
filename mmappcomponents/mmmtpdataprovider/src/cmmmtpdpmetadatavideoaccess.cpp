@@ -1,19 +1,19 @@
 /*
- * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
- * All rights reserved.
- * This component and the accompanying materials are made available
- * under the terms of "Eclipse Public License v1.0"
- * which accompanies this distribution, and is available
- * at the URL "http://www.eclipse.org/legal/epl-v10.html".
- *
- * Initial Contributors:
- * Nokia Corporation - initial contribution.
- *
- * Contributors:
- *
- * Description:  Meta data Video access
- *
- */
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Meta data Video access
+*
+*/
 
 #include <ContentListingFactory.h>
 #include <MCLFContentListingEngine.h>
@@ -62,24 +62,23 @@ const TInt KMtpCompactInterval = 50;  // Compact every ....
 
 CMmMtpDpMetadataVideoAccess* CMmMtpDpMetadataVideoAccess::NewL( RFs& aRfs )
     {
-    CMmMtpDpMetadataVideoAccess* me = new( ELeave ) CMmMtpDpMetadataVideoAccess( aRfs );
-    CleanupStack::PushL( me );
+    CMmMtpDpMetadataVideoAccess* me = new(ELeave) CMmMtpDpMetadataVideoAccess( aRfs );
+    CleanupStack::PushL(me);
     me->ConstructL();
-    CleanupStack::Pop( me );
+    CleanupStack::Pop(me);
 
     return me;
     }
 
-CMmMtpDpMetadataVideoAccess::CMmMtpDpMetadataVideoAccess( RFs& aRfs ) :
-    iRfs( aRfs ),
-    iDbState( ENoRecord ),
-    iDbOpened( EFalse )
+CMmMtpDpMetadataVideoAccess::CMmMtpDpMetadataVideoAccess( RFs& aRfs ) : iRfs(aRfs),
+                                                    iDbState(ENoRecord),
+                                                    iDbOpened(EFalse)
     {
-    // Do nothing
+    
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::ConstructL
+// CMmMtpDpMetadataMpxAccess::ConstructL
 // Second-phase
 // ---------------------------------------------------------------------------
 //
@@ -89,7 +88,8 @@ void CMmMtpDpMetadataVideoAccess::ConstructL()
 
     User::LeaveIfError( iDbsSession.Connect() );
 
-    TInt err = DriveInfo::GetDefaultDrive( DriveInfo::EDefaultPhoneMemory, iStoreNum );
+    TInt err = DriveInfo::GetDefaultDrive( DriveInfo::EDefaultPhoneMemory,
+        iStoreNum );
 
     err = OpenDatabase();
 
@@ -100,7 +100,7 @@ void CMmMtpDpMetadataVideoAccess::ConstructL()
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::OpenDatabase
+// CMmMtpDpMetadataMpxAccess::OpenDatabase
 // Open data base
 // ---------------------------------------------------------------------------
 //
@@ -168,7 +168,7 @@ TInt CMmMtpDpMetadataVideoAccess::OpenDatabase()
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::OpenDatabaseL
+// CMmMtpDpMetadataMpxAccess::OpenDatabaseL
 // Open data base
 // ---------------------------------------------------------------------------
 //
@@ -181,7 +181,7 @@ void CMmMtpDpMetadataVideoAccess::OpenDatabaseL()
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::~CMmMtpDpMetadataVideoAccess
+// CMmMtpDpMetadataMpxAccess::~CMmMtpDpMetadataVideoAccess
 // Destructor
 // ---------------------------------------------------------------------------
 //
@@ -196,7 +196,7 @@ CMmMtpDpMetadataVideoAccess::~CMmMtpDpMetadataVideoAccess()
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::CreateDatabaseTablesL
+// CMmMtpDpMetadataMpxAccess::CreateDatabaseTablesL
 // Case where a new memory card is used and the player has not been opened
 // ---------------------------------------------------------------------------
 //
@@ -341,7 +341,7 @@ void CMmMtpDpMetadataVideoAccess::CompactDbIfNecessaryL()
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::CleanupDbIfNecessaryL
+// CMmMtpDpMetadataMpxAccess::CleanupDbIfNecessaryL
 // Cleanup Database
 // ---------------------------------------------------------------------------
 //
@@ -369,7 +369,7 @@ void CMmMtpDpMetadataVideoAccess::CleanupDbIfNecessaryL()
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::IdentifyDeletedFilesL
+// CMmMtpDpMetadataMpxAccess::IdentifyDeletedFilesL
 // Identify deleted files
 // ---------------------------------------------------------------------------
 //
@@ -380,7 +380,7 @@ void CMmMtpDpMetadataVideoAccess::IdentifyDeletedFilesL()
     ExecuteQueryL( KAllColumns, KMtpVideoTable, KMtpVideoLocation, KNullDesC, ETrue );
     PRINT1( _L( "MM MTP <> CleanupDbIfNecessaryL Database total count = %d" ), iRecordSet.CountL() );
 
-    for ( iRecordSet.FirstL(); iRecordSet.AtRow(); iRecordSet.NextL() )
+    for ( iRecordSet.FirstL(); iRecordSet.AtRow(); iRecordSet.NextL( ))
         {
         HBufC* data = ReadLongTextL( KMtpVideoLocation );
         CleanupStack::PushL( data );
@@ -407,7 +407,7 @@ void CMmMtpDpMetadataVideoAccess::IdentifyDeletedFilesL()
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::ReadLongTextL
+// CMmMtpDpMetadataMpxAccess::ReadLongTextL
 // Read from Data base
 // ---------------------------------------------------------------------------
 //
@@ -443,12 +443,11 @@ HBufC* CMmMtpDpMetadataVideoAccess::ReadLongTextL( const TDesC& aColumn )
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::WriteLongTextL
+// CMmMtpDpMetadataMpxAccess::WriteLongTextL
 // Utility to write to the database
 // ---------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataVideoAccess::WriteLongTextL( const TDesC& aColumn,
-    const TDesC& aValue )
+void CMmMtpDpMetadataVideoAccess::WriteLongTextL( const TDesC& aColumn, const TDesC& aValue )
     {
     PRINT2( _L( "MM MTP <> WriteLongTextL Metadata value for %S is \"%S\"" ), &aColumn, &aValue );
     TDbColNo num = iColSet->ColNo( aColumn );
@@ -460,16 +459,13 @@ void CMmMtpDpMetadataVideoAccess::WriteLongTextL( const TDesC& aColumn,
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::ExecuteQueryL
+// CMmMtpDpMetadataMpxAccess::ExecuteQueryL
 // Executes a query on the database and sets the cursor at the start of the recordset
 // ---------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataVideoAccess::ExecuteQueryL( const TDesC& aSelectThese,
-    const TDesC& aFromTable,
-    const TDesC& aColumnToMatch,
-    const TDesC& aMatchCriteria,
-    const TBool aIfNot,
-    const TBool aNeedQuotes )
+void CMmMtpDpMetadataVideoAccess::ExecuteQueryL( const TDesC& aSelectThese, const TDesC& aFromTable,
+                                       const TDesC& aColumnToMatch, const TDesC& aMatchCriteria,
+                                       const TBool aIfNot, const TBool aNeedQuotes )
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataVideoAccess::ExecuteQueryL" ) );
 
@@ -535,17 +531,17 @@ void CMmMtpDpMetadataVideoAccess::ExecuteQueryL( const TDesC& aSelectThese,
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::OpenSessionL
+// CMmMtpDpMetadataMpxAccess::OpenSessionL
 // Called when the MTP session is initialised
 // ---------------------------------------------------------------------------
 //
 void CMmMtpDpMetadataVideoAccess::OpenSessionL()
     {
-    // Do nothing
+
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::CloseSessionL
+// CMmMtpDpMetadataMpxAccess::CloseSessionL
 // Called when the MTP session is closed
 // ---------------------------------------------------------------------------
 //
@@ -566,7 +562,7 @@ void CMmMtpDpMetadataVideoAccess::CloseSessionL()
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::AddVideoL
+// CMmMtpDpMetadataMpxAccess::AddVideoL
 // Adds video info to the database
 // ---------------------------------------------------------------------------
 //
@@ -597,8 +593,7 @@ void CMmMtpDpMetadataVideoAccess::AddVideoL( const TDesC& aFullFileName )
         iRecordSet.SetColL( num, aFullFileName );
 
         num = iColSet->ColNo( KMtpVideoName );
-        TParsePtrC parser( aFullFileName );
-        iRecordSet.SetColL( num, parser.Name() ); // Default name is the filename.
+        iRecordSet.SetColL( num, aFullFileName );     // Default name is the filename.
 
         num = iColSet->ColNo( KMtpVideoArtist );
         iRecordSet.SetColL( num, KNullDesC );
@@ -627,8 +622,8 @@ void CMmMtpDpMetadataVideoAccess::AddVideoL( const TDesC& aFullFileName )
         num = iColSet->ColNo( KMtpVideoHeight );
         iRecordSet.SetColL( num, 0 );
 
-        num = iColSet->ColNo( KMtpVideoDuration );
-        iRecordSet.SetColL( num, 0 );
+        num = iColSet->ColNo(KMtpVideoDuration);
+        iRecordSet.SetColL(num, 0);
 
         num = iColSet->ColNo( KMtpVideoSampleRate );
         iRecordSet.SetColL( num, 0 );
@@ -648,8 +643,8 @@ void CMmMtpDpMetadataVideoAccess::AddVideoL( const TDesC& aFullFileName )
         num = iColSet->ColNo( KMtpVideoVideoBitrate );
         iRecordSet.SetColL( num, 0 );
 
-        num = iColSet->ColNo( KMtpVideoFramesPer1000Sec );
-        iRecordSet.SetColL( num, 0 );
+        num = iColSet->ColNo(KMtpVideoFramesPer1000Sec);
+        iRecordSet.SetColL(num, 0);
 
         num = iColSet->ColNo( KMtpVideoKeyFrameDistance );
         iRecordSet.SetColL( num, 0 );
@@ -699,13 +694,13 @@ void CMmMtpDpMetadataVideoAccess::AddVideoL( const TDesC& aFullFileName )
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL
+// CMmMtpDpMetadataMpxAccess::GetObjectMetadataValueL
 //  Gets a piece of metadata from the collection
 // ---------------------------------------------------------------------------
 //
 void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCode,
-    MMTPType& aNewData,
-    const CMTPObjectMetaData& aObjectMetaData )
+        MMTPType& aNewData,
+        const CMTPObjectMetaData& aObjectMetaData )
     {
     PRINT1( _L( "MM MTP => CMmMtpDpMetadataVideoAccess::GetObjectMetadataValue aPropCode = 0x%x" ), aPropCode );
 
@@ -723,7 +718,7 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
     TUint32 uInt32 = 0;
     TUint16 uInt16 = 0;
 
-    switch ( aPropCode )
+    switch (aPropCode)
         {
         case EMTPObjectPropCodeName:
             {
@@ -788,13 +783,10 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
             PRINT( _L( "MM MTP <> EMTPObjectPropCodeDescription-MD" ) );
             data = ReadLongTextL( KMtpVideoComment );
 
-            TInt len = data->Length();
-            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::GetObjectMetadataValue len = %d" ),len );
-            if ( len != 0 )
-                {
-                for ( TInt i = 0; i < len; i++ )
-                    ( ( CMTPTypeArray& ) aNewData ).AppendUintL( ( *data )[i] );
-                }
+            if ( data->Length() != 0 )
+                ( ( CMTPTypeString& ) aNewData ).SetL( *data ) ;
+            else
+                ( ( TMTPTypeUint32 & ) aNewData ).Set( 0 );  // return zero if description is empty
 
             delete data;
             data = NULL;
@@ -871,13 +863,13 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
             num = iColSet->ColNo( KMtpVideoNumberOfChannels );
             uInt16 = iRecordSet.ColUint16( num );
             if ( EMTPTypeUINT16 == aNewData.Type() )
-                {
-                ( ( TMTPTypeUint16 & ) aNewData ).Set( uInt16 );
-                }
-            else
-                {
-                User::Leave( KErrArgument );
-                }
+                 {
+                 ( ( TMTPTypeUint16 & ) aNewData ).Set( uInt16 );
+                 }
+             else
+                 {
+                 User::Leave( KErrArgument );
+                 }
             }
             break;
 
@@ -983,13 +975,13 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
             num = iColSet->ColNo( KMtpVideoScanType );
             uInt16 = iRecordSet.ColUint16( num );
             if ( EMTPTypeUINT16 == aNewData.Type() )
-                {
-                ( ( TMTPTypeUint16 & ) aNewData ).Set( uInt16 );
-                }
-            else
-                {
-                User::Leave( KErrArgument );
-                }
+                 {
+                 ( ( TMTPTypeUint16 & ) aNewData ).Set( uInt16 );
+                 }
+             else
+                 {
+                 User::Leave( KErrArgument );
+                 }
             }
             break;
 
@@ -1029,13 +1021,13 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
             num = iColSet->ColNo( KMtpVideoDRM );
             uInt16 = iRecordSet.ColUint16( num );
             if ( EMTPTypeUINT16 == aNewData.Type() )
-                {
-                ( ( TMTPTypeUint16 & ) aNewData ).Set( uInt16 );
-                }
-            else
-                {
-                User::Leave( KErrArgument );
-                }
+                 {
+                 ( ( TMTPTypeUint16 & ) aNewData ).Set( uInt16 );
+                 }
+             else
+                 {
+                 User::Leave( KErrArgument );
+                 }
             }
             break;
 
@@ -1047,7 +1039,7 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
         }
 
     // Pack the info to aNewData
-    if ( data )
+    if (data)
         {
 #ifdef _DEBUG
         if ( data->Length() > KMtpMaxStringDescLength )   // Have to concatenate for MTP
@@ -1072,7 +1064,7 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::SetObjectMetadataValueL
+// CMmMtpDpMetadataMpxAccess::SetObjectMetadataValueL
 // Sets a piece of metadata in the collection
 // ---------------------------------------------------------------------------
 //
@@ -1104,7 +1096,7 @@ void CMmMtpDpMetadataVideoAccess::SetObjectMetadataValueL( const TUint16 aPropCo
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::SetMetadataL
+// CMmMtpDpMetadataMpxAccess::SetMetadataL
 // Set meta data.
 // ---------------------------------------------------------------------------
 //
@@ -1131,7 +1123,7 @@ void CMmMtpDpMetadataVideoAccess::SetMetadataL( const TUint16 aObjPropCode,
         case EMTPObjectPropCodeEncodingProfile:
         case EMTPObjectPropCodeParentalRating:
             {
-            if ( EMTPTypeString != aNewData.Type() )
+            if( EMTPTypeString != aNewData.Type())
                 {
                 User::Leave( KErrArgument );
                 }
@@ -1145,12 +1137,12 @@ void CMmMtpDpMetadataVideoAccess::SetMetadataL( const TUint16 aObjPropCode,
             {
             PRINT( _L( "MM MTP <> EMTPObjectPropCodeDescription-MD" ) );
 #ifdef __MUSIC_ID_SUPPORT
-            // WriteMusicIdsL(*longString);
+            //WriteMusicIdsL(*longString);
 #else
             desData = CMTPTypeArray::NewLC( EMTPTypeAUINT16 ); // + desData
             MMTPType::CopyL( aNewData, *desData );
             TUint length = desData->NumElements();
-            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataVideoAccess::SetMetadataL length = %d" ), length );
+            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL length = %d" ), length );
             if ( length != 0 )
                 {
                 TBuf<KMtpMaxDescriptionLength> text;
@@ -1159,7 +1151,7 @@ void CMmMtpDpMetadataVideoAccess::SetMetadataL( const TUint16 aObjPropCode,
                     {
                     text.Append( desData->ElementUint( i ) );
                     }
-                PRINT1( _L( "MM MTP <> CMmMtpDpMetadataVideoAccess::SetMetadataL text = %S" ),
+                PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL text = %S" ),
                     &text );
                 WriteLongTextL( KMtpVideoComment, text );
                 }
@@ -1218,12 +1210,11 @@ void CMmMtpDpMetadataVideoAccess::SetMetadataL( const TUint16 aObjPropCode,
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::RenameRecordL
+// CMmMtpDpMetadataMpxAccess::RenameRecordL
 // Renames the file part of a record in the collection database.
 // ---------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataVideoAccess::RenameRecordL( const TDesC& aOldFileName,
-    const TDesC& aNewFileName )
+void CMmMtpDpMetadataVideoAccess::RenameRecordL(const TDesC& aOldFileName, const TDesC& aNewFileName)
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataVideoAccess::RenameRecordL()" ) );
 
@@ -1239,7 +1230,7 @@ void CMmMtpDpMetadataVideoAccess::RenameRecordL( const TDesC& aOldFileName,
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::DeleteRecordL
+// CMmMtpDpMetadataMpxAccess::DeleteRecordL
 // Deletes metadata information associated with the object
 // ---------------------------------------------------------------------------
 //
@@ -1276,7 +1267,7 @@ void CMmMtpDpMetadataVideoAccess::DeleteRecordL( const TDesC& aFullFileName )
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::DeleteAllRecordsL
+// CMmMtpDpMetadataMpxAccess::DeleteAllRecordsL
 // Empties the database - used by the FormatStore command
 // ---------------------------------------------------------------------------
 //
@@ -1285,7 +1276,7 @@ void CMmMtpDpMetadataVideoAccess::DeleteAllRecordsL()
     PRINT( _L( "MM MTP => CMmMtpDpMetadataVideoAccess::DeleteAllRecordsL()" ) );
 
     //open database if not opened
-    if ( !IsDatabaseOpened() )
+    if (!IsDatabaseOpened())
         OpenDatabaseL();
 
     SetRecordL( KNullDesC, ENoRecord );   // Commit any other changes to the DB
@@ -1307,19 +1298,18 @@ void CMmMtpDpMetadataVideoAccess::DeleteAllRecordsL()
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::SetRecordL
+// CMmMtpDpMetadataMpxAccess::SetRecordL
 // Set Record
 // ---------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataVideoAccess::SetRecordL( const TDesC& aFullFileName,
-    TMtpDbState aState )
+void CMmMtpDpMetadataVideoAccess::SetRecordL( const TDesC& aFullFileName, TMtpDbState aState )
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataVideoAccess::SetRecordL()" ) );
 
     if ( ( aState == iDbState )
-        && ( 0 == aFullFileName.Compare( iCurrentFileName ) ) )    // Already have it
+            && ( 0 == aFullFileName.Compare( iCurrentFileName ) ) )    // Already have it
         {
-        if ( iDbState == ERecordRead )
+        if (iDbState == ERecordRead)
             iRecordSet.GetL();
 
         PRINT1( _L( "MM MTP <> Cached recordset, filename is '%S'" ), &iCurrentFileName );
@@ -1342,20 +1332,20 @@ void CMmMtpDpMetadataVideoAccess::SetRecordL( const TDesC& aFullFileName,
             PRINT( _L( "MM MTP <> SetRecordL ERecordWrite" ) );
             TRAPD( err, iRecordSet.PutL() );
 
-            if ( KErrNone != err )
+            if (KErrNone != err)
                 {
                 iRecordSet.Cancel();
                 User::Leave( err );
                 }
-            //lint -fallthrough
+        //lint -fallthrough
         case ENoRecord:                 // intentionally fallthrough
             // We need to just close the open record
             PRINT( _L( "MM MTP <> SetRecordL ENoRecord" ) );
-            //lint -fallthrough
+        //lint -fallthrough
         case ERecordRead:               // intentionally fallthrough
             // We need to open a row for reading
             PRINT( _L( "MM MTP <> SetRecordL ERecordRead" ) );
-            //lint -fallthrough
+        //lint -fallthrough
         default:                        // intentionally fallthrough
             PRINT( _L( "MM MTP <> SetRecordL Closing recordset" ) );
             delete iColSet;
@@ -1365,7 +1355,7 @@ void CMmMtpDpMetadataVideoAccess::SetRecordL( const TDesC& aFullFileName,
             break;
         }
 
-    if ( aState == ENoRecord ) // We are closing the session if this is the case
+    if ( aState == ENoRecord )    // We are closing the session if this is the case
         {
         PRINT( _L( "MM MTP <> SetRecordL Record closed, no request to open" ) );
         return;
@@ -1374,6 +1364,7 @@ void CMmMtpDpMetadataVideoAccess::SetRecordL( const TDesC& aFullFileName,
     // if we have a music format, we can open the database...
     TUint16 format = MmMtpDpUtility::FormatFromFilename( iCurrentFileName );
     PRINT1( _L( "MM MTP <> SetRecordL format = 0x%x" ), format );
+
 
     if ( MmMtpDpUtility::HasMetadata( format ) )
         {
@@ -1418,7 +1409,7 @@ void CMmMtpDpMetadataVideoAccess::SetRecordL( const TDesC& aFullFileName,
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::SetImageObjPropL
+// CMmMtpDpMetadataMpxAccess::SetImageObjPropL
 // set image specific properties specific to videos
 // ---------------------------------------------------------------------------
 //
@@ -1439,24 +1430,24 @@ void CMmMtpDpMetadataVideoAccess::SetImageObjPropL( const TDesC& aFullFileName,
     TRAP( err, iRecordSet.SetColL( num, aWidth ) );
 
     if ( err != KErrNone )
-        {
-        SetRecordL( aFullFileName, EFailedWrite );
-        User::Leave( err );
-        }
+       {
+       SetRecordL( aFullFileName, EFailedWrite );
+       User::Leave( err );
+       }
 
     num = iColSet->ColNo( KMtpVideoHeight );
     TRAP( err, iRecordSet.SetColL( num, aHeight ) );
 
     if ( err != KErrNone )
-        {
-        SetRecordL( aFullFileName, EFailedWrite );
-        User::Leave( err );
-        }
+       {
+       SetRecordL( aFullFileName, EFailedWrite );
+       User::Leave( err );
+       }
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataVideoAccess::SetImageObjPropL()" ) );
     }
 
 // ---------------------------------------------------------------------------
-// CMmMtpDpMetadataVideoAccess::GetImageObjPropL
+// CMmMtpDpMetadataMpxAccess::GetImageObjPropL
 // Get image specific properties specific to videos
 // ---------------------------------------------------------------------------
 //
@@ -1485,35 +1476,35 @@ void CMmMtpDpMetadataVideoAccess::GetImageObjPropL( const TDesC& aFullFileName,
 const TDesC& CMmMtpDpMetadataVideoAccess::ColumnNameFromPropCodeL( const TUint16 aPropCode )
     {
     const TColumnNameTable KColumnTable[] =
-        {
-            { EMTPObjectPropCodeName,                    KMtpVideoName },
-            { EMTPObjectPropCodeArtist,                  KMtpVideoArtist },
-            { EMTPObjectPropCodeTrack,                   KMtpVideoTrack },
-            { EMTPObjectPropCodeGenre,                   KMtpVideoGenre },
-            { EMTPObjectPropCodeAlbumName,               KMtpVideoAlbumName },
-            { EMTPObjectPropCodeComposer,                KMtpVideoComposer },
-            { EMTPObjectPropCodeOriginalReleaseDate,     KMtpVideoOrigReleaseDate },
-            { EMTPObjectPropCodeDescription,             KMtpVideoComment },
-            { EMTPObjectPropCodeWidth,                   KMtpVideoWidth },
-            { EMTPObjectPropCodeHeight,                  KMtpVideoHeight },
-            { EMTPObjectPropCodeDuration,                KMtpVideoDuration },
-            { EMTPObjectPropCodeSampleRate,              KMtpVideoSampleRate },
-            { EMTPObjectPropCodeNumberOfChannels,        KMtpVideoNumberOfChannels },
-            { EMTPObjectPropCodeAudioBitRate,            KMtpVideoAudioBitrate },
-            { EMTPObjectPropCodeVideoFourCCCodec,        KMtpVideoVideoCodec },
-            { EMTPObjectPropCodeVideoBitRate,            KMtpVideoVideoBitrate },
-            { EMTPObjectPropCodeFramesPerThousandSeconds,KMtpVideoFramesPer1000Sec },
-            { EMTPObjectPropCodeKeyFrameDistance,        KMtpVideoKeyFrameDistance },
-            { EMTPObjectPropCodeScanType,                KMtpVideoScanType },
-            { EMTPObjectPropCodeEncodingProfile,         KMtpVideoEncodingProfile },
-            { EMTPObjectPropCodeParentalRating,          KMtpVideoParentalRating },
-            { EMTPObjectPropCodeUseCount,                KMtpVideoUseCount },
-            { EMTPObjectPropCodeAudioWAVECodec,          KMtpVideoAudioCodec },
-            { EMTPObjectPropCodeDRMStatus,               KMtpVideoDRM },
-        };
+    {
+        { EMTPObjectPropCodeName,                    KMtpVideoName },
+        { EMTPObjectPropCodeArtist,                  KMtpVideoArtist },
+        { EMTPObjectPropCodeTrack,                   KMtpVideoTrack },
+        { EMTPObjectPropCodeGenre,                   KMtpVideoGenre },
+        { EMTPObjectPropCodeAlbumName,               KMtpVideoAlbumName },
+        { EMTPObjectPropCodeComposer,                KMtpVideoComposer },
+        { EMTPObjectPropCodeOriginalReleaseDate,     KMtpVideoOrigReleaseDate },
+        { EMTPObjectPropCodeDescription,             KMtpVideoComment },
+        { EMTPObjectPropCodeWidth,                   KMtpVideoWidth },
+        { EMTPObjectPropCodeHeight,                  KMtpVideoHeight },
+        { EMTPObjectPropCodeDuration,                KMtpVideoDuration },
+        { EMTPObjectPropCodeSampleRate,              KMtpVideoSampleRate },
+        { EMTPObjectPropCodeNumberOfChannels,        KMtpVideoNumberOfChannels },
+        { EMTPObjectPropCodeAudioBitRate,            KMtpVideoAudioBitrate },
+        { EMTPObjectPropCodeVideoFourCCCodec,        KMtpVideoVideoCodec },
+        { EMTPObjectPropCodeVideoBitRate,            KMtpVideoVideoBitrate },
+        { EMTPObjectPropCodeFramesPerThousandSeconds,KMtpVideoFramesPer1000Sec },
+        { EMTPObjectPropCodeKeyFrameDistance,        KMtpVideoKeyFrameDistance },
+        { EMTPObjectPropCodeScanType,                KMtpVideoScanType },
+        { EMTPObjectPropCodeEncodingProfile,         KMtpVideoEncodingProfile },
+        { EMTPObjectPropCodeParentalRating,          KMtpVideoParentalRating },
+        { EMTPObjectPropCodeUseCount,                KMtpVideoUseCount },
+        { EMTPObjectPropCodeAudioWAVECodec,          KMtpVideoAudioCodec },
+        { EMTPObjectPropCodeDRMStatus,               KMtpVideoDRM },
+    };
 
     TInt i = 0;
-    TInt count = sizeof( KColumnTable ) / sizeof( KColumnTable[0] );
+    TInt count = sizeof ( KColumnTable ) / sizeof ( KColumnTable[0] );
     while ( ( KColumnTable[i].iPropCode != aPropCode ) && ( i < count ) )
         {
         i++;
@@ -1522,7 +1513,7 @@ const TDesC& CMmMtpDpMetadataVideoAccess::ColumnNameFromPropCodeL( const TUint16
     if ( i == count )
         {
         // Not supported by MPX, shouldn't call this function
-        PRINT( _L( "MM MTP <> CMmMtpDpMetadataVideoAccess::ColumnNameFromPropCodeL NOT SUPPORTED ATTRIBUTE" ) );
+        PRINT( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::MpxAttribFromPropL NOT SUPPORTED ATTRIBUTE" ) );
         User::Leave( KErrNotSupported );
         }
     return KColumnTable[i].iDbColumnName;
@@ -1530,7 +1521,7 @@ const TDesC& CMmMtpDpMetadataVideoAccess::ColumnNameFromPropCodeL( const TUint16
 
 void CMmMtpDpMetadataVideoAccess::SetStorageRootL( const TDesC& aStorageRoot )
     {
-    PRINT1( _L( "MM MTP => CMmMtpDpMetadataVideoAccess::SetStorageRoot aStoreRoot = %S" ), &aStorageRoot );
+    PRINT1( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::SetStorageRoot aStoreRoot = %S" ), &aStorageRoot );
 
     // get the drive number
     TParse pathParser;
@@ -1538,7 +1529,7 @@ void CMmMtpDpMetadataVideoAccess::SetStorageRootL( const TDesC& aStorageRoot )
     TChar driveChar( pathParser.Drive()[0] );
 
     User::LeaveIfError( RFs::CharToDrive( driveChar, iStoreNum ) );
-    PRINT1( _L( "MM MTP <= CMmMtpDpMetadataVideoAccess::SetStorageRoot drive number = %d" ), iStoreNum );
+    PRINT1( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::SetStorageRoot drive number = %d" ), iStoreNum );
     }
 
 void CMmMtpDpMetadataVideoAccess::CleanupDatabaseL()

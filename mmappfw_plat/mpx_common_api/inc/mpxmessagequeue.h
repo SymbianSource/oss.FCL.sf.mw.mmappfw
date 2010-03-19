@@ -73,6 +73,14 @@ public: // New functions
      */
     IMPORT_C void Reset();
 
+    /**
+     * Adds a message into the top of the queue and sends the message if slot is available.
+     *
+     * @since S60 9.2
+     * @param aMessage message object, ownership not transferred.
+     * @return system error
+     */    
+    IMPORT_C TInt AddFirst(const CMPXMessage* aMessage, TInt aError);
 private:
     /**
      * C++ constructor.

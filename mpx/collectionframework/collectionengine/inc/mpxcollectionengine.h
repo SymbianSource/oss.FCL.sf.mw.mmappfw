@@ -391,8 +391,6 @@ private:
     * If not KNullUid, indicates the plugin that is currently being upgraded.
     */
     TUid iUpdatedPluginUid;
-
-    CMPXMedia* iMediaForHeapKeepAlive; // own
     };
 
 #include "mpxcollectionengine.inl"

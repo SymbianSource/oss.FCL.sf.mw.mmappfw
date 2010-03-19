@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2008 Nokia Corporation and/or its subsidiary(-ies). 
+* Copyright (c) 2008 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -15,9 +15,7 @@
 *
 */
 
-// Version : %version: 4 %
-
-
+// Version : %version: 5 %
 
 
 #ifndef PLAYBACKHELPER_LOG_H
@@ -26,21 +24,6 @@
 // INCLUDES
 #include <e32svr.h>
 #include <e32def.h>
-#include <flogger.h>
-
-
-
-// #define _PLAYBACKHELPER_FILE_LOGGING_
-
-#ifdef _DEBUG
-    #define PLAYBACKHELPER_DEBUG RDebug::Print
-#else
-    #ifdef _PLAYBACKHELPER_FILE_LOGGING_
-        #define PLAYBACKHELPER_DEBUG PlaybackHelperDebug::FileLog
-    #else
-        #define PLAYBACKHELPER_DEBUG RDebug::Print
-    #endif
-#endif 
 
 
 class PlaybackHelperDebug
@@ -49,18 +32,15 @@ class PlaybackHelperDebug
         inline static void NullLog( TRefByValue<const TDesC16> /*aFmt*/, ... )
         {
         }
-
-        inline static void FileLog( TRefByValue<const TDesC16> aFmt, ... )
-        {
-            VA_LIST list;
-            VA_START(list,aFmt);
-            RFileLogger::WriteFormat( _L("PlaybackHelper"), 
-                                      _L("playbackhelper.log"),
-                                      EFileLoggingModeAppend,
-                                      aFmt,
-                                      list );
-        }
 };
+
+
+#ifdef _DEBUG
+    #define PLAYBACKHELPER_DEBUG RDebug::Print
+#else
+    #define PLAYBACKHELPER_DEBUG PlaybackHelperDebug::NullLog
+#endif
+
 
 #endif  // PLAYBACKHELPER_LOG_H
 
