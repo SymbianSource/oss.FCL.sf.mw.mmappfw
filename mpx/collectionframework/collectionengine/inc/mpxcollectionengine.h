@@ -316,7 +316,7 @@ private:  // New functions
     *  cleanup stack item.
     *  @param aEngine pointer to the current engine instance
     */
-    static void CMPXCollectionEngine::ReleasePlugin(TAny* aEngine);
+    static void ReleasePlugin(TAny* aEngine);
 
     /**
     *  Called when a plugin is unloaded.

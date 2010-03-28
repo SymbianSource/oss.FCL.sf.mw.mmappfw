@@ -168,7 +168,7 @@ public: //Iterate through the playlist
      *               The index can be -1 for no selection and must be
      *               Smaller than the number of items in the playlist
      */
-    IMPORT_C void CMPXCollectionPlaylist::SetToIndex( TInt aIndex );
+    IMPORT_C void SetToIndex( TInt aIndex );
     
 public: // State information   
     /**
