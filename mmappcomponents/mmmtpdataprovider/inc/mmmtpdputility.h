@@ -24,8 +24,7 @@
 #include "mmmtpdpfiledefs.h"
 
 // forward declacration
-class CMTPObjectMetaData;
-class MMTPDataProviderFramework;
+class RFs;
 
 class MmMtpDpUtility
     {
@@ -52,31 +51,6 @@ public:
     static TBool HasReference( TUint16 aObjFormatCode );
 
     /**
-    * Utility function to decide if the file is video.
-    * @param aFullFileName, the full file name
-    * @return TBool for decide if the file is video
-    */
-    IMPORT_C static TBool IsVideo( const TDesC& aFullFileName );
-
-    /**
-    * Utility function to decide if the file is video.
-    * For internal use, this is fast version by querying framework DB
-    * @param aFullFileName, the full file name
-    * @param aFramework, the mtp framework instance pointer, default is null
-    * @return TBool for decide if the file is video
-    */
-    static TBool IsVideoL( const TDesC& aFullFileName, const MMTPDataProviderFramework& aFramework );
-
-    /**
-    * Utility function to decide if the file is video.
-    * For internal use, this is fast version by querying framework DB
-    * @param aFormatCode,
-    * @param aSubFormatCode,
-    * @return TBool for decide if the file is video
-    */
-    static TBool IsVideoL( TUint aFormatCode, TUint aSubFormatCode );
-
-    /**
     * Check the filename length to see if it exceeds Symbian 256 limit.
     * @param aPathName, the path name of the file
     * @param aFileName, the file to be check
@@ -99,7 +73,7 @@ public:
     * @param aFullFileName, fine name
     * @return TTime for specified file
     */
-    static TTime GetObjectDateModifiedL( RFs& aFs, const TDesC& aFullFileName );
+    static void GetObjectDateModifiedL( RFs& aFs, const TDesC& aFullFileName, TDes& aDateModified );
 
     /**
     * Check if file is read-only, if file doesn't exist, leave
@@ -161,7 +135,7 @@ public:
     * @param aSubFormatCode, output the sub format code
     * @return if success, return KErrNone, otherwise, error code
     */
-    static TInt SubFormatCodeFromMime( const TDesC8& aMimeType, TMmMtpSubFormatCode& aSubFormatCode );
+    static TMmMtpSubFormatCode SubFormatCodeFromMime( const TDesC8& aMimeType );
 
     /**
     * Get DRM status

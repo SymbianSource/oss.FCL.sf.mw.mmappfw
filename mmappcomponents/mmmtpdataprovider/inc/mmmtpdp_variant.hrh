@@ -25,4 +25,7 @@
 // flag to enable replace the exist object
 #undef MMMTPDP_REPLACE_EXIST_FILE
 
+// flag to enable support for non embedded album art, should be ON by default
+#define MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+
 #endif // MMMTPDP_VARIANT_HRH

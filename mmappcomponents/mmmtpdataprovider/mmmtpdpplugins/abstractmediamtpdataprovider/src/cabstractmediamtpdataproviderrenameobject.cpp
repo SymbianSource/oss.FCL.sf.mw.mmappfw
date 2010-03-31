@@ -17,10 +17,9 @@
 
 
 #include <badesca.h>
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
-#include <mtp/cmtpobjectmetadata.h>
 #include <mtp/tmtptypeuint32.h>
+#include <mtp/cmtpobjectmetadata.h>
 
 #include "cabstractmediamtpdataproviderrenameobject.h"
 #include "mmmtpdplogger.h"
@@ -92,7 +91,7 @@ void CAbstractMediaMtpDataProviderRenameObject::PerformAdditionalActionL()
         }
     else
         {
-        TRAPD( err, iWrapper.RenameObjectL( iOldFileName, iFileName ) );
+        TRAPD( err, iWrapper.RenameObjectL( *iObjectInfo, iFileName ) );
 
          // should not fail for 1 file, keep it going, as folder already renamed
          if ( err != KErrNone )

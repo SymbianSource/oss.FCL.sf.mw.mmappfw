@@ -168,8 +168,14 @@ void CMPXCollectionHelperImp::AddL( CMPXMedia* aMedia )
     // generic way of resolving collections aside from using file extension
     // or UID.
     //
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
+    if ( aMedia->ValueTObjectL<TMPXGeneralType>(KMPXMediaGeneralType) == EMPXItem &&
+         (aMedia->ValueTObjectL<TMPXGeneralCategory>(KMPXMediaGeneralCategory) == EMPXPlaylist ||
+         aMedia->ValueTObjectL<TMPXGeneralCategory>(KMPXMediaGeneralCategory) == EMPXAbstractAlbum))
+#else
     if ( aMedia->ValueTObjectL<TMPXGeneralType>(KMPXMediaGeneralType) == EMPXItem &&
          aMedia->ValueTObjectL<TMPXGeneralCategory>(KMPXMediaGeneralCategory) == EMPXPlaylist )
+#endif
         {
         aMedia->SetTObjectValueL<TUid>( KMPXMediaGeneralCollectionId,
                                         iMusicCollectionId );
@@ -348,9 +354,13 @@ void CMPXCollectionHelperImp::SetL( CMPXMedia*& aMedia )
     //
     TMPXGeneralCategory category =
         aMedia->ValueTObjectL<TMPXGeneralCategory>(KMPXMediaGeneralCategory);
-
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
+    if ((aMedia->ValueTObjectL<TMPXGeneralType>(KMPXMediaGeneralType) != EMPXItem) ||
+        (category != EMPXSong && category != EMPXPlaylist && category != EMPXAbstractAlbum))
+#else
     if ((aMedia->ValueTObjectL<TMPXGeneralType>(KMPXMediaGeneralType) != EMPXItem) ||
         (category != EMPXSong && category != EMPXPlaylist))
+#endif
         {
         User::Leave( KErrArgument );
         }
@@ -466,8 +476,11 @@ CMPXMedia* CMPXCollectionHelperImp::GetL( const TDesC& aFile,
     {
     MPX_FUNC("CMPXCollectionHelperImp::GetL");
     MPX_DEBUG2("aFile %S", &aFile);
-
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
+    if (aItemCat != EMPXSong && aItemCat != EMPXPlaylist && aItemCat != EMPXAbstractAlbum)
+#else
     if (aItemCat != EMPXSong && aItemCat != EMPXPlaylist)
+#endif
         {
         User::Leave(KErrArgument);
         }

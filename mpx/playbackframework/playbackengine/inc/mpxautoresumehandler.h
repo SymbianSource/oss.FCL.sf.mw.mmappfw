@@ -136,6 +136,11 @@ private:  // New functions
     * in that case
     */
     TBool IsPlaybackRemote();
+    
+    /**
+    * Handle change in voice command state. 
+    */
+    void DoHandleVoiceCmdChange();
 
 private: // data
     CMPXPlaybackEngine&  iEngine;
@@ -148,6 +153,10 @@ private: // data
 
     // Timer for resume operation. Owned.
     CPeriodic* iResumeTimer;
+    
+    CMPXPSKeyWatcher* iVoiceCmdObserver;  // owned
+    TBool iPausedForVoiceCmd;
+    TBool iVoiceCmdResumeOngoing;
     };
 
 #endif      // CMPXAUTORESUMEHANDLER_H   

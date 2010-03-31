@@ -16,8 +16,6 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
-#include <mtp/cmtpobjectmetadata.h>
 #include <mtp/cmtptypefile.h>
 
 #include "cgetobject.h"
@@ -88,7 +86,6 @@ CGetObject::CGetObject( MMTPDataProviderFramework& aFramework,
             aConnection,
             sizeof( KMTPGetObjectPolicy ) / sizeof( TMTPRequestElementInfo ),
             KMTPGetObjectPolicy ),
-        iFs( iFramework.Fs() ),
         iError( EMTPRespCodeOK )
     {
     PRINT( _L( "Operation: GetObject(0x1009)" ) );
@@ -141,7 +138,7 @@ void CGetObject::GetObjectL( const TDesC& aFileName )
     // Create the file object
     delete iFileObject;
     iFileObject = NULL;
-    iFileObject = CMTPTypeFile::NewL( iFs, aFileName, EFileRead  );
+    iFileObject = CMTPTypeFile::NewL( iFramework.Fs(), aFileName, EFileRead  );
 
     PRINT( _L( "MM MTP <= CGetObject::GetObjectL" ) );
     }

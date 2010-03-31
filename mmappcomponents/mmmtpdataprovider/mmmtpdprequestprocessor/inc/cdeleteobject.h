@@ -19,16 +19,11 @@
 #ifndef CDELETEOBJECT_H
 #define CDELETEOBJECT_H
 
-#include <f32file.h>
 #include <d32dbms.h>
-#include <badesca.h>
 
 #include "crequestprocessor.h"
 
 //forward declaration
-class RFs;
-class CMTPTypeArray;
-class MMTPObjectMgr;
 class MMmMtpDpConfig;
 
 /**
@@ -110,12 +105,6 @@ private:
     void DeleteObjectL( const CMTPObjectMetaData& aObjectInfo );
 
 private:
-    // MTP Object Manager
-    MMTPObjectMgr& iObjectMgr;
-
-    // File server used to open the database
-    RFs& iFs;
-
     //  Array of all the objects to delete
     RArray<TUint> iObjectsToDelete;
 

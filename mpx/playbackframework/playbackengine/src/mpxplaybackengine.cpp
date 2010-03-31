@@ -984,7 +984,8 @@ void CMPXPlaybackEngine::DoHandlePluginEventL(
                         TMPXPlaybackMessage(
                             TMPXPlaybackMessage::EStateChanged, iState, aError ));
                     if ( KErrDied == aError ||
-                         KErrAccessDenied == aError )
+                         KErrAccessDenied == aError ||
+                         KErrInUse == aError )
                         {
                         iPluginState = EPbStateNotInitialised;
                         // fixed 

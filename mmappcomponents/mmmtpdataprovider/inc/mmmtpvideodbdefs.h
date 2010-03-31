@@ -53,7 +53,6 @@ _LIT( KMtpVideoScanType,             "ScanType" );
 _LIT( KMtpVideoEncodingProfile,      "EncodingProfile" );
 
 _LIT( KMtpVideoParentalRating,       "ParentalRating" );
-_LIT( KMtpVideoUseCount      ,       "UseCount" );
 _LIT( KMtpVideoDRM,                  "DRM" );
 
 _LIT( KMtpVideoDeleted,              "Deleted" );
@@ -86,7 +85,6 @@ _LIT( KMtpVideoScanTypeType,         " UNSIGNED SMALLINT" );
 _LIT( KMtpVideoEncodingProfileType,  " LONG VARCHAR" );
 
 _LIT( KMtpVideoParentalRatingType,   " LONG VARCHAR" );
-_LIT( KMtpVideoUseCountType,         " UNSIGNED INTEGER" );
 _LIT( KMtpVideoDRMType,              " UNSIGNED SMALLINT" );
 
 _LIT( KMtpVideoDeletedType,          " BIT" );

@@ -17,6 +17,8 @@
 
 #include <mtp/cmtptypeobjectproplist.h>
 #include <mtp/mtpprotocolconstants.h>
+#include <mtp/mtpdatatypeconstants.h>
+#include <mtp/cmtptypearray.h>
 
 #include "cabstractmediamtpdataproviderpropertysettingutility.h"
 #include "mmmtpdplogger.h"
@@ -54,17 +56,40 @@ CAbstractMediaMtpDataProviderPropertySettingUtility::CAbstractMediaMtpDataProvid
     // Do nothing
     }
 
-TMTPResponseCode CAbstractMediaMtpDataProviderPropertySettingUtility::SetSpecificObjectPropertyL( MMmMtpDpConfig& /*aDpConfig*/,
-    TUint16 /*aPropCode*/,
-    const CMTPObjectMetaData& /*aObject*/,
-    const CMTPTypeObjectPropListElement& /*aElement*/ )
+TMTPResponseCode CAbstractMediaMtpDataProviderPropertySettingUtility::SetSpecificObjectPropertyL( MMmMtpDpConfig& aDpConfig,
+    TUint16 aPropCode,
+    const CMTPObjectMetaData& aObject,
+    const CMTPTypeObjectPropListElement& aElement )
     {
     PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderPropertySettingUtility::SetSpecificObjectPropertyL" ) );
 
-    // Do nothing now.
-    // May need add implementation here for further extension.
+    TMTPResponseCode responseCode = EMTPRespCodeOK;
 
-    return EMTPRespCodeOK;
+    switch ( aPropCode )
+        {
+        case EMTPObjectPropCodeRepresentativeSampleData:
+            {
+            CMTPTypeArray*  desData = CMTPTypeArray::NewLC( EMTPTypeAUINT8 );
+            desData->SetByDesL( aElement.ArrayL( CMTPTypeObjectPropListElement::EValue ) );
+            responseCode = SetMetaDataToWrapper( aDpConfig, aPropCode, *desData, aObject );
+            CleanupStack::PopAndDestroy( desData );
+            }
+            break;
+
+        case EMTPObjectPropCodeRepresentativeSampleFormat:
+        case EMTPObjectPropCodeRepresentativeSampleSize: 
+        case EMTPObjectPropCodeRepresentativeSampleHeight:
+        case EMTPObjectPropCodeRepresentativeSampleWidth:
+            // no place to store, do nothing. reserve here for future usage
+            break;
+
+        default:
+            // Should not happen, property code should have been checked before set to store.
+            User::Leave( KErrNotSupported );
+        }
+
+    PRINT( _L( "MM MTP <= CAbstractMediaMtpDataProviderPropertySettingUtility::SetSpecificObjectPropertyL" ) );
+    return responseCode;
     }
 
 // end of file

@@ -76,7 +76,11 @@ CAbstractMediaMtpDataProvider::CAbstractMediaMtpDataProvider( TAny* aParams ) :
     iActiveProcessor( -1 ),
     iRenameObject( NULL ),
     iSupportedFormat( KAbstractMediaMtpDpArrayGranularity ),
-    iSupportedProperties( KAbstractMediaMtpDpArrayGranularity )
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+    iSupportedPropAbstractAlbum( KAbstractMediaMtpDpArrayGranularity ),
+#endif
+    iSupportedPropPlaylist( KAbstractMediaMtpDpArrayGranularity ),
+    iSupportedPropAll( KAbstractMediaMtpDpArrayGranularity )
     {
     // Do nothing
     }
@@ -108,7 +112,11 @@ CAbstractMediaMtpDataProvider::~CAbstractMediaMtpDataProvider()
         delete iRenameObject;
 
     iSupportedFormat.Close();
-    iSupportedProperties.Close();
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+    iSupportedPropAbstractAlbum.Close();
+#endif
+    iSupportedPropPlaylist.Close();
+    iSupportedPropAll.Close();
 
     PRINT( _L( "MM MTP => CAbstractMediaMtpDataProvider::~CAbstractMediaMtpDataProvider" ) );
     }
@@ -129,10 +137,11 @@ void CAbstractMediaMtpDataProvider::ConstructL()
 
     iAbstractMediaEnumerator = CAbstractMediaMtpDataProviderEnumerator::NewL( Framework(), *this );
 
-    CMmMtpDpAccessSingleton::CreateL( Framework().Fs(), Framework() );
+    CMmMtpDpAccessSingleton::CreateL( Framework() );
 
     GetSupportedFormatL();
     GetSupportedPropertiesL();
+    GetAllSupportedPropL();
 
     iPropSettingUtility = CAbstractMediaMtpDataProviderPropertySettingUtility::NewL();
     iDescriptionUtility = CAbstractMediaMtpDataProviderDescriptionUtility::NewL();
@@ -360,11 +369,11 @@ void CAbstractMediaMtpDataProvider::Supported( TMTPSupportCategory aCategory,
 
         case EObjectProperties:
             {
-            TInt count = iSupportedProperties.Count();
+            TInt count = iSupportedPropAll.Count();
 
             for ( TInt i = 0; i < count; i++ )
                 {
-                aArray.Append( iSupportedProperties[i] );
+                aArray.Append( iSupportedPropAll[i] );
                 }
             PRINT1( _L( "MM MTP <> CAbstractMediaMtpDataProvider::Supported properties count = %d" ), aArray.Count() );
             }
@@ -392,7 +401,9 @@ void CAbstractMediaMtpDataProvider::SupportedL( TMTPSupportCategory aCategory,
     {
     if( aCategory == EFormatExtensionSets )
         {
-        //EMTPFormatCodeM3U,
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+        aStrings.AppendL(KFormatExtensionALB);
+#endif
         aStrings.AppendL(KFormatExtensionM3U);
         aStrings.AppendL(KFormatExtensionPLA);
         aStrings.AppendL(KFormatExtensionVIR);
@@ -527,10 +538,24 @@ void CAbstractMediaMtpDataProvider::GetSupportedFormatL()
         }
     }
 
-const RArray<TUint>* CAbstractMediaMtpDataProvider::GetSupportedPropertiesL( TUint32 /*aFormatCode*/ ) const
+const RArray<TUint>* CAbstractMediaMtpDataProvider::GetSupportedPropertiesL( TUint32 aFormatCode ) const
     {
-    // May need add more implementation here for further extension.
-    return &iSupportedProperties;
+    if ( ( aFormatCode == EMTPFormatCodeM3UPlaylist ) || ( aFormatCode == EMTPFormatCodeAbstractAudioVideoPlaylist ) )
+        {
+        return &iSupportedPropPlaylist;
+        }
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+    else if ( aFormatCode == EMTPFormatCodeAbstractAudioAlbum )
+        {
+        return &iSupportedPropAbstractAlbum;
+        }
+#endif
+    else
+        {
+        User::Leave( KErrNotSupported );
+        }
+    // should never run to this line, just for avoiding warning.
+    return NULL;
     }
 
 // ---------------------------------------------------------------------------
@@ -540,20 +565,37 @@ const RArray<TUint>* CAbstractMediaMtpDataProvider::GetSupportedPropertiesL( TUi
 //
 void CAbstractMediaMtpDataProvider::GetSupportedPropertiesL()
     {
-    iSupportedProperties.Reset();
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+    iSupportedPropAbstractAlbum.Reset();
+#endif
+    iSupportedPropPlaylist.Reset();
 
     TInt count = 0, i = 0;
     count = sizeof( KMmMtpDpSupportedPropMandatoryAll ) / sizeof( TUint16 );
     for ( i = 0; i < count; i++ )
         {
-        InsertL( iSupportedProperties, KMmMtpDpSupportedPropMandatoryAll[i] );
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+        InsertL( iSupportedPropAbstractAlbum, KMmMtpDpSupportedPropMandatoryAll[i] );
+#endif
+        InsertL( iSupportedPropPlaylist, KMmMtpDpSupportedPropMandatoryAll[i] );
         }
 
     count = sizeof( KMmMtpDpSupportedPropAdditionalAll ) / sizeof( TUint16 );
     for ( i = 0; i < count; i++ )
         {
-        InsertL( iSupportedProperties, KMmMtpDpSupportedPropAdditionalAll[i] );
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT            
+        InsertL( iSupportedPropAbstractAlbum, KMmMtpDpSupportedPropAdditionalAll[i] );
+#endif
+        InsertL( iSupportedPropPlaylist, KMmMtpDpSupportedPropAdditionalAll[i] );
         }
+
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+    count = sizeof( KMmMtpDpSupportedPropMandatoryALB ) / sizeof( TUint16 );
+    for ( i = 0; i < count; i++ )
+        {
+        InsertL( iSupportedPropAbstractAlbum, KMmMtpDpSupportedPropMandatoryALB[i] );
+        }
+#endif        
     }
 
 // ---------------------------------------------------------------------------
@@ -563,7 +605,31 @@ void CAbstractMediaMtpDataProvider::GetSupportedPropertiesL()
 //
 const RArray<TUint>* CAbstractMediaMtpDataProvider::GetAllSupportedProperties() const
     {
-    return &iSupportedProperties;
+    return &iSupportedPropAll;
+    }
+
+void CAbstractMediaMtpDataProvider::GetAllSupportedPropL()
+    {
+    iSupportedPropAll.Reset();
+
+    TInt count = 0, i = 0;
+    count = sizeof( KMmMtpDpSupportedPropMandatoryAll ) / sizeof( TUint16 );
+    for ( i = 0; i < count; i++ )
+        {
+        InsertL( iSupportedPropAll, KMmMtpDpSupportedPropMandatoryAll[i] );
+        }
+
+    count = sizeof( KMmMtpDpSupportedPropAdditionalAll ) / sizeof( TUint16 );
+    for ( i = 0; i < count; i++ )
+        {
+        InsertL( iSupportedPropAll, KMmMtpDpSupportedPropAdditionalAll[i] );
+        }
+
+    count = sizeof( KMmMtpDpSupportedPropMandatoryALB ) / sizeof( TUint16 );
+    for ( i = 0; i < count; i++ )
+        {
+        InsertL( iSupportedPropAll, KMmMtpDpSupportedPropMandatoryALB[i] );
+        }
     }
 
 // ---------------------------------------------------------------------------

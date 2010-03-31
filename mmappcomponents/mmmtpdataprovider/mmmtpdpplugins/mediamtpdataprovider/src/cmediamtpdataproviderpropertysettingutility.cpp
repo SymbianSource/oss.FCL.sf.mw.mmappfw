@@ -22,6 +22,7 @@
 #include <mtp/tmtptypeuint16.h>
 #include <mtp/tmtptypeuint32.h>
 #include <mtp/mtpdatatypeconstants.h>
+#include <mtp/cmtpobjectmetadata.h>
 
 #include "tobjectdescription.h"
 #include "cmmmtpdpmetadataaccesswrapper.h"
@@ -118,7 +119,6 @@ TMTPResponseCode CMediaMtpDataProviderPropertySettingUtility::SetSpecificObjectP
         case EMTPObjectPropCodeWidth:
         case EMTPObjectPropCodeHeight:
         case EMTPObjectPropCodeDuration:
-        case EMTPObjectPropCodeUseCount:
         case EMTPObjectPropCodeSampleRate:
         case EMTPObjectPropCodeAudioWAVECodec:
         case EMTPObjectPropCodeAudioBitRate:

@@ -22,7 +22,6 @@
 #include "crequestprocessor.h"
 
 // forward declaration
-class RFs;
 class CMTPTypeFile;
 class MMmMtpDpConfig;
 
@@ -78,9 +77,6 @@ private:
     void GetObjectL( const TDesC& aFileName );
 
 private:
-    // File server used to open the database
-    RFs& iFs;
-
     // File Object to encapsulate the object to send back
     CMTPTypeFile* iFileObject;
 

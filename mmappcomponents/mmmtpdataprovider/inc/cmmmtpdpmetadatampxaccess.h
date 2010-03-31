@@ -47,8 +47,7 @@ class CMmMtpDpMetadataMpxAccess : public CBase
     {
 public:
 
-    static CMmMtpDpMetadataMpxAccess* NewL( RFs& aRfs,
-        MMTPDataProviderFramework& aFramework );
+    static CMmMtpDpMetadataMpxAccess* NewL( RFs& aRfs );
 
     /**
      * Destructor
@@ -99,17 +98,18 @@ public:
 
     /**
      * Set abstract media to DB
-     * @param aAbstractMediaFileName, full file name of abstract media file
+     * @param aRefOwnerName, full file name of abstract media file
      * @param aRefFileArray, a array to store the full file name of media files
      * @param aCategory, indicate the category of abstract media
      */
-    void SetAbstractMediaL( const TDesC& aAbstractMediaFileName,
+    void SetReferenceL( const TDesC& aRefOwnerName,
         CDesCArray& aRefFileArray,
         TMPXGeneralCategory aCategory );
 
     void GetObjectMetadataValueL( const TUint16 aPropCode,
         MMTPType& aNewData,
-        const CMTPObjectMetaData& aObjectMetaData );
+        const TDesC& aFullFileName,
+        TMPXGeneralCategory aCategory );
 
     /**
      * Set object property and updated object in DB according property code,
@@ -122,19 +122,8 @@ public:
      */
     void SetObjectMetadataValueL( const TUint16 aPropCode,
         const MMTPType& aNewData,
-        const CMTPObjectMetaData& aObjectMetaData );
-
-    /**
-     * Set object property and updated object in DB according property code,
-     * only for update, not for creation
-     * @param aPropCode, property code of aObjectMetaData
-     * @param aNewData, object property value which will be set into
-     *     aObjectMetaData
-     * @param aSuid, full file name of object of which properties need to set
-     */
-    void SetObjectMetadataValueL( const TUint16 aPropCode,
-        const MMTPType& aNewData,
-        const TDesC& aSuid );
+        const TDesC& aFullFileName,
+        TMPXGeneralCategory aCategory );
 
     CMPXMedia* FindWMPMediaLC( TMPXAttributeData aWMPMediaID,
         TBool aFlag );
@@ -158,11 +147,11 @@ public:
      * Rename the filename onto MPX DB
      * @param aOldFileName, the old file to rename
      * @param aNewFileName, the new file name
-     * @param aFormatCode, the format of object
+     * @param aCategory, the category of object
      */
     void RenameObjectL( const TDesC& aOldFileName,
         const TDesC& aNewFileName,
-        TUint aFormatCode );
+        TMPXGeneralCategory aCategory );
 
     /**
      * Set current  drive info
@@ -185,8 +174,7 @@ public:
     TBool IsExistL( const TDesC& aSuid );
 
 private:
-    CMmMtpDpMetadataMpxAccess( RFs& aFs,
-        MMTPDataProviderFramework& aFramework );
+    CMmMtpDpMetadataMpxAccess( RFs& aFs );
 
     void ConstructL();
 
@@ -210,14 +198,11 @@ private:
     MMPXCollectionHelper* CollectionHelperL();
 
 private:
-    // File server to allow file access
     RFs& iRfs;
 
     TBuf<KStorageRootMaxLength> iStoreRoot;
 
     MMPXCollectionHelper* iCollectionHelper;
-
-    MMTPDataProviderFramework& iFramework;
 
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     CMmMtpDpPerfLog* iPerfLog;

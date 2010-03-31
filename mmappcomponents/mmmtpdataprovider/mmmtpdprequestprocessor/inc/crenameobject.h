@@ -22,7 +22,6 @@
 // Forward declarations
 class MMTPDataProviderFramework;
 class CMmMtpDpMetadataAccessWrapper;
-class MMTPObjectMgr;
 class CMTPObjectMetaData;
 
 class CRenameObject: public CActive

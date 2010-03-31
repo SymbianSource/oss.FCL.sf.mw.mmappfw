@@ -16,7 +16,6 @@
 */
 
 
-#include <mtp/cmtpobjectmetadata.h>
 #include <mtp/mmtpconnection.h>
 #include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
@@ -211,7 +210,7 @@ TMTPResponseCode CRequestChecker::CheckRequestHeader( const TMTPTypeRequest& aRe
 // -----------------------------------------------------------------------------
 //
 TMTPResponseCode CRequestChecker::VerifySessionId( TUint32 aSessionId,
-        const TMTPRequestElementInfo& /*aElementInfo*/ ) const
+    const TMTPRequestElementInfo& /*aElementInfo*/ ) const
     {
     TMTPResponseCode ret = EMTPRespCodeOK;
 
@@ -237,7 +236,7 @@ TMTPResponseCode CRequestChecker::VerifySessionId( TUint32 aSessionId,
 // -----------------------------------------------------------------------------
 //
 TMTPResponseCode CRequestChecker::VerifyObjectHandleL( TUint32 aHandle,
-        const TMTPRequestElementInfo& aElementInfo )
+    const TMTPRequestElementInfo& aElementInfo )
     {
     PRINT1( _L("MM MTP => CRequestChecker::VerifyObjectHandleL aHandle = 0x%x"), aHandle );
     TMTPResponseCode ret = EMTPRespCodeOK;
@@ -255,58 +254,32 @@ TMTPResponseCode CRequestChecker::VerifyObjectHandleL( TUint32 aHandle,
         TEntry entry;
         TInt err = iFramework.Fs().Entry( suid, entry );
 
-        if ( object->Uint( CMTPObjectMetaData::EFormatCode ) == EMTPFormatCodeAssociation )
-//            && ( object->Uint( CMTPObjectMetaData::EFormatSubCode ) == EMTPAssociationTypeGenericFolder ) )
+        if ( err == KErrNotFound )
             {
-            // Special association type .. not always present on the filesystem.
-            return ret;
+            iFramework.ObjectMgr().RemoveObjectL( suid );
+            // TODO: workaround for abstractalbumart
+            // ret = EMTPRespCodeInvalidObjectHandle;
             }
-        else
+        else if ( err != KErrNone )
+            ret = EMTPRespCodeGeneralError;
+        else if ( object->Uint( CMTPObjectMetaData::EFormatCode ) != EMTPFormatCodeAssociation )
             {
-            User::LeaveIfError( err );
-
             if ( iFramework.ObjectMgr().ObjectOwnerId( aHandle ) != iFramework.DataProviderId() )
-                {
-                PRINT( _L(" ewrwe ret = EMTPRespCodeInvalidObjectHandle;"));
                 ret = EMTPRespCodeInvalidObjectHandle;
-                }
-            }
 
-        if ( aElementInfo.iElementAttr & EMTPElementAttrWrite )
-            {
-            if ( entry.IsReadOnly() )
-                {
+            if ( ( aElementInfo.iElementAttr & EMTPElementAttrWrite ) && entry.IsReadOnly() )
                 ret = EMTPRespCodeObjectWriteProtected;
-                }
-            }
 
-        //((EMTPRespCodeOK == ret) && (aElementInfo.iElementAttr & EMTPElementAttrFileOrDir)) is
-        // covered implicitly here, EMTPRespCodeOK will be returned. It is a valid case for an object to be either a folder or file
-        // for certain operation's request parameter, for instance the first parameter of copyObject or
-        // moveObject can be either a file or a directory.
-
-        // Other cases.
-        if ( ( EMTPRespCodeOK == ret ) && ( aElementInfo.iElementAttr & EMTPElementAttrFile ) )
-            {
-            if ( entry.IsDir() )
-                {
+            if ( ( EMTPRespCodeOK == ret ) && ( aElementInfo.iElementAttr & EMTPElementAttrFile ) && entry.IsDir() )
                 ret = EMTPRespCodeInvalidObjectHandle;
-                }
-            }
 
-        if ( ( EMTPRespCodeOK == ret ) && ( aElementInfo.iElementAttr & EMTPElementAttrDir ) )
-            {
-            if (!entry.IsDir())
-                {
+            if ( ( EMTPRespCodeOK == ret ) && ( aElementInfo.iElementAttr & EMTPElementAttrDir ) && !entry.IsDir() )
                 ret = EMTPRespCodeInvalidParentObject;
-                }
             }
         }
     else
-        {
-        PRINT( _L( "MM MTP <> CRequestChecker::VerifyObjectHandleL, Object does not exist." ) );
         ret = EMTPRespCodeInvalidObjectHandle;
-        }
+
     PRINT1( _L( "MM MTP <= CRequestChecker::VerifyObjectHandleL ret = 0x%x" ), ret );
 
     return ret;
@@ -318,7 +291,7 @@ TMTPResponseCode CRequestChecker::VerifyObjectHandleL( TUint32 aHandle,
 // -----------------------------------------------------------------------------
 //
 TMTPResponseCode CRequestChecker::VerifyStorageIdL( TUint32 aStorageId,
-        const TMTPRequestElementInfo& aElementInfo ) const
+    const TMTPRequestElementInfo& aElementInfo ) const
     {
     MMTPStorageMgr& mgr( iFramework.StorageMgr() );
     TMTPResponseCode ret( EMTPRespCodeOK );
@@ -369,7 +342,7 @@ TMTPResponseCode CRequestChecker::VerifyStorageIdL( TUint32 aStorageId,
 // -----------------------------------------------------------------------------
 //
 TMTPResponseCode CRequestChecker::VerifyFormatCode( TUint32 aFormatCode,
-        const TMTPRequestElementInfo& aElementInfo ) const
+    const TMTPRequestElementInfo& aElementInfo ) const
     {
     PRINT1( _L( "MM MTP => CRequestChecker::VerifyFormatCode aFormatCode = 0x%x" ), aFormatCode );
     TMTPResponseCode ret = EMTPRespCodeInvalidObjectFormatCode;
@@ -407,7 +380,7 @@ TMTPResponseCode CRequestChecker::VerifyFormatCode( TUint32 aFormatCode,
 // -----------------------------------------------------------------------------
 //
 TBool CRequestChecker::IsSpecialValue( TUint32 aParameter,
-        const TMTPRequestElementInfo& aElementInfo ) const
+    const TMTPRequestElementInfo& aElementInfo ) const
     {
     TBool result = EFalse;
     switch ( aElementInfo.iCount )

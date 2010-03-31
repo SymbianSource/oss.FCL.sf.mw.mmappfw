@@ -16,6 +16,10 @@
 */
 
 
+#include <mtp/cmtptypeobjectproplist.h>
+#include <mtp/cmtptypearray.h>
+#include <f32file.h>
+
 #include "cabstractmediamtpdataprovidergetobjectproplist.h"
 #include "abstractmediamtpdataproviderconst.h"
 #include "mmmtpdplogger.h"
@@ -81,15 +85,70 @@ void CAbstractMediaMtpDataProviderGetObjectPropList::ConstructL()
 // do nothing here, just leave, as this should never be invoked or invalid propcode
 // -----------------------------------------------------------------------------
 //
-TInt CAbstractMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL( TUint16 /*aPropCode*/,
-    TUint32 /*aHandle*/ )
+TInt CAbstractMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL( TUint16 aPropCode,
+    TUint32 aHandle )
     {
-    PRINT( _L( "MM MTP <> CAbstractMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL, leave with KErrNotSupported" ) );
+    PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL" ) );
+    TInt err = KErrNone;
+    switch ( aPropCode )
+        {
+        case EMTPObjectPropCodeRepresentativeSampleFormat:
+            {
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EValue, 0 );
+            }
+            break;
+        case EMTPObjectPropCodeRepresentativeSampleSize:
+        case EMTPObjectPropCodeRepresentativeSampleHeight:
+        case EMTPObjectPropCodeRepresentativeSampleWidth:
+            {
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, 0 );
+            }
+            break;
+        case EMTPObjectPropCodeRepresentativeSampleData:
+            {
+            const TDesC& suid( iObject->DesC( CMTPObjectMetaData::ESuid ) );
+            CMTPTypeArray* desData = CMTPTypeArray::NewLC( EMTPTypeAUINT8 );    // + desData
 
-    // Do nothing now.
-    // May need add implementation here for further extension.
+            RFile sampleFile;
+            TInt err = sampleFile.Open( iFramework.Fs(), suid, EFileShareReadersOnly );
+            PRINT2( _L( "MM MTP <> EMTPObjectPropCodeRepresentativeSampleData open filename=%S, err=%d" ), &suid, err );
 
-    return KErrNotSupported;
+            CleanupClosePushL( sampleFile );    // + sampleFile
+            TInt size = 0;
+            if( err == KErrNone )
+                {
+                err = sampleFile.Size( size );
+                }
+            PRINT2( _L( "MM MTP <> EMTPObjectPropCodeRepresentativeSampleData sampleFile.Size size=%d, err=%d" ), size, err );
+            if( err == KErrNone && size > 0 )
+                {
+                HBufC8* sampleData = HBufC8::NewLC( size * sizeof( TUint8 ) );    // + sampleData
+                TPtr8 samplePtr = sampleData->Des();
+                err = sampleFile.Read( samplePtr );
+                PRINT1( _L( "MM MTP <> EMTPObjectPropCodeRepresentativeSampleData sampleFile.Read err=%d" ), err );
+                PRINT1( _L( "MM MTP <> EMTPObjectPropCodeRepresentativeSampleData samplePtr.Size=%d" ), samplePtr.Size() );
+                if( err == KErrNone )
+                    {
+                    desData->SetByDesL( samplePtr );
+                    }
+                CleanupStack::PopAndDestroy( sampleData );    // - sampleData
+                }
+            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
+            iPropertyElement->SetArrayL( CMTPTypeObjectPropListElement::EValue, *desData );
+
+            CleanupStack::PopAndDestroy( &sampleFile );    // - sampleFile
+            CleanupStack::PopAndDestroy( desData );        // - desData
+            }
+            break;
+
+        default:
+            err = KErrNotSupported;
+        }
+
+    PRINT1( _L( "MM MTP <= CAbstractMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL, err = %d" ), err );
+    return err;
     }
 
 // end of file

@@ -16,7 +16,6 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
 #include <mtp/mmtpobjectmgr.h>
@@ -132,7 +131,6 @@ void CMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectPropertyL
         case EMTPObjectPropCodeWidth: // 0xDC87
         case EMTPObjectPropCodeHeight: // 0xDC88
         case EMTPObjectPropCodeDuration: // 0xDC89
-        case EMTPObjectPropCodeUseCount: // 0xDC91
         case EMTPObjectPropCodeSampleRate: // 0xDE93
         case EMTPObjectPropCodeAudioWAVECodec: // 0xDE99
         case EMTPObjectPropCodeAudioBitRate: // 0xDE9A
@@ -185,7 +183,6 @@ TMTPResponseCode CMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectP
         case EMTPObjectPropCodeWidth: //0xDC87
         case EMTPObjectPropCodeHeight: //0xDC88
         case EMTPObjectPropCodeDuration: //0xDC89
-        case EMTPObjectPropCodeUseCount: //0xDC91
         case EMTPObjectPropCodeSampleRate: //0xDE93
         case EMTPObjectPropCodeAudioWAVECodec: //0xDE99
         case EMTPObjectPropCodeAudioBitRate: //0xDE9A

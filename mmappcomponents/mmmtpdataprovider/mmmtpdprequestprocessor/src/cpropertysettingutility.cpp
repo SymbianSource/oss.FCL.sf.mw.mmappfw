@@ -51,8 +51,8 @@ EXPORT_C TMTPResponseCode CPropertySettingUtility::SetMetaDataToWrapper( MMmMtpD
     {
     TMTPResponseCode responseCode = EMTPRespCodeOK;
     TRAPD( err, aDpConfig.GetWrapperL().SetObjectMetadataValueL( aPropCode,
-            aNewData,
-            aObjectMetaData ) );
+        aNewData,
+        aObjectMetaData ) );
 
     PRINT1( _L("MM MTP <> CPropertySettingUtility::SetMetaDataToWrapper err = %d"), err);
 

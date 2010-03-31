@@ -34,6 +34,7 @@ const TInt KMPXMediaIdMTP=0x10282970;
 *  Attributes supported for KMPXMediaIdMTP
 */    
 const TMPXAttributeData KMPXMediaMTPDrmStatus = {KMPXMediaIdMTP, 0x0001}; // TUint16
+const TMPXAttributeData KMPXMediaMTPSampleDataFlag = {KMPXMediaIdMTP, 0x0002}; // TBool
 const TMPXAttributeData KMPXMediaMTPAll = {KMPXMediaIdMTP, 0xffffffff};
 
 #endif // MPXMEDIAMTPDEFS_H

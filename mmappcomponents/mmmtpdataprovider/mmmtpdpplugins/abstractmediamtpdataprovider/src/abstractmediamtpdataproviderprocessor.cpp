@@ -38,7 +38,7 @@
 #include "cabstractmediamtpdataprovidersetobjectpropvalue.h"
 #include "csetobjectproplist.h"
 #include "cgetobjectreferences.h"
-#include "cabstractmediamtpdataprovidersetobjectreferences.h"
+#include "csetobjectreferences.h"
 #include "cdeleteobject.h"
 #include "cabstractmediamtpdataprovidercopyobject.h"
 #include "cabstractmediamtpdataprovidermoveobject.h"
@@ -63,7 +63,7 @@ const TAbstractMediaMtpDataProviderRequestProcessorEntry KAbstractMediaMtpDataPr
         { EMTPOpCodeSetObjectPropValue, CAbstractMediaMtpDataProviderSetObjectPropValue::NewL },
         { EMTPOpCodeSetObjectPropList, CSetObjectPropList::NewL }, //SetObjectPropList
         { EMTPOpCodeGetObjectReferences, CGetObjectReferences::NewL }, //Get Object References
-        { EMTPOpCodeSetObjectReferences, CAbstractMediaMtpDataProviderSetObjectReferences::NewL }, //Set Object References
+        { EMTPOpCodeSetObjectReferences, CSetObjectReferences::NewL }, //Set Object References
         { EMTPOpCodeDeleteObject, CDeleteObject::NewL }, //DeleteObject
         { EMTPOpCodeCopyObject, CAbstractMediaMtpDataProviderCopyObject::NewL }, // Copy Object
         { EMTPOpCodeMoveObject, CAbstractMediaMtpDataProviderMoveObject::NewL }, // Move Object

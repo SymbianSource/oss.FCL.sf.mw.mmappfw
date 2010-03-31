@@ -42,6 +42,7 @@ _LIT( KTxtExtensionO4A, ".o4a" );
 _LIT( KTxtExtensionO4V, ".o4v" );
 _LIT( KTxtExtensionODF, ".odf" );
 
+_LIT( KTxtExtensionALB, ".alb" );
 _LIT( KTxtExtensionM3U, ".m3u" );
 _LIT( KTxtExtensionPLA, ".pla" );
 _LIT( KTxtExtensionVIR, ".vir" ); // virtual playlist from MPX
@@ -65,6 +66,9 @@ _LIT(KFormatExtensionODFVideoMP4, "0xB982:ODF:video/mp4");
 _LIT(KFormatExtensionM4A, "0xB982:m4a");
 _LIT(KFormatExtensionO4A, "0xB984:o4a");
 _LIT(KFormatExtensionO4V, "0xB984:o4v");
+
+//Abstract Album
+_LIT(KFormatExtensionALB, "0xBA03:alb");
 
 //Playlists
 _LIT(KFormatExtensionM3U, "0xba11:m3u");
@@ -95,7 +99,8 @@ enum TMmMtpSubFormatCode
     {
     EMTPSubFormatCodeUnknown,
     EMTPSubFormatCodeAudio,
-    EMTPSubFormatCodeVideo
+    EMTPSubFormatCodeVideo,
+    EMTPSubFormatCodeUndefine
     };
 
 #endif // MMMTPDPFILEDEFS_H

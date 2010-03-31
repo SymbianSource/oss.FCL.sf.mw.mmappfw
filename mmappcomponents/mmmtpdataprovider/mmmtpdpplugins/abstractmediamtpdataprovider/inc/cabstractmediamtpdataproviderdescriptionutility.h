@@ -53,14 +53,35 @@ public:
     CMTPTypeObjectPropDesc* NewSpecificPropDescL( TUint aFormatCode, TUint16 aPropCode );
 
 private:
-    // Example for further extension
     /**
-     * Construct audio wave codec property description.
-     * @param aFormatCode
-     * @return Property description dataset of audio wave codec.
+     * Construct property description of SampleFormat.
+     * @return Property description dataset of sample format.
      */
-    // CMTPTypeObjectPropDesc* NewAudioWaveCodecPropDescL( TUint aFormatCode );
+    CMTPTypeObjectPropDesc* NewRepresentativeSampleFormatL();                   
 
+    /**
+     * Construct property description of SampleSize.
+     * @return Property description dataset of sample size.
+     */
+    CMTPTypeObjectPropDesc* NewRepresentativeSampleSizeL();
+    
+    /**
+     * Construct property description of SampleHeight.
+     * @return Property description dataset of sample height.
+     */
+    CMTPTypeObjectPropDesc* NewRepresentativeSampleHeightL();
+    
+    /**
+     * Construct property description of SampleWidth.
+     * @return Property description dataset of sample width.
+     */
+    CMTPTypeObjectPropDesc* NewRepresentativeSampleWidthL();
+    
+    /**
+     * Construct property description of SampleData.
+     * @return Property description dataset of sample data.
+     */
+    CMTPTypeObjectPropDesc* NewRepresentativeSampleDataL();
     };
 
 #endif // CABSTRACTMEDIAMTPDATAPROVIDERDESCRIPTIONUTILITY_H

@@ -16,6 +16,8 @@
 */
 
 
+#include <mtp/cmtptypearray.h>
+
 #include "cabstractmediamtpdataprovidersetobjectpropvalue.h"
 #include "abstractmediamtpdataproviderconst.h"
 #include "mmmtpdplogger.h"
@@ -81,9 +83,22 @@ CAbstractMediaMtpDataProviderSetObjectPropValue::~CAbstractMediaMtpDataProviderS
 // invalid propcode
 // -----------------------------------------------------------------------------
 //
-TBool CAbstractMediaMtpDataProviderSetObjectPropValue::IsSpecificPropCodeReadOnly( TUint16 /*aPropCode*/ ) const
+TBool CAbstractMediaMtpDataProviderSetObjectPropValue::IsSpecificPropCodeReadOnly( TUint16 aPropCode ) const
     {
-    return EFalse;
+    TBool ret = EFalse;
+    switch ( aPropCode )
+        {
+        case EMTPObjectPropCodeRepresentativeSampleFormat:
+        case EMTPObjectPropCodeRepresentativeSampleSize:
+        case EMTPObjectPropCodeRepresentativeSampleHeight:
+        case EMTPObjectPropCodeRepresentativeSampleWidth:
+            ret = ETrue;
+            break;
+        default:
+            ret = EFalse;
+            break;
+        }
+    return ret;
     }
 
 // -----------------------------------------------------------------------------
@@ -92,14 +107,24 @@ TBool CAbstractMediaMtpDataProviderSetObjectPropValue::IsSpecificPropCodeReadOnl
 // invalid propcode
 // -----------------------------------------------------------------------------
 //
-void CAbstractMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectPropertyL( TUint16 /*aPropCode*/ )
+void CAbstractMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectPropertyL( TUint16 aPropCode )
     {
-    PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectPropertyL leave with KErrNotSupported" ) );
+    PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectPropertyL" ) );
+    if ( aPropCode == EMTPObjectPropCodeRepresentativeSampleData )
+        {
+        delete iMTPTypeArray;
+        iMTPTypeArray = NULL;
 
-    // Do nothing now.
-    // May need add implementation here for further extension.
-
-    User::Leave( KErrNotSupported );
+        iMTPTypeArray = CMTPTypeArray::NewL( EMTPTypeAUINT8 );
+        ReceiveDataL( *iMTPTypeArray );
+        }
+    else
+        {
+        PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectPropertyL leave with KErrNotSupported" ) );
+        // Do nothing now.
+        // May need add implementation here for further extension.
+        User::Leave( KErrNotSupported );
+        }
     }
 
 // -----------------------------------------------------------------------------
@@ -108,15 +133,26 @@ void CAbstractMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectP
 // invalid propcode
 // -----------------------------------------------------------------------------
 //
-TMTPResponseCode CAbstractMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectPropertyL( TUint16 /*aPropCode*/ )
+TMTPResponseCode CAbstractMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectPropertyL( TUint16 aPropCode )
     {
-    PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectPropertyL leave with KErrNotSupported" ) );
+    PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectPropertyL" ) );
+    TMTPResponseCode responseCode = EMTPRespCodeOK;
 
-    // Do nothing now.
-    // May need add implementation here for further extension.
-    User::Leave( KErrNotSupported );
-
-    return EMTPRespCodeOK;
+    if ( aPropCode == EMTPObjectPropCodeRepresentativeSampleData )
+        {
+        responseCode = ServiceMetaDataToWrapperL( aPropCode,
+            *iMTPTypeArray,
+            *iObjectInfo );
+        }
+    else
+        {
+        PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectPropertyL leave with KErrNotSupported" ) );
+        // Do nothing now.
+        // May need add implementation here for further extension.
+        User::Leave( KErrNotSupported );
+        }
+    PRINT( _L( "MM MTP <= CAbstractMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectPropertyL" ) );
+    return responseCode;
     }
 
 // end of file

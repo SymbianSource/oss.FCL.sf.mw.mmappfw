@@ -43,7 +43,6 @@ SOURCE    cabstractmediamtpdataproviderenumerator.cpp
 SOURCE    cabstractmediamtpdataprovidergetobjectpropvalue.cpp
 SOURCE    cabstractmediamtpdataprovidergetobjectproplist.cpp
 SOURCE    cabstractmediamtpdataprovidersetobjectpropvalue.cpp
-SOURCE    cabstractmediamtpdataprovidersetobjectreferences.cpp
 SOURCE    cabstractmediamtpdataproviderabstractmediapreference.cpp
 SOURCE    cabstractmediamtpdataprovidercopyobject.cpp
 SOURCE    cabstractmediamtpdataprovidermoveobject.cpp

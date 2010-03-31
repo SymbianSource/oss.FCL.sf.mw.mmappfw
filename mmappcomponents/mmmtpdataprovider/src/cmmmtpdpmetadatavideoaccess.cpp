@@ -303,10 +303,6 @@ void CMmMtpDpMetadataVideoAccess::CreateDatabaseTablesL()
     formatBuf.Append( KMtpVideoParentalRatingType );
     formatBuf.Append( KMtpVideoCommaSign );
 
-    formatBuf.Append( KMtpVideoUseCount );
-    formatBuf.Append( KMtpVideoUseCountType );
-    formatBuf.Append( KMtpVideoCommaSign );
-
     formatBuf.Append( KMtpVideoDRM );
     formatBuf.Append( KMtpVideoDRMType );
     formatBuf.Append( KMtpVideoCommaSign );
@@ -662,9 +658,6 @@ void CMmMtpDpMetadataVideoAccess::AddVideoL( const TDesC& aFullFileName )
         num = iColSet->ColNo( KMtpVideoParentalRating );
         iRecordSet.SetColL( num, KNullDesC );
 
-        num = iColSet->ColNo( KMtpVideoUseCount );
-        iRecordSet.SetColL( num, 0 );
-
         num = iColSet->ColNo( KMtpVideoDRM );
         iRecordSet.SetColL( num, 0 );
         }
@@ -1006,22 +999,6 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
             }
             break;
 
-        case EMTPObjectPropCodeUseCount:
-            {
-            PRINT( _L( "MM MTP <> EMTPObjectPropCodeUseCount-MD" ) );
-            num = iColSet->ColNo( KMtpVideoUseCount );
-            uInt32 = iRecordSet.ColUint32( num );
-            if ( EMTPTypeUINT32 == aNewData.Type() )
-                {
-                ( ( TMTPTypeUint32 & ) aNewData ).Set( uInt32 );
-                }
-            else
-                {
-                User::Leave( KErrArgument );
-                }
-            }
-            break;
-
         case EMTPObjectPropCodeDRMStatus:
             {
             PRINT( _L( "MM MTP <> EMTPObjectPropCodeDRMStatus-MD" ) );
@@ -1174,7 +1151,6 @@ void CMmMtpDpMetadataVideoAccess::SetMetadataL( const TUint16 aObjPropCode,
         case EMTPObjectPropCodeVideoBitRate:
         case EMTPObjectPropCodeFramesPerThousandSeconds:
         case EMTPObjectPropCodeKeyFrameDistance:
-        case EMTPObjectPropCodeUseCount:
             {
             if ( EMTPTypeUINT32 != aNewData.Type() )
                 {
@@ -1499,7 +1475,6 @@ const TDesC& CMmMtpDpMetadataVideoAccess::ColumnNameFromPropCodeL( const TUint16
             { EMTPObjectPropCodeScanType,                KMtpVideoScanType },
             { EMTPObjectPropCodeEncodingProfile,         KMtpVideoEncodingProfile },
             { EMTPObjectPropCodeParentalRating,          KMtpVideoParentalRating },
-            { EMTPObjectPropCodeUseCount,                KMtpVideoUseCount },
             { EMTPObjectPropCodeAudioWAVECodec,          KMtpVideoAudioCodec },
             { EMTPObjectPropCodeDRMStatus,               KMtpVideoDRM },
         };

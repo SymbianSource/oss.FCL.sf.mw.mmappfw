@@ -16,7 +16,6 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
 #include <mtp/mmtpobjectmgr.h>
@@ -231,6 +230,7 @@ EXPORT_C void CSetObjectPropValue::ServiceL()
         // Get Data for String objects
         case EMTPObjectPropCodeObjectFileName:  // 0xDC07
         case EMTPObjectPropCodeName: // 0xDC44
+        case EMTPObjectPropCodeAlbumArtist:
             {
             delete iMTPTypeString;
             iMTPTypeString = NULL;
@@ -280,38 +280,36 @@ EXPORT_C TBool CSetObjectPropValue::DoHandleResponsePhaseL()
                 err = MmMtpDpUtility::UpdateObjectFileName( iFramework.Fs(),
                     suid,
                     newSuid );
+                // TODO: if the new name is the same with old name
                 PRINT1( _L( "MM MTP <> Update object file name err = %d" ), err );
                 if ( KErrOverflow == err ) // full path name is too long
                     {
                     responseCode = EMTPRespCodeInvalidDataset;
                     }
-                else if ( ( KErrNone == err ) || ( KErrAlreadyExists == err ) )
+                else if ( KErrNone == err )
                     {
-                    TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( suid, newSuid ) ); //Update MPX DB
+                    TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( *iObjectInfo, newSuid ) ); //Update MPX DB
                     PRINT1( _L( "MM MTP <> Rename MPX object file name err = %d" ), err );
                     // it is ok if file is not found in DB, following S60 solution
                     if ( KErrNotFound == err )
                         {
-                        TUint formatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatCode );
-                        TUint subFormatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatSubCode );
-                        TRAP( err, iDpConfig.GetWrapperL().AddObjectL( newSuid, formatCode, subFormatCode ) );
+                        TRAP( err, iDpConfig.GetWrapperL().AddObjectL( *iObjectInfo ) );
                         PRINT1( _L( "MM MTP <> Add MPX object file name err = %d" ), err );
                         }
-                    if ( KErrNone == err )
-                        {
-                        iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
-                        iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
-                        }
-                    else
-                        {
-                        responseCode = EMTPRespCodeGeneralError;
-                        }
+
+                    iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
+                    iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
+                    }
+                else
+                    {
+                    responseCode = EMTPRespCodeGeneralError;
                     }
                 }
             }
             break;
 
         case EMTPObjectPropCodeName: // 0xDC44
+        case EMTPObjectPropCodeAlbumArtist:
             {
             responseCode = ServiceMetaDataToWrapperL( iPropCode,
                 *iMTPTypeString,

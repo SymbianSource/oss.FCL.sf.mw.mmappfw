@@ -168,6 +168,13 @@ private: // New Functions:
                             const TDesC& aFile,
                             TDesC8& aValue);
     
+    /**
+     * Check if can send request to TNM or not.
+     * @since 5.0
+     * 
+     */                     
+    void CheckBeforeSendRequest();
+    
 private:
 
     /**

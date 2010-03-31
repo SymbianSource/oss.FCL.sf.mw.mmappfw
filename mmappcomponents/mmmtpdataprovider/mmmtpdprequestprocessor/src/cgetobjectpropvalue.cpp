@@ -18,9 +18,7 @@
 
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
-#include <mtp/cmtpobjectmetadata.h>
 #include <f32file.h>
 
 #include "cgetobjectpropvalue.h"
@@ -228,29 +226,21 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
         // Name and DataAdded (audio only) fall under the same branch while dateadded(video)/modified/created fall under another
         case EMTPObjectPropCodeName: // 0xDC44
         case EMTPObjectPropCodeDateAdded: // 0xDC4E
+        case EMTPObjectPropCodeAlbumArtist:
             {
-            if ( ( propCode == EMTPObjectPropCodeName )
-                || ( ( !MmMtpDpUtility::IsVideoL(iObjectInfo->DesC( CMTPObjectMetaData::ESuid ), iFramework ) )
-                    && ( propCode == EMTPObjectPropCodeDateAdded ) ) )
-                {
-                iMTPTypeString = CMTPTypeString::NewL();
-                ServiceMetaDataFromWrapperL( propCode, *iMTPTypeString, *iObjectInfo );
-                break;
-                }
-            // Else, video DB does not support DateAdded field, use the file system date!
-            // It's the same behavior with DateCreated and DateModified.
-            // Fall through intentional.
+            iMTPTypeString = CMTPTypeString::NewL();
+            ServiceMetaDataFromWrapperL( propCode, *iMTPTypeString, *iObjectInfo );
             }
+            break;
         //lint -fallthrough
         case EMTPObjectPropCodeDateCreated:
         case EMTPObjectPropCodeDateModified:
             {
-            TTime dataModified;
-            dataModified = MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(),
-                iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
-
             TBuf<KMtpMaxDateTimeStringLength> timeStr;
-            dataModified.FormatL( timeStr, KMtpDateTimeFormat );
+            MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(),
+                iObjectInfo->DesC( CMTPObjectMetaData::ESuid ),
+                timeStr );
+
             PRINT1( _L( "MM MTP <> CGetObjectPropValue::ServiceL Date time %S" ), &timeStr );
             iMTPTypeString = CMTPTypeString::NewL( timeStr );
             SendDataL( *iMTPTypeString );

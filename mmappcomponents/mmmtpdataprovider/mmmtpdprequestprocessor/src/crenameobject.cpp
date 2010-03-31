@@ -18,9 +18,7 @@
 
 #include <f32file.h>
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
-#include <mtp/cmtpobjectmetadata.h>
 #include <mtp/tmtptypeuint32.h>
 
 #include "crenameobject.h"
@@ -147,6 +145,8 @@ EXPORT_C void CRenameObject::RunL()
 
             if ( iNewFolderName.Length() + iRightPartName.Length() <= KMaxFileName )
                 {
+                PerformAdditionalActionL();
+
                 iFileName.Zero();
                 iFileName.Append( iNewFolderName );
                 iFileName.Append( iRightPartName );
@@ -155,8 +155,6 @@ EXPORT_C void CRenameObject::RunL()
                 iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, iFileName );
                 iObjectInfo->SetUint( CMTPObjectMetaData::EObjectMetaDataUpdate, 1 );
                 iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
-
-                PerformAdditionalActionL();
                 }
             }
 
@@ -287,7 +285,7 @@ void CRenameObject::PerformAdditionalActionL()
     PRINT( _L( "MM MTP => CRenameObject::PerformAdditionalActionL" ) );
 
     // update MPX DB
-    TRAPD( err, iWrapper.RenameObjectL( iOldFileName, iFileName ) );
+    TRAPD( err, iWrapper.RenameObjectL( *iObjectInfo, iFileName ) );
 
     // should not fail for 1 file, keep it going, as folder already renamed
     if ( err != KErrNone )

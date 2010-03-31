@@ -31,6 +31,8 @@ VENDORID                VID_DEFAULT
 MACRO __RAMDISK_PERF_ENABLE
 #define __RAMDISK_PERF_ENABLE
 
+MACRO ABSTRACTAUDIOALBUM_INCLUDED
+#define ABSTRACTAUDIOALBUM_INCLUDED
 SOURCEPATH              ../src
 SOURCE                  mpxharvesterfilehandler.cpp
 SOURCE                  mpxharvesterfilehandlerimp.cpp

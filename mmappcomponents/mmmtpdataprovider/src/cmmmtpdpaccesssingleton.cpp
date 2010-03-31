@@ -50,14 +50,13 @@ EXPORT_C CMmMtpDpMetadataAccessWrapper& CMmMtpDpAccessSingleton::GetAccessWrappe
 // create singleton instance
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CMmMtpDpAccessSingleton::CreateL( RFs& aRfs,
-    MMTPDataProviderFramework& aFramework )
+EXPORT_C void CMmMtpDpAccessSingleton::CreateL( MMTPDataProviderFramework& aFramework )
     {
     CMmMtpDpAccessSingleton* self = reinterpret_cast<CMmMtpDpAccessSingleton*>( Dll::Tls() );
 
     if ( self == NULL )
         {
-        self = CMmMtpDpAccessSingleton::NewL( aRfs, aFramework );
+        self = CMmMtpDpAccessSingleton::NewL( aFramework );
         Dll::SetTls( reinterpret_cast<TAny*>( self ) );
         }
     else
@@ -135,12 +134,11 @@ CMmMtpDpAccessSingleton* CMmMtpDpAccessSingleton::Instance()
 // two-phase construction
 // -----------------------------------------------------------------------------
 //
-CMmMtpDpAccessSingleton* CMmMtpDpAccessSingleton::NewL( RFs& aRfs,
-    MMTPDataProviderFramework& aFramework )
+CMmMtpDpAccessSingleton* CMmMtpDpAccessSingleton::NewL( MMTPDataProviderFramework& aFramework )
     {
     CMmMtpDpAccessSingleton* self = new(ELeave) CMmMtpDpAccessSingleton;
     CleanupStack::PushL( self );
-    self->ConstructL(aRfs, aFramework);
+    self->ConstructL( aFramework );
     CleanupStack::Pop( self );
     return self;
     }
@@ -150,10 +148,9 @@ CMmMtpDpAccessSingleton* CMmMtpDpAccessSingleton::NewL( RFs& aRfs,
 // two-phase construction
 // -----------------------------------------------------------------------------
 //
-void CMmMtpDpAccessSingleton::ConstructL( RFs& aRfs,
-    MMTPDataProviderFramework& aFramework )
+void CMmMtpDpAccessSingleton::ConstructL( MMTPDataProviderFramework& aFramework )
     {
-    iWrapper = CMmMtpDpMetadataAccessWrapper::NewL( aRfs, aFramework );
+    iWrapper = CMmMtpDpMetadataAccessWrapper::NewL( aFramework );
     }
 
 

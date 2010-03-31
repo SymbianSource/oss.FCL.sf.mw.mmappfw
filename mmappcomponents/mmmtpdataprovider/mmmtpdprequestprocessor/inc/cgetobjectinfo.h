@@ -22,7 +22,6 @@
 #include "crequestprocessor.h"
 
 // forward declacration
-class CMmMtpDpMetadataAccessWrapper;
 class CMTPTypeObjectInfo;
 class MMmMtpDpConfig;
 

@@ -21,7 +21,6 @@
 
 #include "crequestprocessor.h"
 
-class MMTPDataProviderFramework;
 class CMTPTypeFile;
 class CMmMtpDpMetadataAccessWrapper;
 class MMmMtpDpConfig;

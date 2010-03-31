@@ -54,6 +54,7 @@ LIBRARY         stiftestinterface.lib
 LIBRARY         stiftestengine.lib 
 LIBRARY         mpxplaybackutility.lib 
 LIBRARY         mpxcommon.lib
+LIBRARY         mpxcollectionutility.lib
 
 LANG            SC
 

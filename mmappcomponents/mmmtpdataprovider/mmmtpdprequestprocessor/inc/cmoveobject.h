@@ -22,7 +22,6 @@
 #include "crequestprocessor.h"
 
 class CMTPObjectMetaData;
-class CMmMtpDpMetadataAccessWrapper;
 class CMTPTypeObjectPropList;
 class CMTPTypeObjectPropListElement;
 class MMmMtpDpConfig;
@@ -112,8 +111,7 @@ private:
     /**
     * Set the object properties in the object property store.
     */
-    void SetPropertiesL( const TDesC& aOldFileName,
-        const TDesC& aNewFileName );
+    void SetPropertiesL( const TDesC& aNewFileName );
 
     /*
     * Move a single object and update the database

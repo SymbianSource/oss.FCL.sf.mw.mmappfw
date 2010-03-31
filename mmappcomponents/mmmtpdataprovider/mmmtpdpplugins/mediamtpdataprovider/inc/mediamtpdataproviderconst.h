@@ -78,21 +78,21 @@ enum TMmMtpDuration
 enum TMmMtpWidthRange
     {
     EMTPMinWidth  = 0x000000b0,  // 176 pixels
-    EMTPMaxWidth  = 0x00000500,  // 1280 pixels
+    EMTPMaxWidth  = 0x00000500,  // 1280 pixels, standard for 720p content
     EMTPStepWidth = 0x00000001,
     };
 
 enum TMmMtpHeightRange
     {
     EMTPMinHeight  = 0x00000090,  // 144 pixels
-    EMTPMaxHeight  = 0x000002D0,  // 720 pixels
+    EMTPMaxHeight  = 0x000002D0,  // 720 pixels, standard for 720p content
     EMTPStepHeight = 0x00000001,
     };
 
 enum TMmMtpVideoBitRateRange
     {
     EMTPWMVMinBitrate  = 0x00000000,
-    EMTPWMVMaxBitrate  = 0x01312D00,        // 20 Mbps
+    EMTPWMVMaxBitrate  = 0x01312D00,        // 20 Mbps, recommanded by Helix team
     EMTPVideoBitrateStep = 0x00000001
     };
 
@@ -111,7 +111,7 @@ enum TMmMtpVideoFourCCCodec
 enum TMmMtpFramesPerThousandSecondsRange
     {
     EMTPMinFramesPerThousandSeconds  = 0x00000000,
-    EMTPMaxFramesPerThousandSeconds  = 0x00007530,  // 30000 frame per thousand seconds (30 frame/s)
+    EMTPMaxFramesPerThousandSeconds  = 0x00007530,  // 30000 frame per ms (30 frame/s), standard for progressive content
     EMTPStepFramesPerThousandSeconds = 0x00000001
     };
 
@@ -195,6 +195,7 @@ static const TUint16 KMmMtpDpSupportedPropMandatoryAudio[] =
     EMTPObjectPropCodeNumberOfChannels,
     EMTPObjectPropCodeAudioWAVECodec,
     EMTPObjectPropCodeAudioBitRate,
+    EMTPObjectPropCodeAlbumArtist
     };
 
 // Additional for audio formats
@@ -215,7 +216,6 @@ static const TUint16 KMmMtpDpSupportedPropMandatoryWMV[] =
     EMTPObjectPropCodeHeight,
     EMTPObjectPropCodeDuration,
     EMTPObjectPropCodeGenre,
-    EMTPObjectPropCodeUseCount,
     EMTPObjectPropCodeSampleRate,
     EMTPObjectPropCodeNumberOfChannels,
     EMTPObjectPropCodeScanType,

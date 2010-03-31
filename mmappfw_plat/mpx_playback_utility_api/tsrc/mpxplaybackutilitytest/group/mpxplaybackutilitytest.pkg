@@ -21,7 +21,7 @@
 &EN
 
 ; Provide value for uid
-#{"STIF mpxplaybackutilitytest Application"},(0x10005942),1,1,0,TYPE=SA
+#{"MPX PlaybackUtility STIF"}, (0x101FB3E3), 1, 0, 1, TYPE=SA, RU
 
 ; Series60 product id for S60 3.0
 [0x101F7961], 0, 0, 0, {"Series60ProductID"}
@@ -32,35 +32,16 @@
 ; Unique Vendor name
 :"Nokia"
 
-; Logo
-; None
-
-; Package signature - Optional
-; None
-
-; Start of Package body
-
-; Condition blocks
-; None
-
-; Options list
-; None
-
 ; Install files
-"..\..\data\mmc\Battle_160x100_30kbps.rm"   -   "e:\testing\data\Battle_160x100_30kbps.rm"
+"\epoc32\release\armv5\udeb\mpxplaybackutilitytest.dll" - "!:\Sys\Bin\mpxplaybackutilitytest.dll"
+"..\..\init\TestFramework.ini" - "c:\testframework\TestFramework.ini" 
+"..\..\conf\mpxplaybackutilitytest.cfg" - "c:\testframework\mpxplaybackutilitytest.cfg"
 
-"..\..\init\TestFramework.ini"   -   "c:\testframework\TestFramework.ini" 
-"..\..\conf\mpxplaybackutilitytest.cfg"   -   "c:\testframework\mpxplaybackutilitytest.cfg"
-
-"\epoc32\release\armv5\udeb\mpxplaybackutilitytest.dll"   -   "c:\Sys\Bin\mpxplaybackutilitytest.dll"
-  
-; Embedded SIS 
-; None
-
-; End of Package body
-
-; PKG dependencies
-; None
-
-; PKG capabilities
-; None
+"..\..\data\mmc\Battle_160x100_30kbps.rm"   -   "f:\testing\data\Battle_160x100_30kbps.rm"
+"..\..\data\mmc\20k_H263_WB_176x144_15fps.3gp"   -   "f:\testing\data\20k_H263_WB_176x144_15fps.3gp"
+"..\..\data\mmc\30k_MPEG4_AAC_8Khz_176x144_15fps_30secs.mp4"   -   "f:\testing\data\30k_MPEG4_AAC_8Khz_176x144_15fps_30secs.mp4"
+"..\..\data\mmc\80k_H264_AAC16M22_176x144_15fps.3gp"   -   "f:\testing\data\80k_H264_AAC16M22_176x144_15fps.3gp"
+"..\..\data\mmc\DivX_MP3_256x112_30fps_300Kbps.avi"   -   "f:\testing\data\DivX_MP3_256x112_30fps_300Kbps.avi"
+"..\..\data\mmc\honey_im_home_horror_ad.avi"   -   "f:\testing\data\honey_im_home_horror_ad.avi"
+"..\..\data\mmc\MPEG4_VBR_176x144_15fps.3gp"   -   "f:\testing\data\MPEG4_VBR_176x144_15fps.3gp"
+"..\..\data\mmc\XVID_176x144_15fps_261Kbps.avi"   -   "f:\testing\data\XVID_176x144_15fps_261Kbps.avi"

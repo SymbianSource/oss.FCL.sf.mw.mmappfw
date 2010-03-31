@@ -18,7 +18,6 @@
 
 #include <mtp/mtpprotocolconstants.h>
 #include <mtp/tmtptyperequest.h>
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/tmtptypeevent.h>
 #include <mtp/mmtpconnection.h>
 #include <mtp/mmtpobjectmgr.h>

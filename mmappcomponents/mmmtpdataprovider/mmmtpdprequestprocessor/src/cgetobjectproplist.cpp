@@ -18,12 +18,11 @@
 
 #include <bautils.h>
 #include <e32std.h>
-#include <mtp/mmtpdataproviderframework.h>
+
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/cmtptypeobjectproplist.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
-#include <mtp/cmtpobjectmetadata.h>
 
 #include "tobjectdescription.h"
 #include "cgetobjectproplist.h"
@@ -552,22 +551,14 @@ TInt CGetObjectPropList::ServiceGroupPropertiesL( TUint32 aHandle )
     const TInt count = iPropertyArray.Count();
 
     TInt err = KErrNone;
-    TBool successQuery = EFalse;
     for ( TInt i = 0; i < count; i++ )
         {
         err = ServiceOneObjectPropertyL( aHandle, iPropertyArray[i] );
-        if ( err == KErrNone )
-            successQuery = ETrue;
         if ( err == KErrNotSupported || err == KErrNotFound )  // Skip
             err = KErrNone;
         if ( err != KErrNone )
             break;
         }
-
-    // In PC Suite combined mode, a file that was found at the beginning could be deleted by PC Suite protocol
-    // Need to fail it here.
-    if ( successQuery == EFalse )
-        err = KErrNotFound;
 
     PRINT1( _L( "MM MTP <= CGetObjectPropList::ServiceGroupPropertiesL err = %d" ), err );
 
@@ -670,44 +661,35 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
 
         case EMTPObjectPropCodeName:
         case EMTPObjectPropCodeDateAdded:
+        case EMTPObjectPropCodeAlbumArtist:
             {
-            if ( ( aPropCode == EMTPObjectPropCodeName )
-                || ( ( !MmMtpDpUtility::IsVideoL( iObject->DesC( CMTPObjectMetaData::ESuid ), iFramework ) )
-                && ( aPropCode == EMTPObjectPropCodeDateAdded ) ) )
-                {
-                textData = CMTPTypeString::NewLC();   // + textData
+            textData = CMTPTypeString::NewLC(); // + textData
 
-                TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( aPropCode,
-                    *textData,
-                    *iObject ) );
+            TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( aPropCode,
+                *textData,
+                *iObject ) );
 
-                PRINT1( _L( "MM MTP <> CGetObjectPropList::ServiceOneObjectPropertyL err = %d" ), err );
+            PRINT1( _L( "MM MTP <> CGetObjectPropList::ServiceOneObjectPropertyL err = %d" ), err );
 
-                iPropertyElement = &(iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
-                iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, textData->StringChars() );
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, textData->StringChars() );
 
-                CleanupStack::PopAndDestroy( textData );  // - textData
-                break;
-                }
-            // Else, video DB does not support DateAdded field, use the file system date!
-            // It's the same behavior with DateCreated and DateModified.
-            // Fall through intentional.
+            CleanupStack::PopAndDestroy( textData ); // - textData
             }
+            break;
 
         case EMTPObjectPropCodeDateCreated:
         case EMTPObjectPropCodeDateModified:
             {
-            TTime dataModified;
-            dataModified = MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(),
-                iObject->DesC( CMTPObjectMetaData::ESuid ) );
-
             TBuf<KMtpMaxDateTimeStringLength> timeStr;
-            dataModified.FormatL( timeStr, KMtpDateTimeFormat );
+            MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(),
+                iObject->DesC( CMTPObjectMetaData::ESuid ),
+                timeStr );
             PRINT1( _L( "MM MTP <> CGetObjectPropList::ServiceOneObjectPropertyL Date time %S" ), &timeStr );
-            CMTPTypeString* datastring = CMTPTypeString::NewLC( timeStr );  // + datastring
 
-            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-            iPropertyElement->SetStringL(CMTPTypeObjectPropListElement::EValue, datastring->StringChars());
+            CMTPTypeString* datastring = CMTPTypeString::NewLC( timeStr );  // + datastring
+            iPropertyElement = &(iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, datastring->StringChars() );
             CleanupStack::PopAndDestroy( datastring );  // - datastring
             }
             break;

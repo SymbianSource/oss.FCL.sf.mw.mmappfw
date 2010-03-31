@@ -23,7 +23,11 @@ _LIT( KHarvesterDBPath, "\\private\\101ffca9\\");
 // Harvester db increment 9 v1
 // Please update the increment number for each increment 
 // Please update the version number for each schema change
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
+_LIT( KHarvesterDBName, "harvesterdbv9_6.dat" );
+#else
 _LIT( KHarvesterDBName, "harvesterdbv9_5.dat" );
+#endif 
 _LIT( KHarvesterDBPattern, "harvesterdbv*.dat" );
 
 const TInt KDbMaxTableCreationSQLLength = 1024;

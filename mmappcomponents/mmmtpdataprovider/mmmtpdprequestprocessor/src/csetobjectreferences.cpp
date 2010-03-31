@@ -18,7 +18,6 @@
 
 #include <mtp/cmtptypearray.h>
 #include <mtp/mmtpobjectmgr.h>
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpreferencemgr.h>
 
 #include "csetobjectreferences.h"
@@ -27,6 +26,8 @@
 #include "cmmmtpdpmetadataaccesswrapper.h"
 #include "mmmtpdputility.h"
 #include "mmmtpdpconfig.h"
+
+const TInt KMmMtpRefArrayGranularity = 3;
 
 // -----------------------------------------------------------------------------
 // Verification data for the SetReferences request
@@ -88,16 +89,14 @@ EXPORT_C CSetObjectReferences::~CSetObjectReferences()
 // Standard c++ constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CSetObjectReferences::CSetObjectReferences(
-    MMTPDataProviderFramework& aFramework,
+EXPORT_C CSetObjectReferences::CSetObjectReferences( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
-    CRequestProcessor(
-        aFramework,
-        aConnection,
-        sizeof( KMTPSetObjectReferencesPolicy )/sizeof( TMTPRequestElementInfo ),
-        KMTPSetObjectReferencesPolicy ),
-    iDpConfig( aDpConfig )
+        CRequestProcessor( aFramework,
+            aConnection,
+            sizeof( KMTPSetObjectReferencesPolicy ) / sizeof( TMTPRequestElementInfo ),
+            KMTPSetObjectReferencesPolicy ),
+        iDpConfig( aDpConfig )
     {
     PRINT( _L( "Operation: SetObjectReferences(0x9811)" ) );
     }
@@ -107,12 +106,15 @@ EXPORT_C CSetObjectReferences::CSetObjectReferences(
 // set references to DB
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CSetObjectReferences::DoSetObjectReferencesL( CMmMtpDpMetadataAccessWrapper& /*aWrapper*/,
-    TUint16 /*aObjectFormat*/,
-    const TDesC& /*aSrcFileName*/,
-    CDesCArray& /*aRefFileArray*/ )
+EXPORT_C void CSetObjectReferences::DoSetObjectReferencesL( const CMTPObjectMetaData& aObject )
     {
-    // do nothing, do special thing by inheriting
+    TUint formatCode = aObject.Uint( CMTPObjectMetaData::EFormatCode );
+    TBool hasReference = MmMtpDpUtility::HasReference( formatCode );
+
+    if ( hasReference )
+        {
+        iDpConfig.GetWrapperL().SetReferenceL( aObject, *iReferenceSuids );
+        }
     }
 
 // -----------------------------------------------------------------------------
@@ -142,7 +144,7 @@ EXPORT_C TBool CSetObjectReferences::DoHandleResponsePhaseL()
 
     delete iReferenceSuids;
     iReferenceSuids = NULL;
-    iReferenceSuids = new ( ELeave ) CDesCArrayFlat( 3 );
+    iReferenceSuids = new ( ELeave ) CDesCArrayFlat( KMmMtpRefArrayGranularity );
 
     if ( !VerifyReferenceHandlesL() )
         {
@@ -159,10 +161,7 @@ EXPORT_C TBool CSetObjectReferences::DoHandleResponsePhaseL()
         CMTPObjectMetaData* object = CMTPObjectMetaData::NewLC(); // + object
         iFramework.ObjectMgr().ObjectL( objectHandle, *object );
         PRINT1( _L( "MM MTP <> object file name is %S" ), &(object->DesC( CMTPObjectMetaData::ESuid ) ) );
-        DoSetObjectReferencesL( iDpConfig.GetWrapperL(),
-            object->Uint( CMTPObjectMetaData::EFormatCode ),
-            object->DesC( CMTPObjectMetaData::ESuid ),
-            *iReferenceSuids );
+        DoSetObjectReferencesL( *object );
 
         CleanupStack::PopAndDestroy( object ); // - object
 
@@ -196,8 +195,9 @@ TBool CSetObjectReferences::VerifyReferenceHandlesL() const
             result = EFalse;
             break;
             }
-
-        iReferenceSuids->AppendL( object->DesC( CMTPObjectMetaData::ESuid ) );
+        // Only audio in playlist is supported
+        if ( iDpConfig.GetWrapperL().Category( *object ) == EMPXSong )
+            iReferenceSuids->AppendL( object->DesC( CMTPObjectMetaData::ESuid ) );
         }
     CleanupStack::PopAndDestroy( object ); // - object
     PRINT( _L( "MM MTP <= CSetObjectReferences::VerifyReferenceHandlesL" ) );

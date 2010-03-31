@@ -17,8 +17,6 @@
 
 
 #include <mtp/cmtptypefile.h>
-#include <mtp/mmtpdataproviderframework.h>
-#include <mtp/cmtpobjectmetadata.h>
 
 #include "cgetpartialobject.h"
 #include "mmmtpdplogger.h"
@@ -154,6 +152,7 @@ EXPORT_C void CGetPartialObject::ServiceL()
     CMTPObjectMetaData* objectInfo = iRequestChecker->GetObjectInfo( iObjectHandle );
     __ASSERT_DEBUG( objectInfo, Panic( EMmMTPDpObjectNull ) );
 
+    // NOTE: Change all TBuf<KMaxFileName> into TFileName for easily change when fs change the limitation of filename
     TFileName fileSuid;
     fileSuid.Append( objectInfo->DesC( CMTPObjectMetaData::ESuid ) );
 

@@ -16,7 +16,6 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/cmtptypeobjectproplist.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
@@ -156,7 +155,6 @@ TInt CMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectPropertyL( TUi
         case EMTPObjectPropCodeWidth:
         case EMTPObjectPropCodeHeight:
         case EMTPObjectPropCodeDuration:
-        case EMTPObjectPropCodeUseCount:
         case EMTPObjectPropCodeSampleRate:
         case EMTPObjectPropCodeAudioWAVECodec:
         case EMTPObjectPropCodeAudioBitRate:

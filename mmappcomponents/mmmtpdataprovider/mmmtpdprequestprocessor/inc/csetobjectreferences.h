@@ -64,16 +64,9 @@ protected:
 protected:
     /**
     * set references to DB
-    * @param aWrapper          medadata access interface
-    * @param aObjectFormat     the format of the file
-    * @param aSrcFileName      file name, from
-    * @param aRefFileArray     the array of file names, to
+    * @param aObject, the reference owner
     */
-    IMPORT_C virtual void
-        DoSetObjectReferencesL( CMmMtpDpMetadataAccessWrapper& aWrapper,
-            TUint16 aObjectFormat,
-            const TDesC& aSrcFileName,
-            CDesCArray& aRefFileArray );
+    void DoSetObjectReferencesL( const CMTPObjectMetaData& aObject );
 
 private:
     //from CRequestProcessor

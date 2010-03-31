@@ -30,6 +30,8 @@ VENDORID                VID_DEFAULT
 MACRO RD_MPX_TNM_INTEGRATION
 #define RD_MPX_TNM_INTEGRATION
 
+MACRO ABSTRACTAUDIOALBUM_INCLUDED
+#define ABSTRACTAUDIOALBUM_INCLUDED
 SOURCEPATH              ../src
 SOURCE                  mpxmetadataextractor.cpp
 SOURCE                  mpxfileinfoutility.cpp

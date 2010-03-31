@@ -16,7 +16,6 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/cmtptypeobjectproplist.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
@@ -172,7 +171,6 @@ void CMediaMtpDataProviderCopyObject::ServiceGetSpecificObjectPropertyL( TUint16
         case EMTPObjectPropCodeWidth:
         case EMTPObjectPropCodeHeight:
         case EMTPObjectPropCodeDuration:
-        case EMTPObjectPropCodeUseCount:
         case EMTPObjectPropCodeSampleRate:
         case EMTPObjectPropCodeAudioWAVECodec:
         case EMTPObjectPropCodeAudioBitRate:
@@ -217,6 +215,7 @@ void CMediaMtpDataProviderCopyObject::ServiceGetSpecificObjectPropertyL( TUint16
             break;
         }
 
+    // centralize logic to handle error, doing so, that's on need to trap the
     // Ignore all errors came from mpx db.
     // It's enough that only file copied successfully no matter metadata got whatever failure.
     if ( err != KErrNone )

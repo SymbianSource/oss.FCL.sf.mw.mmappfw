@@ -24,7 +24,6 @@
 // forward declaration
 class MMmMtpDpConfig;
 class CMTPTypeObjectPropDesc;
-class CMTPTypeInterdependentPropDesc;
 
 /**
 Implements the file data provider CMTPGetFormatCapabilities request processor.

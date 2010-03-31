@@ -451,7 +451,7 @@ enum TMPXGeneralCategory
     EMPXFile,
     EMPXImage,
     EMPXVideo,
-    EMPXRadio,
+    EMPXAbstractAlbum,
     EMPXMessage,
     EMPXTag,
     EMPXCommand,

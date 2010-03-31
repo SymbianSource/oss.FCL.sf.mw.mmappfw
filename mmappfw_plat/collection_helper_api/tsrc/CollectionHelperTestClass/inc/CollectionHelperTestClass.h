@@ -73,6 +73,28 @@ _LIT( KTestFileMimeType, "audio/aac" );
 _LIT( KRenameOldUri, "c:\\Blackbird.aac");
 _LIT( KRenameNewUri, "c:\\data\\Blackbird.aac");
 
+_LIT( KFileWmaSong, "f:\\1.wma");
+
+_LIT( KFile1, "e:\\data\\sounds\\digital\\1.mp3");    //ok
+_LIT( KOldAbstractAlbumName, "1.wma");    //ok
+_LIT( KNewAbstractAlbumName, "The 99 Most Essential Beethoven MasterpiecesVarious Artists");    //ok
+_LIT( KFile3, "e:\\data\\sounds\\digital\\(01) Amber - Yes.mp3");    //ok
+_LIT( KFilet, "e:\\data\\sounds\\digital\\02 What A Wonderful World.mp3");    //ok
+
+
+_LIT( KTestFile3, "e:\\data\\sounds\\digital\\Atomic Kitten - It's Ok.mp3");    //ok
+_LIT( KSongtest, "e:\\data\\sounds\\digital\\02 What A Wonderful World.mp3"); //ok
+
+_LIT( KAbstractalbum1, "f:\\1.alb");
+_LIT( KAbstractalbum2, "f:\\2.alb");
+_LIT( KAbstractalbum3, "f:\\3.alb");
+_LIT( KStoreRoot, "f:\\");
+
+_LIT( KAbstractAlbumName, "The 99 Most Essential Beethoven MasterpiecesVarious Artists");
+
+_LIT( KAlbumArtistShort, "testAlbumArtist");
+
+
 
 // FORWARD DECLARATIONS	
 class CCollectionHelperTestClass;
@@ -300,7 +322,6 @@ NONSHARABLE_CLASS(CCollectionHelperTestClass) : public CScriptBase,
 	    TInt SetAllowedPanic( CStifItemParser& aItem );
 	    
 	    void CreateTestMediaL( CMPXMedia*& aNewProperty );
-	    
 	    /**
 	    * Connect to the default client to the server
 	    * @since S60 3.2
@@ -316,8 +337,21 @@ NONSHARABLE_CLASS(CCollectionHelperTestClass) : public CScriptBase,
 		virtual TInt CloseUiHelperL(CStifItemParser& aItem);
 		virtual TInt CloseHelperL(CStifItemParser& aItem);
 		virtual TInt CloseCachedHelperL(CStifItemParser& aItem);      
-        
 
+        virtual TInt AddSongL(CStifItemParser& aItem);
+        TInt FindMediaL(const TDesC& aPath, TMPXGeneralCategory aCategory);
+		virtual TInt RemoveSongL(CStifItemParser& aItem );
+	    virtual TInt AddAbstractAlbumL(CStifItemParser& aItem);
+	    virtual TInt RemoveAbstractAlbumL(CStifItemParser& aItem);
+	    virtual TInt SetAbstractAlbumL(CStifItemParser& aItem);
+	    virtual TInt SetSongAlbumArtistL(CStifItemParser& aItem);
+	    virtual TInt GetSongAlbumArtistL(CStifItemParser& aItem);
+	    virtual TInt SetAbstractAlbumArtistL(CStifItemParser& aItem);
+	    virtual TInt GetAbstractAlbumArtistL(CStifItemParser& aItem);
+	    virtual TInt UpdateAbstractAlbumNameL(CStifItemParser& aItem);
+	    virtual TInt GetAbstractAlbumAndSongsL(CStifItemParser& aItem);
+	    virtual TInt RenameAbstractAlbumL(CStifItemParser& aItem);
+        void AttachSongsL(CMPXMediaArray* aAbstractalbumArray, const TDesC& aPath);
     	/**
     	*  From MMPXCollectionRemoveObserver
     	*  Handles removing a collection path
@@ -339,7 +373,8 @@ NONSHARABLE_CLASS(CCollectionHelperTestClass) : public CScriptBase,
     	*  @param aError error code   
     	*/
     	void HandleFindAllL(const CMPXMedia& aResults, TBool aComplete,TInt aError);
-    	
+    
+	
     public:     // Data
 
     protected:  // Data

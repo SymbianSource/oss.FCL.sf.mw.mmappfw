@@ -16,7 +16,6 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/cmtptypeobjectproplist.h>
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/cmtptypestring.h>
@@ -231,34 +230,31 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL( const CMTPTypeObjectPro
                         {
                         responseCode = EMTPRespCodeInvalidDataset;
                         }
-                    else if ( ( KErrNone == err ) || ( KErrAlreadyExists == err ) )
+                    else if ( KErrNone == err )    // TODO: ( KErrAlreadyExists == err )
                         {
-                        TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( suid, newSuid ) ); //Update MPX DB
-                        PRINT1( _L( "MM MTP <> Rename Object err = %d" ), err );
+                        TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( *object, newSuid ) ); //Update MPX DB
+
+                        PRINT1( _L( "MM MTP <> Rename MPX object file name err = %d" ), err );
                         // it is ok if file is not found in DB, following S60 solution
                         if ( KErrNotFound == err )
                             {
-                            TUint formatCode = object->Uint( CMTPObjectMetaData::EFormatCode );
-                            TUint subFormatCode = object->Uint( CMTPObjectMetaData::EFormatSubCode );
-                            TRAP( err, iDpConfig.GetWrapperL().AddObjectL( newSuid, formatCode, subFormatCode ) );
-                            PRINT1( _L( "MM MTP <> Add Object err = %d" ), err );
+                            TRAP( err, iDpConfig.GetWrapperL().AddObjectL( *object ) );
+                            PRINT1( _L( "MM MTP <> Add MPX object file name err = %d" ), err );
                             }
 
-                        if ( KErrNone == err )
-                            {
-                            object->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
-                            iFramework.ObjectMgr().ModifyObjectL( *object );
-                            }
-                        else
-                            {
-                            responseCode = EMTPRespCodeGeneralError;
-                            }
+                        object->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
+                        iFramework.ObjectMgr().ModifyObjectL( *object );
+                        }
+                    else
+                        {
+                        responseCode = EMTPRespCodeGeneralError;
                         }
                     }
                 }
                 break;
 
             case EMTPObjectPropCodeName:
+            case EMTPObjectPropCodeAlbumArtist:
                 {
                 CMTPTypeString* stringData = CMTPTypeString::NewLC(
                     aPropListElement.StringL( CMTPTypeObjectPropListElement::EValue ) );// + stringData

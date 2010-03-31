@@ -17,11 +17,9 @@
 
 #include <bautils.h>
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/mmtpreferencemgr.h>
 #include <mtp/mmtpstoragemgr.h>
-#include <mtp/cmtpobjectmetadata.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
 #include <mtp/cmtptypeobjectproplist.h>
@@ -74,6 +72,7 @@ EXPORT_C CCopyObject::~CCopyObject()
     {
     Cancel();
 
+    delete iTargetObject;
     delete iDest;
 
     if ( iPropertyElement )
@@ -93,7 +92,9 @@ EXPORT_C CCopyObject::CCopyObject( MMTPDataProviderFramework& aFramework,
             aConnection, 
             sizeof( KMTPCopyObjectPolicy ) / sizeof( TMTPRequestElementInfo ),
             KMTPCopyObjectPolicy ),
-        iDpConfig( aDpConfig )
+        iDpConfig( aDpConfig ),
+        iSourceObject( NULL ),
+        iTargetObject( NULL )
     {
     PRINT( _L( "Operation: CopyObject(0x101A)" ) );
     }
@@ -144,7 +145,7 @@ void CCopyObject::CopyObjectL()
     newObjectName.CleanupClosePushL(); // + newObjectName
     newObjectName = *iDest;
 
-    const TDesC& suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
+    const TDesC& suid( iSourceObject->DesC( CMTPObjectMetaData::ESuid ) );
     TParsePtrC fileNameParser( suid );
     if ( ( newObjectName.Length() + fileNameParser.NameAndExt().Length() )
         <= newObjectName.MaxLength() )
@@ -191,8 +192,8 @@ void CCopyObject::GetParametersL()
         iNewParentHandle );
 
     // not taking owernship
-    iObjectInfo = iRequestChecker->GetObjectInfo( objectHandle );
-    __ASSERT_DEBUG( iObjectInfo, Panic( EMmMTPDpObjectNull ) );
+    iSourceObject = iRequestChecker->GetObjectInfo( objectHandle );
+    __ASSERT_DEBUG( iSourceObject, Panic( EMmMTPDpObjectNull ) );
 
     if ( iNewParentHandle == KMTPHandleNone )
         {
@@ -213,7 +214,7 @@ void CCopyObject::GetParametersL()
 
 // -----------------------------------------------------------------------------
 // CCopyObject::SetDefaultParentObjectL
-// Get a default parent object, ff the request does not specify a parent object,
+// Set a default destination, if the request does not specify a parent object,
 // -----------------------------------------------------------------------------
 //
 void CCopyObject::SetDefaultParentObjectL()
@@ -280,7 +281,7 @@ TMTPResponseCode CCopyObject::CanCopyObjectL( const TDesC& aOldName,
 #endif
         }
     // This is used to keep the same behavior in mass storage and device file manager.
-    else if ( iObjectInfo->Uint( CMTPObjectMetaData::EFormatCode )
+    else if ( iSourceObject->Uint( CMTPObjectMetaData::EFormatCode )
         == EMTPFormatCodeAbstractAudioVideoPlaylist )
         {
         PRINT( _L( "MM MTP <> CCopyObject::CanCopyObjectL playlist file can't copy" ) );
@@ -298,31 +299,25 @@ TMTPResponseCode CCopyObject::CanCopyObjectL( const TDesC& aOldName,
 //
 TUint32 CCopyObject::CopyFileL( const TDesC& aNewFileName )
     {
-    const TDesC& suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
-    PRINT2( _L( "MM MTP => CCopyObject::CopyFileL old name = %S, aNewFileName = %S" ),
-        &suid,
-        &aNewFileName );
+    PRINT( _L( "MM MTP => CCopyObject::CopyFileL" ) );
 
-    GetPreviousPropertiesL( *iObjectInfo );
+    GetPreviousPropertiesL();
 
     // TODO: Need rollback mechanism for consistant with image dp in fw.
     // Not sure if it should be trap if something wrong with MPX db.
-    TUint32 handle = AddObjectToStoreL( suid, aNewFileName );
+    TPtrC oldFileName( iSourceObject->DesC( CMTPObjectMetaData::ESuid ) );
+    TUint32 handle = AddObjectToStoreL( oldFileName, aNewFileName );
 
     // Only leave when getting proplist element from data received by fw.
     // It should not happen after ReceiveDataL in which construction of proplist already succeed.
-    SetPreviousPropertiesL( *iObjectInfo );
+    SetPreviousPropertiesL();
 
     CFileMan* fileMan = CFileMan::NewL( iFramework.Fs() );
-    User::LeaveIfError( fileMan->Copy( suid, aNewFileName ) );
+    User::LeaveIfError( fileMan->Copy( oldFileName, aNewFileName ) );
     delete fileMan;
     fileMan = NULL;
 
-    User::LeaveIfError( iFramework.Fs().SetModified( aNewFileName,
-        iPreviousModifiedTime ) );
-
-    PRINT1( _L( "MM MTP <= CCopyObject::CopyFileL handle = 0x%x" ), handle );
-
+    PRINT( _L( "MM MTP <= CCopyObject::CopyFileL" ) );
     return handle;
     }
 
@@ -331,20 +326,17 @@ TUint32 CCopyObject::CopyFileL( const TDesC& aNewFileName )
 // Save the object properties before doing the copy
 // -----------------------------------------------------------------------------
 //
-void CCopyObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
+void CCopyObject::GetPreviousPropertiesL()
     {
     PRINT( _L( "MM MTP => CCopyObject::GetPreviousPropertiesL" ) );
 
-    const TDesC& suid( aObject.DesC( CMTPObjectMetaData::ESuid ) );
-    User::LeaveIfError( iFramework.Fs().Modified( suid, iPreviousModifiedTime ) );
-
-    TUint formatCode = aObject.Uint( CMTPObjectMetaData::EFormatCode );
+    TUint formatCode = iSourceObject->Uint( CMTPObjectMetaData::EFormatCode );
     const RArray<TUint>* properties = iDpConfig.GetSupportedPropertiesL( formatCode );
     TInt count = properties->Count();
 
     TInt err = KErrNone;
     TUint16 propCode;
-    TUint32 handle = aObject.Uint( CMTPObjectMetaData::EHandle );
+    TUint32 handle = iSourceObject->Uint( CMTPObjectMetaData::EHandle );
 
     if ( iPropertyElement != NULL )
         {
@@ -372,41 +364,39 @@ void CCopyObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
             case EMTPObjectPropCodeNonConsumable:
                 iPropertyElement = &( iPropertyList->ReservePropElemL( handle, propCode ) );
                 iPropertyElement->SetUint8L( CMTPTypeObjectPropListElement::EValue,
-                    aObject.Uint( CMTPObjectMetaData::ENonConsumable ) );
+                    iSourceObject->Uint( CMTPObjectMetaData::ENonConsumable ) );
                 break;
 
             case EMTPObjectPropCodeName:
             case EMTPObjectPropCodeDateAdded:
-                if ( ( propCode == EMTPObjectPropCodeName )
-                    || ( !MmMtpDpUtility::IsVideoL( aObject.DesC( CMTPObjectMetaData::ESuid ), iFramework )
-                        && ( propCode == EMTPObjectPropCodeDateAdded ) ) )
+            case EMTPObjectPropCodeAlbumArtist:
+                {
+                CMTPTypeString* textData = CMTPTypeString::NewLC(); // + textData
+
+                TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( propCode,
+                    *textData,
+                    *iSourceObject ) );
+
+                PRINT1( _L( "MM MTP <> CCopyObject::GetPreviousPropertiesL err = %d" ), err );
+
+                if ( err == KErrNone )
                     {
-                    CMTPTypeString* textData = CMTPTypeString::NewLC(); // + textData
-
-                    TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( propCode,
-                        *textData,
-                        aObject ) );
-
-                    PRINT1( _L( "MM MTP <> CCopyObject::GetPreviousPropertiesL err = %d" ), err );
-
-                    if ( err == KErrNone )
-                        {
-                        iPropertyElement = &( iPropertyList->ReservePropElemL( handle, propCode ) );
-                        iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue,
-                            textData->StringChars() );
-                        }
-                    else
-                        {
-                        iPropertyElement = NULL;
-                        }
-
-                    CleanupStack::PopAndDestroy( textData ); // - textData
+                    iPropertyElement = &( iPropertyList->ReservePropElemL( handle, propCode ) );
+                    iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue,
+                        textData->StringChars() );
                     }
+                else
+                    {
+                    iPropertyElement = NULL;
+                    }
+
+                CleanupStack::PopAndDestroy( textData ); // - textData
+                }
                 break;
 
             default:
                 {
-                ServiceGetSpecificObjectPropertyL( propCode, handle, aObject );
+                ServiceGetSpecificObjectPropertyL( propCode, handle, *iSourceObject );
                 }
                 break;
             }
@@ -426,7 +416,7 @@ void CCopyObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
 // Set the object properties after doing the copy
 // -----------------------------------------------------------------------------
 //
-void CCopyObject::SetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
+void CCopyObject::SetPreviousPropertiesL()
     {
     PRINT( _L( "MM MTP => CCopyObject::SetPreviousPropertiesL" ) );
 
@@ -461,22 +451,23 @@ void CCopyObject::SetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
                 break;
 
             case EMTPObjectPropCodeNonConsumable:
-                iObjectInfo->SetUint( CMTPObjectMetaData::ENonConsumable,
+                iTargetObject->SetUint( CMTPObjectMetaData::ENonConsumable,
                     element.Uint8L( CMTPTypeObjectPropListElement::EValue ) );
                 // TODO: need to reconsider,
                 // should wait all property setting finished then insert object, or not?
                 // need to investigate if it will affect performance result
-                iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
+                iFramework.ObjectMgr().ModifyObjectL( *iTargetObject );
                 break;
 
             case EMTPObjectPropCodeName:
+            case EMTPObjectPropCodeAlbumArtist:
                 {
                 CMTPTypeString *stringData = CMTPTypeString::NewLC( element.StringL( CMTPTypeObjectPropListElement::EValue ) ); // + stringData
 
                 respcode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
                     propertyCode,
                     *stringData,
-                    aObject );
+                    *iTargetObject );
 
                 CleanupStack::PopAndDestroy( stringData ); // - stringData
                 }
@@ -486,7 +477,7 @@ void CCopyObject::SetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
                 {
                 respcode = iDpConfig.PropSettingUtility()->SetSpecificObjectPropertyL( iDpConfig,
                     propertyCode,
-                    aObject,
+                    *iTargetObject,
                     element );
                 }
                 break;
@@ -514,21 +505,21 @@ TUint32 CCopyObject::AddObjectToStoreL( const TDesC& aOldObjectName,
         &aOldObjectName,
         &aNewObjectName );
 
-    CMTPObjectMetaData* objectInfo = CMTPObjectMetaData::NewLC(); // + objectInfo
+    iTargetObject = CMTPObjectMetaData::NewL();
 
     // 1. Add new object into objectMgr db
-    objectInfo->SetUint( CMTPObjectMetaData::EDataProviderId, iObjectInfo->Uint( CMTPObjectMetaData::EDataProviderId ) );
-    TUint formatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatCode );
-    objectInfo->SetUint( CMTPObjectMetaData::EFormatCode, formatCode );
-    TUint subFormatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatSubCode );
-    objectInfo->SetUint( CMTPObjectMetaData::EFormatSubCode, subFormatCode );
-    objectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
-    objectInfo->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
-    objectInfo->SetDesCL( CMTPObjectMetaData::ESuid, aNewObjectName );
-    iFramework.ObjectMgr().InsertObjectL( *objectInfo );
+    iTargetObject->SetUint( CMTPObjectMetaData::EDataProviderId, iSourceObject->Uint( CMTPObjectMetaData::EDataProviderId ) );
+    TUint formatCode = iSourceObject->Uint( CMTPObjectMetaData::EFormatCode );
+    iTargetObject->SetUint( CMTPObjectMetaData::EFormatCode, formatCode );
+    TUint subFormatCode = iSourceObject->Uint( CMTPObjectMetaData::EFormatSubCode );
+    iTargetObject->SetUint( CMTPObjectMetaData::EFormatSubCode, subFormatCode );
+    iTargetObject->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
+    iTargetObject->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
+    iTargetObject->SetDesCL( CMTPObjectMetaData::ESuid, aNewObjectName );
+    iFramework.ObjectMgr().InsertObjectL( *iTargetObject );
 
     // 2. Add new object into MPX db
-    iDpConfig.GetWrapperL().AddObjectL( aNewObjectName, formatCode, subFormatCode );
+    iDpConfig.GetWrapperL().AddObjectL( *iTargetObject );
 
     // 3. Set references into references db
     if ( formatCode == EMTPFormatCodeM3UPlaylist )
@@ -539,8 +530,7 @@ TUint32 CCopyObject::AddObjectToStoreL( const TDesC& aOldObjectName,
         CleanupStack::PopAndDestroy( references ); // - references
         }
 
-    TUint32 handle = objectInfo->Uint( CMTPObjectMetaData::EHandle );
-    CleanupStack::PopAndDestroy( objectInfo ); // - objectInfo
+    TUint32 handle = iTargetObject->Uint( CMTPObjectMetaData::EHandle );
 
     PRINT1( _L( "MM MTP <= CCopyObject::AddObjectToStoreL handle = 0x%x" ), handle );
     return handle;

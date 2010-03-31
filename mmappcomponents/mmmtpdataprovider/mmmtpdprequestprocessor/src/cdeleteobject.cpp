@@ -16,10 +16,8 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/mmtpreferencemgr.h>
-#include <mtp/cmtpobjectmetadata.h>
 
 #include "cdeleteobject.h"
 #include "mmmtpdplogger.h"
@@ -27,7 +25,7 @@
 #include "cmmmtpdpmetadataaccesswrapper.h"
 #include "mmmtpdputility.h"
 
-static const TInt KMaxDeletionTimes = 10;
+const TInt KMaxDeletionTimes = 10;
 const TInt KDeletionThreshold = 100 * 1000; // (100 millisec)
 
 // -----------------------------------------------------------------------------
@@ -92,8 +90,6 @@ CDeleteObject::CDeleteObject( MMTPDataProviderFramework& aFramework,
         aConnection,
         sizeof( KMTPDeleteObjectPolicy ) / sizeof( TMTPRequestElementInfo ),
         KMTPDeleteObjectPolicy ),
-    iObjectMgr( aFramework.ObjectMgr() ),
-    iFs( aFramework.Fs() ),
     iObjectsToDelete( KMmMtpRArrayGranularity ),
     iDeleteError( KErrNone ),
     iDpConfig( aDpConfig )
@@ -194,7 +190,7 @@ EXPORT_C void CDeleteObject::RunL()
         CMTPObjectMetaData* objectInfo = CMTPObjectMetaData::NewLC(); // + objectInfo
 
         TUint32 handle = iObjectsToDelete[0];
-        iObjectMgr.ObjectL( handle, *objectInfo );
+        iFramework.ObjectMgr().ObjectL( handle, *objectInfo );
         TFileName fileName( objectInfo->DesC( CMTPObjectMetaData::ESuid ) );
         PRINT2( _L( "MM MTP <> CDeleteObject::RunL delete object handle is 0x%x, fileName is %S" ), handle, &fileName );
 
@@ -234,7 +230,7 @@ void CDeleteObject::DeleteObjectL( const CMTPObjectMetaData& aObjectInfo )
     // record in MPX is not inlined with framework db, playlist should not be deleted
     // until next session.
     // This is used to keep the same behavior in mass storage and device file manager.
-    if ( aObjectInfo.Uint(CMTPObjectMetaData::EFormatCode )
+    if ( aObjectInfo.Uint( CMTPObjectMetaData::EFormatCode )
         == EMTPFormatCodeAbstractAudioVideoPlaylist
         && !iDpConfig.GetWrapperL().IsExistL( fileName ) )
         {
@@ -245,7 +241,7 @@ void CDeleteObject::DeleteObjectL( const CMTPObjectMetaData& aObjectInfo )
 
     // 1. Delete object from file system
     TEntry fileInfo;
-    iFs.Entry( fileName, fileInfo );
+    iFramework.Fs().Entry( fileName, fileInfo );
     if ( fileInfo.IsReadOnly() )
         {
         iDeleteError = KErrAccessDenied;
@@ -257,7 +253,7 @@ void CDeleteObject::DeleteObjectL( const CMTPObjectMetaData& aObjectInfo )
     TInt count = KMaxDeletionTimes;
     while ( count > 0 )
         {
-        iDeleteError = iFs.Delete( fileName );
+        iDeleteError = iFramework.Fs().Delete( fileName );
         if ( iDeleteError == KErrNone || iDeleteError == KErrNotFound )
             {
             break;
@@ -275,11 +271,11 @@ void CDeleteObject::DeleteObjectL( const CMTPObjectMetaData& aObjectInfo )
         }
 
     // 2. Delete object from metadata db
-    TRAP( iDeleteError, iDpConfig.GetWrapperL().DeleteObjectL( fileName, aObjectInfo.Uint( CMTPObjectMetaData::EFormatCode ) ));
+    TRAP( iDeleteError, iDpConfig.GetWrapperL().DeleteObjectL( aObjectInfo ) );
     PRINT1( _L( "MM MTP <> CDeleteObject::DeleteObjectL, Delete from Media DB, err = %d" ), iDeleteError );
 
     // 3. Delete object from framework db
-    iObjectMgr.RemoveObjectL( aObjectInfo.Uint( CMTPObjectMetaData::EHandle ) );
+    iFramework.ObjectMgr().RemoveObjectL( aObjectInfo.Uint( CMTPObjectMetaData::EHandle ) );
 
     // 4. If the object has references, Delete references from reference manager
     if ( MmMtpDpUtility::HasReference( aObjectInfo.Uint( CMTPObjectMetaData::EFormatCode ) ) )
@@ -363,7 +359,7 @@ void CDeleteObject::GetObjectHandlesL( TUint32 aStorageId,
             else
                 {
                 CMTPObjectMetaData* objectInfo = CMTPObjectMetaData::NewLC(); // + objectInfo
-                iObjectMgr.ObjectL( handles[i], *objectInfo );
+                iFramework.ObjectMgr().ObjectL( handles[i], *objectInfo );
                 if ( EMTPFormatCodeAssociation == objectInfo->Uint( CMTPObjectMetaData::EFormatCode ) )
                     {
                     GetObjectHandlesL( KMTPStorageAll, handles[i] );

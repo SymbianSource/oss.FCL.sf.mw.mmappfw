@@ -74,6 +74,14 @@ protected: // from CActive
     TInt RunError( TInt aError );
 
 private:
+
+    enum TEnumState
+    {
+        EEnumPlaylist,
+        EEnumAbstractAlbum,
+        EEnumCount
+    };
+
     /**
     * Standard C++ Constructor
     * @param aFramework Reference to MMTPDataProviderFramework
@@ -90,7 +98,7 @@ private:
     void SignalCompleteL( MMTPEnumerationCallback& aCallback,
         TInt aError = KErrNone );
 
-    void ScanStorageL( TUint32 aStorageId );
+    void InitStorageL( );
 
     /**
     * Scan next storage
@@ -134,6 +142,7 @@ private:
     CMPXMediaArray* iAbstractMedias;
     TInt iCount;
     TInt iCurrentIndex;
+    TInt iEnumState;
 
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     CMmMtpDpPerfLog* iPerfLog;

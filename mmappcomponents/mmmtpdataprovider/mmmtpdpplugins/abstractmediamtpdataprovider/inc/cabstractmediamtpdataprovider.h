@@ -24,6 +24,7 @@
 #include "abstractmediamtpdataproviderprocessor.h"
 #include "mmmtpenumerationcallback.h"
 #include "mmmtpdpconfig.h"
+#include "mmmtpdp_variant.hrh"
 
 // Forward declaration
 class MMmRequestProcessor;
@@ -178,6 +179,8 @@ private:
 
     void GetSupportedPropertiesL();
 
+    void GetAllSupportedPropL();
+
 private:
     // data
     RPointerArray<MMmRequestProcessor> iActiveProcessors;
@@ -192,7 +195,11 @@ private:
 
     RArray<TUint> iSupportedFormat;
 
-    RArray<TUint> iSupportedProperties;
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+    RArray<TUint> iSupportedPropAbstractAlbum;
+#endif
+    RArray<TUint> iSupportedPropPlaylist;
+    RArray<TUint> iSupportedPropAll;
 
     CPropertySettingUtility* iPropSettingUtility;
     CDescriptionUtility* iDescriptionUtility;

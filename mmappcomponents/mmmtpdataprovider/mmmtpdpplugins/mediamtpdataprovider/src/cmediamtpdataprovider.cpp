@@ -25,6 +25,7 @@
 #include <driveinfo.h>
 
 #include "cmediamtpdataprovider.h"
+#include "crequestprocessor.h"
 #include "mediamtpdataproviderconst.h"
 #include "cmediamtpdataproviderenumerator.h"
 #include "mmmtpdplogger.h"
@@ -130,7 +131,7 @@ void CMediaMtpDataProvider::ConstructL()
 
     iMediaEnumerator = CMediaMtpDataProviderEnumerator::NewL( Framework(), *this );
 
-    CMmMtpDpAccessSingleton::CreateL( Framework().Fs(), Framework() );
+    CMmMtpDpAccessSingleton::CreateL( Framework() );
 
     GetSupportedFormatL();
     GetSupportedPropL();

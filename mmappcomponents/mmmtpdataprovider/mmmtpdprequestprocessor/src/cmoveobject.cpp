@@ -17,10 +17,8 @@
 
 
 #include <bautils.h>
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/mmtpstoragemgr.h>
-#include <mtp/cmtpobjectmetadata.h>
 #include <mtp/cmtptypearray.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypeobjectproplist.h>
@@ -296,7 +294,7 @@ void CMoveObject::MoveFileL( const TDesC& aNewFileName )
     // Move the file first no matter if it will fail in Get/SetPreviousPropertiesL
     // Already trapped inside
     GetPreviousPropertiesL( *iObjectInfo );
-    TRAPD( err, SetPropertiesL( oldFileName, aNewFileName ) );
+    TRAPD( err, SetPropertiesL( aNewFileName ) );
 
     CFileMan* fileMan = CFileMan::NewL( iFramework.Fs() );
     err = fileMan->Move( oldFileName, aNewFileName );
@@ -360,31 +358,28 @@ void CMoveObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
 
             case EMTPObjectPropCodeName:
             case EMTPObjectPropCodeDateAdded:
-                if ( ( propCode == EMTPObjectPropCodeName )
-                    || ( !MmMtpDpUtility::IsVideoL( aObject.DesC( CMTPObjectMetaData::ESuid ), iFramework )
-                        && ( propCode == EMTPObjectPropCodeDateAdded ) ) )
+            case EMTPObjectPropCodeAlbumArtist:
+                {
+                CMTPTypeString* textData = CMTPTypeString::NewLC(); // + textData
+
+                TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( propCode,
+                    *textData,
+                    aObject ) );
+                PRINT1( _L( "MM MTP <> CMoveObject::GetPreviousPropertiesL err = %d" ), err );
+
+                if ( err == KErrNone )
                     {
-                    CMTPTypeString* textData = CMTPTypeString::NewLC(); // + textData
-
-                    TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( propCode,
-                        *textData,
-                        aObject ) );
-
-                    PRINT1( _L( "MM MTP <> CMoveObject::GetPreviousPropertiesL err = %d" ), err );
-
-                    if ( err == KErrNone )
-                        {
-                        iPropertyElement = &( iPropertyList->ReservePropElemL( handle, propCode ) );
-                        iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue,
-                            textData->StringChars() );
-                        }
-                    else
-                        {
-                        iPropertyElement = NULL;
-                        }
-
-                    CleanupStack::PopAndDestroy( textData ); // - textData
+                    iPropertyElement = &( iPropertyList->ReservePropElemL( handle, propCode ) );
+                    iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue,
+                        textData->StringChars() );
                     }
+                else
+                    {
+                    iPropertyElement = NULL;
+                    }
+
+                CleanupStack::PopAndDestroy( textData ); // - textData
+                }
                 break;
 
             default:
@@ -450,6 +445,7 @@ void CMoveObject::SetPreviousPropertiesL()
                 break;
 
             case EMTPObjectPropCodeName:
+            case EMTPObjectPropCodeAlbumArtist:
                 {
                 CMTPTypeString *stringData = CMTPTypeString::NewLC( element.StringL( CMTPTypeObjectPropListElement::EValue ) ); // + stringData
 
@@ -474,7 +470,7 @@ void CMoveObject::SetPreviousPropertiesL()
         } // end of for loop
 
     // ignore errors
-    if (respcode == EMTPRespCodeOK)
+    if ( respcode == EMTPRespCodeOK )
         {
         // do nothing, just to get rid of build warning
         }
@@ -487,17 +483,9 @@ void CMoveObject::SetPreviousPropertiesL()
 // Set the object properties in the object property store.
 // -----------------------------------------------------------------------------
 //
-void CMoveObject::SetPropertiesL( const TDesC& aOldFileName,
-    const TDesC& aNewFileName )
+void CMoveObject::SetPropertiesL( const TDesC& aNewFileName )
     {
-    PRINT2( _L( "MM MTP => CMoveObject::SetPropertiesL aOldFileName = %S, aNewFileName = %S" ),
-        &aOldFileName, 
-        &aNewFileName );
-
-    iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, aNewFileName );
-    iObjectInfo->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
-    iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
-    iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
+    PRINT1( _L( "MM MTP => CMoveObject::SetPropertiesL, aNewFileName = %S" ), &aNewFileName );
 
     TUint32 formatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatCode );
     if ( formatCode == EMTPFormatCodeAbstractAudioVideoPlaylist )
@@ -511,22 +499,23 @@ void CMoveObject::SetPropertiesL( const TDesC& aOldFileName,
         {
         if ( iSameStorage )
             {
-            iDpConfig.GetWrapperL().RenameObjectL( aOldFileName, aNewFileName );
+            iDpConfig.GetWrapperL().RenameObjectL( *iObjectInfo, aNewFileName );
             }
         else    // if the two object in different storage, we should delete the old one and insert new one
             {
-            iDpConfig.GetWrapperL().DeleteObjectL( aOldFileName, formatCode );
-
-            TUint32 subFormatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatSubCode );
-            iDpConfig.GetWrapperL().AddObjectL( aNewFileName,
-                formatCode,
-                subFormatCode );
+            iDpConfig.GetWrapperL().DeleteObjectL( *iObjectInfo );
+            iDpConfig.GetWrapperL().AddObjectL( *iObjectInfo );
 
             // Only leave when getting proplist element from data received by fw.       
             // It should not happen after ReceiveDataL in which construction of proplist already succeed.
             SetPreviousPropertiesL();
             }
         }
+
+    iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, aNewFileName );
+    iObjectInfo->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
+    iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
+    iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
 
     // It's not necessary to change references of playlists since Reference DB is used PUID
 

@@ -19,10 +19,8 @@
 #ifndef CMMMTPDPMETADATAACCESSWRAPPER_H
 #define CMMMTPDPMETADATAACCESSWRAPPER_H
 
-#include <mtp/cmtpobjectmetadata.h>
-#include <mtp/mtpprotocolconstants.h>
 #include <mpxmediageneraldefs.h>
-#include <mtp/mmtpdataproviderframework.h>
+#include <badesca.h>
 
 // forward declacration
 class CMmMtpDpMetadataMpxAccess;
@@ -30,16 +28,15 @@ class CMmMtpDpMetadataVideoAccess;
 
 class RFs;
 class MMTPType;
-class CMTPTypeObjectPropList;
 class CMPXMediaArray;
 class CMPXMedia;
 class MMTPDataProviderFramework;
+class CMTPObjectMetaData;
 
 class CMmMtpDpMetadataAccessWrapper : public CBase
     {
 public:
-    static CMmMtpDpMetadataAccessWrapper* NewL( RFs& aRfs,
-        MMTPDataProviderFramework& aFramework );
+    static CMmMtpDpMetadataAccessWrapper* NewL( MMTPDataProviderFramework& aFramework );
 
     /**
     * Destructor
@@ -78,18 +75,16 @@ public:
     * @param aFullFileName, full file name of file
     * @return void
     */
-    void AddObjectL( const TDesC& aFullFileName, TUint aFormatCode, TUint aSubFormatCode );
+    void AddObjectL( const CMTPObjectMetaData& aObject );
 
     /**
     * Set abstract media to DB
-    * @param aAbstractMediaFileName, full file name of abstract media file
+    * @param aObject,
     * @param aRefFileArray, a array to store the full file name of media files
-    * @param aCategory, the category of abstract media
     * @return void
     */
-    IMPORT_C void SetAbstractMediaL( const TDesC& aAbstractMediaFileName,
-        CDesCArray& aRefFileArray,
-        TMPXGeneralCategory aCategory );
+    IMPORT_C void SetReferenceL( const CMTPObjectMetaData& aObject,
+        CDesCArray& aRefFileArray );
 
     /**
     * Gets a piece of metadata from the collection
@@ -119,18 +114,17 @@ public:
 
     /**
     * Renames the file part of a record in the collection database
-    * @param aFile, old full file name of Media file
+    * @param aOldObject, object need to be renamed
     * @param aNewFileName, new file name need update
     * @return void
     */
-    IMPORT_C void RenameObjectL( const TDesC& aOldFileName, const TDesC& aNewFileName );
+    IMPORT_C void RenameObjectL( const CMTPObjectMetaData& aOldObject, const TDesC& aNewFileName );
 
     /**
     * Deletes metadata information associated with the object
-    * @param aFullFileName, full file name of Media file
-    * @param aFormatCode, format code
+    * @param aObject, the object need to be deleted
     */
-    void DeleteObjectL( const TDesC& aFullFileName, const TUint aFormatCode );
+    void DeleteObjectL( const CMTPObjectMetaData& aObject );
 
     /**
     * Set current  drive info
@@ -144,7 +138,7 @@ public:
     * @param aWidth,  the width of an object in pixels to set
     * @parem aHeight,  the height of an object in pixels to set
     */
-    void SetImageObjPropL( const TDesC& aFullFileName,
+    void SetImageObjPropL( const CMTPObjectMetaData& aObject,
         const TUint32 aWidth,
         const TUint32 aHeight );
 
@@ -154,7 +148,7 @@ public:
     * @param aWidth,  the width of an object in pixels to get
     * @parem aHeight,  the height of an object in pixels to get
     */
-    void GetImageObjPropL( const TDesC& aFullFileName,
+    void GetImageObjPropL( const CMTPObjectMetaData& aObject,
         TUint32& aWidth,
         TUint32& aHeight );
 
@@ -213,13 +207,15 @@ public:
     */
     IMPORT_C void CreateDummyFile( const TDesC& aPlaylistName );
 
+    TMPXGeneralCategory Category( const CMTPObjectMetaData& aObject );
+
 private:
 
-    CMmMtpDpMetadataAccessWrapper( RFs& aRfs, MMTPDataProviderFramework& aFramework );
+    CMmMtpDpMetadataAccessWrapper( MMTPDataProviderFramework& aFramework );
 
     void ConstructL();
 
-    TMPXGeneralCategory Category( const TUint aFormatCode );
+    TMPXGeneralCategory ContainerCategory( const TDesC& aFullFileName );
 
     /**
     * Remove all dummy file of which format is "pla", and leave the "m3u"
@@ -227,13 +223,12 @@ private:
     void RemoveDummyFiles();
 
 private:
-    // Data
-    RFs& iRfs;
     CMmMtpDpMetadataMpxAccess* iMmMtpDpMetadataMpxAccess;
     CMmMtpDpMetadataVideoAccess* iMmMtpDpMetadataVideoAccess;
     TBool iOpenSession;
 
     MMTPDataProviderFramework& iFramework;
+    RFs& iFs;	// should not remove this member data!!!
 
     CDesCArray* iAbstractMediaArray;
 

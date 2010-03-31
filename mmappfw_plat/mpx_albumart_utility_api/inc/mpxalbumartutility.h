@@ -21,7 +21,7 @@
 
 #include <e32def.h>
 #include <gdi.h>
-#include <metadatafield.hrh>
+#include <MetaDataField.hrh>
 
 class CMPXMedia;
 class CMPXImageUtil;

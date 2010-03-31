@@ -52,6 +52,7 @@ EXPORT_C CMTPTypeObjectPropDesc* CDescriptionUtility::NewCommonObjectPropertyL( 
         case EMTPObjectPropCodePersistentUniqueObjectIdentifier:
         case EMTPObjectPropCodeName:
         case EMTPObjectPropCodeDateAdded:
+        case EMTPObjectPropCodeAlbumArtist:
             propertyDesc = CMTPTypeObjectPropDesc::NewL( aPropCode );
             break;
 

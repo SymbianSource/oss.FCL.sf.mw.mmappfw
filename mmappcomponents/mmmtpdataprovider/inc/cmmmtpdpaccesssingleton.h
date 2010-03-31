@@ -19,11 +19,6 @@
 #ifndef CMMMTPDPACCESSSINGLETON_H
 #define CMMMTPDPACCESSSINGLETON_H
 
-/**
-* Implements the MM MTP Data Priovider access singletons reference manager.
-*/
-
-class RFs;
 class CMmMtpDpMetadataAccessWrapper;
 class MMTPDataProviderFramework;
 
@@ -36,8 +31,7 @@ public:
      * @param aRFs RFs reference
      * @param aFramework framework reference
      */
-    IMPORT_C static void CreateL( RFs& aRfs, 
-        MMTPDataProviderFramework& aFramework );
+    IMPORT_C static void CreateL( MMTPDataProviderFramework& aFramework );
     
     /**
      * release singleton instance
@@ -68,14 +62,12 @@ private:
     /*
      * 2-phase construction
      */
-    static CMmMtpDpAccessSingleton* NewL( RFs& aRfs, 
-        MMTPDataProviderFramework& aFramework );
+    static CMmMtpDpAccessSingleton* NewL( MMTPDataProviderFramework& aFramework );
     
     /*
      * 2-phase construction
      */
-    void ConstructL( RFs& aRfs, 
-        MMTPDataProviderFramework& aFramework );
+    void ConstructL( MMTPDataProviderFramework& aFramework );
     /*
      * destruction
      */

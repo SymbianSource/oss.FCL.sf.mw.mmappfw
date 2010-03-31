@@ -71,10 +71,13 @@ void CMmMtpDpPerfLog::WriteFormat( TRefByValue<const TDesC> aFmt, ... )
     VA_LIST list;
     VA_START( list, aFmt );
 
-    TBuf<KMtpLogBufferSize> buf;
-    
-    buf.AppendFormatList( aFmt, list, &iOverflowHandler );
-    Write( buf );
+    HBufC* buf = HBufC::New( KMtpLogBufferSize );
+    if ( buf )
+        {
+        buf->Des().AppendFormatList( aFmt, list, &iOverflowHandler );
+        Write( *buf );
+        delete buf;
+        }
     }
 
 void CMmMtpDpPerfLog::Start( const TDesC& aDescription )
