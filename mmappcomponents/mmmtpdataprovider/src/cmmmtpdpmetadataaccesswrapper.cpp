@@ -259,7 +259,7 @@ EXPORT_C void CMmMtpDpMetadataAccessWrapper::RenameObjectL( const CMTPObjectMeta
 // Deletes metadata information associated with the object
 // ---------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataAccessWrapper::DeleteObjectL( const CMTPObjectMetaData& aObject )
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::DeleteObjectL( const CMTPObjectMetaData& aObject )
     {
     TPtrC fileName( aObject.DesC( CMTPObjectMetaData::ESuid ) );
     PRINT1( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::DeleteObjectL name = %S" ), &fileName );

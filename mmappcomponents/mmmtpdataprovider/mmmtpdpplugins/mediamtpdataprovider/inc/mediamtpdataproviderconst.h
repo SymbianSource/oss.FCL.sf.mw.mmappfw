@@ -111,7 +111,7 @@ enum TMmMtpVideoFourCCCodec
 enum TMmMtpFramesPerThousandSecondsRange
     {
     EMTPMinFramesPerThousandSeconds  = 0x00000000,
-    EMTPMaxFramesPerThousandSeconds  = 0x00007530,  // 30000 frame per ms (30 frame/s), standard for progressive content
+    EMTPMaxFramesPerThousandSeconds  = 0x00007530,  // 30000 frame per thousand seconds (30 frame/s), standard for progressive content
     EMTPStepFramesPerThousandSeconds = 0x00000001
     };
 

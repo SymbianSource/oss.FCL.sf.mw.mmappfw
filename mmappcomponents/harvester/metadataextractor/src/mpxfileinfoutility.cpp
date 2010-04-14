@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  This class is responsible for reading file info
-*  Version     : %version: da1mmcf#5.1.3.1.6 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#5.1.3.1.8 % << Don't touch! Updated by Synergy at check-out.
 *
 *  Copyright © 2005 Nokia. All rights reserved.
 */
@@ -65,6 +65,8 @@ CMPXFileInfoUtility::CMPXFileInfoUtility(): iCurrentControllerUid(NULL)
 // Destructor
 CMPXFileInfoUtility::~CMPXFileInfoUtility()
     {
+    MPX_DEBUG1("CMPXFileInfoUtility::~CMPXFileInfoUtility()<---");
+    
     iAudioControllers.ResetAndDestroy();
     //Reset();
     // Close all MMF controllers in the cache
@@ -88,6 +90,9 @@ CMPXFileInfoUtility::~CMPXFileInfoUtility()
         }
     
     REComSession::FinalClose();
+    
+    MPX_DEBUG1("CMPXFileInfoUtility::~CMPXFileInfoUtility()--->");
+    
     }
 
 // ----------------------------------------------------------------------------
@@ -106,7 +111,7 @@ void CMPXFileInfoUtility::ConstructL()
 void CMPXFileInfoUtility::OpenFileL(RFile& aFile,
                                     const TDesC& aMimeType /*= KNullDesC*/)
     {
-    MPX_DEBUG1("CMPXFileInfoUtility::OpenFileL()");
+    MPX_DEBUG1("CMPXFileInfoUtility::OpenFileL()<---");
     Reset();
 
     HBufC* fileNameBuf = HBufC::NewLC(KMaxFileName);
@@ -125,10 +130,8 @@ void CMPXFileInfoUtility::OpenFileL(RFile& aFile,
     TBool enableUI = EFalse;
 
     //Code taken from TMMFileHandleSource
-
-
-    //{//build custom mmf message packet
-     //based on CMMFileSourceSink::DoCreateFileHandleSourceConfigDataL()
+    //build custom mmf message packet
+    //based on CMMFileSourceSink::DoCreateFileHandleSourceConfigDataL()
     CBufFlat* buf = CBufFlat::NewL(KMCExpandSize);
     CleanupStack::PushL(buf);
     RBufWriteStream stream;
@@ -152,22 +155,21 @@ void CMPXFileInfoUtility::OpenFileL(RFile& aFile,
 
     stream.CommitL();
     CleanupStack::PopAndDestroy(&stream);
-    //iSourceSinkData = buf->Ptr(0).AllocL();
 
-    //CleanupStack::PopAndDestroy(buf);
-    //}
-
-    // User::LeaveIfError(iController->Reset());
+    // Add new data source
+    MPX_DEBUG1("CMPXFileInfoUtility::OpenFileL()- AddDataSource()");
     
-   
-   // Add new data source
     User::LeaveIfError(iController->AddDataSource(KUidMmfFileSource,
                                                  buf->Ptr(0),
                                                  dataSource));
     
+    MPX_DEBUG1("CMPXFileInfoUtility::OpenFileL()- AddDataSink()");
     User::LeaveIfError(iController->AddDataSink(KUidMmfAudioOutput,
                                                KNullDesC8));
     CleanupStack::PopAndDestroy(buf);
+    
+    MPX_DEBUG1("CMPXFileInfoUtility::OpenFileL()--->");
+    
     }
 
 // ----------------------------------------------------------------------------
@@ -176,21 +178,25 @@ void CMPXFileInfoUtility::OpenFileL(RFile& aFile,
 //
 void CMPXFileInfoUtility::Reset()
     {
-    // Reset the controller
+    MPX_DEBUG1("CMPXFileInfoUtility::Reset()<---");
+    
     if(iController)
         {
-        if(iCurrentControllerUid == 0x101FAFB1 || iCurrentControllerUid == 0x10283351
-            || iCurrentControllerUid == 0x10207B65 )
+        // This is just for RA, WMA does not use controller 
+        if( iCurrentControllerUid == 0x10207B65 )  // Helix Controller UID
             {
+            MPX_DEBUG1("CMPXFileInfoUtility::Reset(), Close Controller - only for RA ");
             iController->Close();
             delete iController;
             iController = NULL;
             }
         else
             {
-           	iController->Reset();
+            MPX_DEBUG1("CMPXFileInfoUtility::Reset(), Reset Controller ");
+            iController->Reset();
             }
-    	}
+        }
+    MPX_DEBUG1("CMPXFileInfoUtility::Reset()--->");
     
     }
 
@@ -200,13 +206,15 @@ void CMPXFileInfoUtility::Reset()
 //
 TTimeIntervalMicroSeconds CMPXFileInfoUtility::Duration()
     {
-    MPX_DEBUG1("CMPXFileInfoUtility::Duration()");
+    MPX_DEBUG1("CMPXFileInfoUtility::Duration()<---");
     TTimeIntervalMicroSeconds duration;
     TInt err = iController->GetDuration(duration);
     if(err != KErrNone)
         {
         duration = TInt64(0);
         }
+    MPX_DEBUG2("CMPXFileInfoUtility::Duration(), duration = %ld --->", duration );
+
     return duration;
     }
 
@@ -216,11 +224,16 @@ TTimeIntervalMicroSeconds CMPXFileInfoUtility::Duration()
 //
 TUint CMPXFileInfoUtility::BitRate()
     {
+    MPX_DEBUG1("CMPXFileInfoUtility::BitRate()<---");
+
     RMMFAudioControllerCustomCommands customCommands(*iController);
 
     TUint bitRate(0);
     //Ignore return value, bitRate remain 0 if error
     customCommands.GetSourceBitRate(bitRate);
+    
+    MPX_DEBUG2("CMPXFileInfoUtility::BitRate(), bit rate = %d --->", bitRate);
+
     return bitRate;
     }
 
@@ -230,11 +243,16 @@ TUint CMPXFileInfoUtility::BitRate()
 //
 TUint CMPXFileInfoUtility::SampleRate()
     {
+    MPX_DEBUG1("CMPXFileInfoUtility::SampleRate()<---");
+    
     RMMFAudioControllerCustomCommands  customCommands(*iController);
 
     TUint sampleRate(0) ;
     //Ignore return value, sampleRate remain 0 if error
     customCommands.GetSourceSampleRate(sampleRate);
+    
+    MPX_DEBUG2("CMPXFileInfoUtility::SampleRate(), sample rate = %d --->", sampleRate);
+    
     return sampleRate;
     }
 
@@ -245,7 +263,8 @@ void CMPXFileInfoUtility::FindController(const TDesC& aFileName,
                                          const TDesC& aMimeType,
                                          TUid& aUid)
     {
-    MPX_DEBUG1("CMPXFileInfoUtility::FindControllerL()");
+    MPX_DEBUG1("CMPXFileInfoUtility::FindControllerL()<---");
+    
     TBool found(EFalse);
     TInt i(0);
     TInt j(0);
@@ -292,6 +311,9 @@ void CMPXFileInfoUtility::FindController(const TDesC& aFileName,
                 }
             }
         }
+    
+    MPX_DEBUG1("CMPXFileInfoUtility::FindControllerL()--->");
+    
     }
 
 // ----------------------------------------------------------------------------
@@ -302,11 +324,10 @@ void CMPXFileInfoUtility::FindController(const TDesC& aFileName,
 // ----------------------------------------------------------------------------
 void CMPXFileInfoUtility::OpenControllerL(const TUid& aUid)
     {
-    MPX_DEBUG1("CMPXFileInfoUtility::OpenControllerL()");
-    
-    // 3gp and helix (wma) do not allow controller caching
-    if(aUid.iUid == 0x101FAFB1 || aUid.iUid == 0x10283351
-        || aUid.iUid == 0x10207B65 )
+    MPX_DEBUG1("CMPXFileInfoUtility::OpenControllerL()<---");
+
+    // RA does not allow controller caching
+    if( aUid.iUid == 0x10207B65 )  // RA Controller Uid
         {
          iCurrentControllerUid = aUid.iUid;
          TMMFPrioritySettings prioritySettings;
@@ -319,9 +340,11 @@ void CMPXFileInfoUtility::OpenControllerL(const TUid& aUid)
          User::LeaveIfError(iController->Open(aUid, prioritySettings));  
 
          iCurrentControllerUid = aUid.iUid;
+         MPX_DEBUG1("CMPXFileInfoUtility::OpenControllerL(), RA Controller open --->");
+         
          return;
         }
-    
+     
     // check if we already have controller open for this UID in the cache
      RMMFController* controller = const_cast<RMMFController*>(iMMFControllers.Find(aUid.iUid));
 
@@ -335,10 +358,11 @@ void CMPXFileInfoUtility::OpenControllerL(const TUid& aUid)
     	
     	TUint32* key = new (ELeave) TUint32(aUid.iUid);
     	CleanupStack::PushL(key);
-    // Now instantiate the first controller in the array
-    TMMFPrioritySettings prioritySettings;
-    prioritySettings.iPriority = EMdaPriorityNormal;
-    prioritySettings.iPref = EMdaPriorityPreferenceTimeAndQuality;
+    	
+        // Now instantiate the first controller in the array
+        TMMFPrioritySettings prioritySettings;
+        prioritySettings.iPriority = EMdaPriorityNormal;
+        prioritySettings.iPref = EMdaPriorityPreferenceTimeAndQuality;
 
 	    // Try to open controller
 	    User::LeaveIfError(controller->Open(aUid,
@@ -353,7 +377,9 @@ void CMPXFileInfoUtility::OpenControllerL(const TUid& aUid)
 	
 	iController = controller;
 	iCurrentControllerUid = aUid.iUid;
-                       
+
+    MPX_DEBUG1("CMPXFileInfoUtility::OpenControllerL()--->");
+
     }
 
 // -----------------------------------------------------------------------------
@@ -362,6 +388,8 @@ void CMPXFileInfoUtility::OpenControllerL(const TUid& aUid)
 //
 void CMPXFileInfoUtility::CreateAudioFormatsArrayL()
     {
+    MPX_DEBUG1("CMPXFileInfoUtility::CreateAudioFormatsArrayL()<---");
+    
     CMMFControllerPluginSelectionParameters* cSelect =
             CMMFControllerPluginSelectionParameters::NewLC();
     CMMFFormatSelectionParameters* fSelect =
@@ -381,6 +409,9 @@ void CMPXFileInfoUtility::CreateAudioFormatsArrayL()
     cSelect->ListImplementationsL(iAudioControllers);
     // Clean up
     CleanupStack::PopAndDestroy(3); //fSelect, cSelect, mediaIds
+    
+    MPX_DEBUG1("CMPXFileInfoUtility::CreateAudioFormatsArrayL()--->");
+    
     }
 
 // End of File

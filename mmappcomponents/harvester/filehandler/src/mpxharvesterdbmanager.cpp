@@ -168,6 +168,7 @@ TInt CMPXHarvesterDatabaseManager::OpenAllDatabasesL()
             TRAP( check, GetDatabaseL(static_cast<TDriveNumber>(driveNum)) );
             if( check == KErrNotFound )
                 {
+                MPX_DEBUG1("CMPXHarvesterDatabaseManager::OpenAllDatabasesL: re-creating database");
                 CMPXHarvesterDB* dB = CMPXHarvesterDB::NewL(
                     static_cast<TDriveNumber>(driveNum), iFs );
                 CleanupStack::PushL( dB );
@@ -179,6 +180,7 @@ TInt CMPXHarvesterDatabaseManager::OpenAllDatabasesL()
                     }
                 else
                     {
+                    MPX_DEBUG2("CMPXHarvesterDatabaseManager::OpenAllDatabasesL: opening failed, error=%d, removing database", openError);
                     CleanupStack::PopAndDestroy( dB );
                     }
                 }
@@ -187,6 +189,7 @@ TInt CMPXHarvesterDatabaseManager::OpenAllDatabasesL()
                 TRAPD(openError, GetDatabaseL(static_cast<TDriveNumber>(driveNum)).OpenL() );
                 if(openError != KErrNone)
                     {
+                    MPX_DEBUG2("CMPXHarvesterDatabaseManager::OpenAllDatabasesL: opening failed, error=%d, removing database", openError);
                     TRAP_IGNORE( RemoveDatabaseL(static_cast<TDriveNumber>(driveNum)));
                     }
                 }
@@ -293,6 +296,19 @@ void CMPXHarvesterDatabaseManager::CloseDatabase( TDriveNumber aDrive )
             if ( db->GetDbDrive() == aDrive)
                 {
                 db->Close();
+#ifdef __RAMDISK_PERF_ENABLE                
+                if( iRAMDiskPerfEnabled && db->IsUseRamDrive() )
+                    {
+                    MPX_DEBUG1("CMPXHarvesterDatabaseManager::CloseDatabase DB is on RAM");
+                    db->SetRamDriveInfo( iRAMDrive, EFalse ); 
+                    TRAPD( err, DoCopyDBFromRamL(aDrive) );
+                    if ( err )
+                        {
+                        MPX_DEBUG2("CMPXHarvesterDatabaseManager::CloseDatabase DB copy error=%d", err);                
+                        RemoveDummyFile(i);
+                        }
+                    }
+#endif
                 break;
                 }
             }
@@ -589,6 +605,8 @@ void CMPXHarvesterDatabaseManager::CopyDBsFromRamL()
 
     if( iRAMDiskPerfEnabled )
        {
+        // Should not leave until all the databases have been copied from RAM drive. 
+        TInt leaveError = KErrNone;
         TInt count(iDatabases.Count());
         for (TInt i = 0; i < count; ++i)
             {
@@ -605,8 +623,19 @@ void CMPXHarvesterDatabaseManager::CopyDBsFromRamL()
             iDatabases[i]->SetRamDriveInfo( iRAMDrive, EFalse );
             // Get the db state in order to restore it later.
             TDbState dbState = iDatabases[i]->GetDbState();
-            iDatabases[i]->SetDbStateL(EDbClose);
-            TRAP( err, DoCopyDBFromRamL(drive) );
+            TRAP( err, iDatabases[i]->SetDbStateL(EDbClose) );
+            if ( err == KErrNone )
+                {
+                TRAP( err, DoCopyDBFromRamL(drive) );
+                }
+            else
+                {
+                // Error closing db on RAM drive, try to delete it.
+                TFileName ramDB;
+                ramDB = GenerateHarvesterDbName( drive, ETrue );
+                BaflUtils::DeleteFile(iFs, ramDB);
+                }
+            
             if ( err )
                 {
                 MPX_DEBUG2("CMPXHarvesterDatabaseManager::CopyDBsFromRamL copy error=%d", err);                
@@ -615,8 +644,13 @@ void CMPXHarvesterDatabaseManager::CopyDBsFromRamL()
                 }
 
             // Restore the db state.
-            iDatabases[i]->SetDbStateL( dbState );
+            TRAPD( error, iDatabases[i]->SetDbStateL( dbState ) );
+            if ( error && !leaveError )
+                {
+                leaveError = error;
+                }
             }
+        User::LeaveIfError( leaveError );
         }
     }
 
@@ -635,14 +669,13 @@ void CMPXHarvesterDatabaseManager::DoCopyDBFromRamL(TDriveUnit aDriveUnit)
     src = GenerateHarvesterDbName( aDriveUnit, ETrue );
     MPX_DEBUG3("CMPXHarvesterDatabaseManager::DoCopyDBFromRamL from %S to %S", &src, &dst );
 
-    // Rename the temp file into real Db name
     TFileName dummyDbFileName = GenerateDummyDbName( aDriveUnit ); 
 
     //Copy Db from RAM to replace dummy file
     err = BaflUtils::CopyFile(iFs, src, dummyDbFileName);
     MPX_DEBUG2("CMPXHarvesterDatabaseManager::DoCopyDBFromRamL database copied from ram drive err=%d.", err);
     
-    // delete db in ram drive.
+    // delete db on ram drive.
     TInt delErr = BaflUtils::DeleteFile(iFs, src);
     MPX_DEBUG3("CMPXHarvesterDatabaseManager::DoCopyDBFromRamL db on ram drive deleted file=%S, err=%d", &src, delErr);
 

@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Handles all file related activities
-*  Version     : %version: e003sa33#72.1.14.2.4.1.4.1.2.1.3 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.1.4 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -438,6 +438,7 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
     // 4: USB end we re-open all db and scan for new files
     // 5: MTP start we stop monitoring for new files (no dismount)
     // 6: MTP end we re-open all db, files added already, restart monitor
+    // 7: Disk dismount: stop scanning, close the dismounting DB
     //
 #ifdef RD_MULTIPLE_DRIVE
     // Get all visible drives
@@ -632,9 +633,11 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
 #endif //__RAMDISK_PERF_ENABLE
             break;
             }
-        case EPowerKeyEjectEvent:
+        case EDiskDismountEvent:
             {
+            MPX_DEBUG2("Disk dismount notification, drive %d", aData);
             CancelScan();
+            iDBManager->CloseDatabase( (TDriveNumber) aData );
             break;
             }
         default:

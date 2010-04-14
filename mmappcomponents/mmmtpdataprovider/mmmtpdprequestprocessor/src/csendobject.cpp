@@ -1322,9 +1322,9 @@ EXPORT_C void CSendObject::UsbDisconnect()
 void CSendObject::Rollback()
     {
     // Delete this object from file system.
-    if ( iProgress == ESendObjectInProgress 
-            || iProgress == EObjectInfoSucceed 
-            ||iProgress == EObjectInfoFail )
+    if ( iProgress == ESendObjectInProgress )
+            // || iProgress == EObjectInfoSucceed   // this line is to be commented out until SetSize is done in SendObjectInfo/SendObjectPropList
+            //||iProgress == EObjectInfoFail )
         {
         PRINT1( _L( "MM MTP <> CSendObject::Rollback ROLLBACK_FILE %S" ), &iFullPath );
         // Close the interrupted transfer file by delete iFileReceived object

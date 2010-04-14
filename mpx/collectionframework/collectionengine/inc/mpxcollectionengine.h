@@ -79,6 +79,14 @@ public:
     *  @param aData some data
     */
     IMPORT_C void NotifyL(TMPXCollectionBroadCastMsg aMsg, TInt aData);
+    
+    
+    /**
+    *  Broadcast a command to all plug-ins
+    *  @param aCmd command to send
+    *  @param aData some data
+    */
+    void Command(TMPXCollectionCommand aCmd, TInt aData);
 
     /**
     * Retrieves the set of supported file types in the collection server

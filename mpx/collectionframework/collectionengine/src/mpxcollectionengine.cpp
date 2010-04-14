@@ -253,12 +253,7 @@ EXPORT_C void CMPXCollectionEngine::NotifyL( TMPXCollectionBroadCastMsg aMsg,
         }
     if( command != KErrNotSupported )
         {
-        TArray<CMPXCollectionPlugin*> plugins = iPluginHandler->LoadedPlugins();
-        for( TInt i=0; i<plugins.Count(); ++i )
-            {
-            CMPXCollectionPlugin* plugin = plugins[i];
-            TRAP_IGNORE(plugin->CommandL( (TMPXCollectionCommand)command, data));
-            }
+        Command( (TMPXCollectionCommand)command, data );
         }
 
     if( clearCache )
@@ -292,6 +287,16 @@ EXPORT_C void CMPXCollectionEngine::NotifyL( TMPXCollectionBroadCastMsg aMsg,
         CMPXCollectionClientContext* context;
         context = iContexts[i];
         context->NotifyL( aMsg, aData );
+        }
+    }
+
+void CMPXCollectionEngine::Command( TMPXCollectionCommand aCmd, TInt aData )
+    {
+    TArray<CMPXCollectionPlugin*> plugins = iPluginHandler->LoadedPlugins();
+    for( TInt i=0; i<plugins.Count(); ++i )
+        {
+        CMPXCollectionPlugin* plugin = plugins[i];
+        TRAP_IGNORE(plugin->CommandL( aCmd, aData));
         }
     }
 

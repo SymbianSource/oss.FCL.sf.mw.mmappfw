@@ -124,7 +124,7 @@ public:
     * Deletes metadata information associated with the object
     * @param aObject, the object need to be deleted
     */
-    void DeleteObjectL( const CMTPObjectMetaData& aObject );
+    IMPORT_C void DeleteObjectL( const CMTPObjectMetaData& aObject );
 
     /**
     * Set current  drive info
@@ -228,7 +228,7 @@ private:
     TBool iOpenSession;
 
     MMTPDataProviderFramework& iFramework;
-    RFs& iFs;	// should not remove this member data!!!
+    RFs& iFs;    // should not remove this member data!!!
 
     CDesCArray* iAbstractMediaArray;
 

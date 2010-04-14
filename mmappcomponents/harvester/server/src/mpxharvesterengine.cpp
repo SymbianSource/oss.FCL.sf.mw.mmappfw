@@ -38,7 +38,6 @@
 #include "mpxfsformatmonitor.h"
 #include "mpxmediaremovalmonitor.h"
 #include "mpxusbeventhandler.h"
-#include "mpxmmcejectmonitor.h"
 #include "mpxharvesterfilehandler.h"
 #include "mpxharvesterengineobserver.h"
 #include "mpxhvsmsg.h"
@@ -64,7 +63,6 @@ CMPXHarvesterEngine::~CMPXHarvesterEngine()
     delete iFormatMonitor;
     delete iMediaRemovalMonitor;
     delete iUSBMonitor;
-    delete iMMCMonitor;
 
     delete iFileHandler;
     iFsSession.Close();
@@ -110,8 +108,6 @@ void CMPXHarvesterEngine::ConstructL()
     // USB Event monitor
     iUSBMonitor = CMPXUsbEventHandler::NewL( *this );
 
-    // MMC Event handling
-    iMMCMonitor = CMPXMMCEjectMonitor::NewL( *this );
 
     // File handler to handle file related events
     iFileHandler = CMPXHarvesterFileHandler::NewL( iFsSession );
@@ -455,7 +451,7 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
     TBool notify(ETrue);
     switch( aEvent )
         {
-        case EPowerKeyEjectEvent:
+        case EDiskDismountEvent:
             {
             notify=EFalse;
             TRAP_IGNORE( DoStopPlaybackL() );
@@ -470,16 +466,15 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
             iDiskOpActive = ETrue;
             TRAP_IGNORE( DoStopPlaybackL() );
             }
-        default: //lint !e616 !e825
-            if( !iTempCollectionUtil )
-                {
-                iTempCollectionUtil = MMPXCollectionUtility::NewL( NULL, KMcModeDefault );
-                }
             break;
         }
 
     // Send a message to the collection server about the event
     //
+    if( !iTempCollectionUtil )
+        {
+        iTempCollectionUtil = MMPXCollectionUtility::NewL( NULL, KMcModeDefault );
+        }
     if( notify )
         {
         TRAP_IGNORE(
@@ -487,6 +482,13 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
                                                           aData )
              );
         }
+	else if ( aEvent == EDiskDismountEvent ) 
+	    {
+        TRAP_IGNORE
+		    ( 
+            iTempCollectionUtil->Collection().CommandL ( EMcCloseCollection, aData ) 
+            );
+		}
 
     // Avoid Message queue already exist problem
     //
@@ -513,6 +515,15 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
                 iTempCollectionUtil->Close();
                 iTempCollectionUtil = NULL;
                 }
+        }
+        
+    if ( aEvent == EUSBMassStorageEndEvent )
+        {
+        // In some cases visit to USB Mass Storage mode can be so brief
+        // that drives are actually not dismounted at all even though we
+        // get a NotifyDismount event. In such cases we need to re-issue
+        // the NotifyDismount requests.
+        iMediaRemovalMonitor->CheckDriveStatus();
         }
     }
 

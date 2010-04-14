@@ -1678,14 +1678,6 @@ void CMPXPlaybackEngine::HandleProperty(
         iCallback->HandleProperty(aProperty,aValue,aError);
         iCallback = NULL;
         iTaskQueue->CompleteTask();
-        
-        // notify client the new position during the playback
-        if ((EPbPropertyPosition == aProperty) && (iProgressTimer->IsActive()))
-            {
-            TRAP_IGNORE(iClientList->SendMsgL(
-                    TMPXPlaybackMessage(TMPXPlaybackMessage::EPropertyChanged,
-                                        EPbPropertyPosition,aValue)));            
-            }
         }
     MPX_DEBUG2("<--CMPXPlaybackEngine::HandleProperty 0x%08x", this);
     }

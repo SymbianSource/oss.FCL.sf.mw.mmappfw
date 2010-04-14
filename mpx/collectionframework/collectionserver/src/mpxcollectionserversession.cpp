@@ -570,13 +570,13 @@ TInt CMPXCollectionSession::DoWriteData(
 //
 void CMPXCollectionSession::CancelRequests()
     {
-    if (!iMessage.IsNull())
-        {
-        iMessage.Complete(KErrCancel);
-        }
     if (iContext)
         {
         iContext->CancelRequest(this);
+        }
+    if (!iMessage.IsNull())
+        {
+        iMessage.Complete(KErrCancel);
         }
     }
 

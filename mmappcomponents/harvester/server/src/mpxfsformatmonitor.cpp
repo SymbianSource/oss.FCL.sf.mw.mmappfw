@@ -142,6 +142,12 @@ void CMPXFsFormatMonitor::HandleBackupOperationEventL(
         }
     else  // TOperationType::EEnd or TOperationType::EAbort
         {
+        //Ignore if formatting is ongoing
+        TBool formatting = iBackupSession->IsBackupOperationRunning();
+        if ( formatting )
+        	{
+            return;
+        	}
         for(TInt i=0; i<KDriveCount; ++i)
             {
             iObserver.HandleSystemEventL(EFormatEndEvent, iBackupDrives[i]);

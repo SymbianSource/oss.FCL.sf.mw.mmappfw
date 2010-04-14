@@ -23,8 +23,12 @@
 TARGET                  mpxharvesterserver.exe
 TARGETTYPE              exe
 UID                     0 0x101FFCA9
+#ifdef WINSCW
 EPOCHEAPSIZE            0x1000 0x500000
-EPOCSTACKSIZE 0X5000
+#else
+EPOCHEAPSIZE            0x1000 0x800000
+#endif
+EPOCSTACKSIZE           0x5000
 
 CAPABILITY              CAP_SERVER DRM AllFiles
 VENDORID                VID_DEFAULT
@@ -40,7 +44,6 @@ SOURCE                  mpxharvesterengine.cpp
 SOURCE                  mpxfsformatmonitor.cpp
 SOURCE                  mpxmediaremovalmonitor.cpp
 SOURCE                  mpxusbeventhandler.cpp
-SOURCE                  mpxmmcejectmonitor.cpp
 
 USERINCLUDE             ../inc
 USERINCLUDE             ../../inc
@@ -60,3 +63,4 @@ LIBRARY                 usbman.lib
 #ifdef RD_MULTIPLE_DRIVE
 LIBRARY                 PlatformEnv.lib
 #endif //RD_MULTIPLE_DRIVE
+LIBRARY                 disknotifyhandler.lib

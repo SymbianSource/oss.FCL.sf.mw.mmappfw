@@ -12,10 +12,9 @@
 * Contributors:
 *
 * Description:  Extracts metadata from a file
-*  Version     : %version: da1mmcf#38.1.4.2.6.1.7 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#38.1.4.2.6.1.9 % << Don't touch! Updated by Synergy at check-out.
 *
 */
-
 
 #include <e32base.h>
 #include <badesca.h>
@@ -45,10 +44,14 @@
 
 #include "mpxmetadataextractor.h"
 #include "mpxfileinfoutility.h"
+
+_LIT( KWmaMimeType, "audio/x-ms-wma" );
+_LIT( KWmaCafMimeType, "x-caf-audio/x-ms-wma" );
+
 #ifdef RD_MPX_TNM_INTEGRATION
 _LIT( KImageFileType, "image/jpeg" );
 const TInt KMPXTimeoutTimer = 3000000; // 3 seconds
-const TInt KMPXMaxThumbnailRequest = 5; 
+const TInt KMPXMaxThumbnailRequest = 2; 
 #endif //RD_MPX_TNM_INTEGRATION
 
 #ifdef ABSTRACTAUDIOALBUM_INCLUDED
@@ -239,6 +242,8 @@ EXPORT_C void CMPXMetadataExtractor::CreateMediaL( const TDesC& aFile,
     TInt err = file.Open( iFs, *fileName, EFileRead | EFileShareReadersOrWriters );
     CleanupClosePushL(file);
     
+    // Initially set default tags.
+    SetDefaultL( *media );
     // Metadata related
     //
     if( err == KErrNone )
@@ -247,31 +252,17 @@ EXPORT_C void CMPXMetadataExtractor::CreateMediaL( const TDesC& aFile,
         HBufC8* mimeType8 = HBufC8::NewLC( mimeType.Length() );
         mimeType8->Des().Append( mimeType );
         TRAPD( metadataerror, iMetadataUtility->OpenFileL( file, *mimeType8 ) );
+        MPX_DEBUG2("CMPXMetadataExtractor::CreateMediaL, error %d parsing metadata", 
+            metadataerror );
         CleanupStack::PopAndDestroy( mimeType8 );
-
-        // No problem
-        if( KErrNone == metadataerror )
-            {
-            // Add TRAPD to capture exception KErrNoMemory.
-            //If album art size is too large, trap this exception and SetDefaultL.
-            //Fix EYLU-7ESE5L
-            TRAPD( err, SetMediaPropertiesL( *media, *fileName ) );
-            if ( KErrNoMemory == err )
-                {
-                SetDefaultL( *media );
-                }
-            }
-        else  // Error, Set defaults
-            {
-            SetDefaultL( *media );
-            }
+        
+        // Even if there is error extracting metadata, fill extracted tags.
+        TRAP( metadataerror, SetMediaPropertiesL( *media, *fileName ) ); 
+        MPX_DEBUG2("CMPXMetadataExtractor::CreateMediaL, error %d setting tags", 
+            metadataerror );
 
         // Reset the utility
         iMetadataUtility->ResetL();
-        }
-    else // Error, Set defaults
-        {
-        SetDefaultL( *media );
         }
     
     // Common properties that we can extract
@@ -461,11 +452,17 @@ void CMPXMetadataExtractor::SetMediaPropertiesL( CMPXMedia& aMedia,
                 if ( KErrNone != err )
                     {
                     MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL - error jpeg = %i", err);           
-                    User::Leave( err );  
-                    }                 
-                CleanupStack::PushL( value8 );
-                AddMediaAlbumArtL( aMedia, aFile, *value8 );
-                CleanupStack::Pop( value8 );
+                    }
+                else
+                    {
+                    CleanupStack::PushL( value8 );
+                    TRAPD( err, AddMediaAlbumArtL( aMedia, aFile, *value8 ) );
+                    if ( KErrNone != err )
+                        {
+                        MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL - error album art = %i", err);           
+                        }
+                    CleanupStack::Pop( value8 );
+                    }
                 MPX_PERF_END(CMPXMetadataExtractor_SetMediaPropertiesL_JPEG_TNM);
 #else //RD_MPX_TNM_INTEGRATION
                 aMedia.SetTextValueL( KMPXMediaMusicAlbumArtFileName,
@@ -479,11 +476,33 @@ void CMPXMetadataExtractor::SetMediaPropertiesL( CMPXMedia& aMedia,
                                       *value );
                 break;
                 }
+            case EMetaDataDuration:     
+                {                  
+                const TDesC& mimeType = aMedia.ValueText( KMPXMediaGeneralMimeType );
+                MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL, mimeType = %S", &mimeType);   
+                
+                // Verify if WMA, get the duration
+                if( mimeType.Compare(KWmaMimeType) == 0 || mimeType.Compare(KWmaCafMimeType) == 0 )
+                    {
+                    MPX_DEBUG1("CMPXMetadataExtractor::SetMediaPropertiesL- WMA");                         
+
+                    // Perform the duration conversion
+                    TLex lexer( *value );
+                    TInt32 duration ( 0 );
+                    lexer.Val( duration );   // [second]      
+                    duration *= 1000;        // [msec]
+                
+                    aMedia.SetTObjectValueL<TInt32>( KMPXMediaGeneralDuration,
+                                                duration );      
+                
+                    MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL- duration = %i", duration);  
+                    }
+                break;
+                }
             case EMetaDataOriginalArtist:  // fall through
             case EMetaDataVendor:          // fall through
             case EMetaDataRating:          // fall through
             case EMetaDataUniqueFileIdentifier:  // fall through
-            case EMetaDataDuration:        // fall through
             case EMetaDataDate:            // fall through
                 {
                 // not used
@@ -580,33 +599,49 @@ void CMPXMetadataExtractor::SetExtMediaPropertiesL( CMPXMedia& aProp,
     
     iDrmMediaUtility->Close();
     
-    // File Size
+    //
+    // File Size --- The following needs MMF support
     //
     TInt size( 0 );
     if( aFileErr == KErrNone )
         {
-        aFileHandle.Size( size );
-        aProp.SetTObjectValueL<TInt>( KMPXMediaGeneralSize,
-                                      size );
-
-        // Duration, bitrate, samplerate, etc
-        //
-        if( !aMetadataOnly )
+        const TDesC& mimeType = aProp.ValueText( KMPXMediaGeneralMimeType );
+        MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL, mimeType = %S", &mimeType);   
+        
+        // Verify if WMA, skip getting info from MMF
+        if( mimeType.Compare(KWmaMimeType) == 0 || mimeType.Compare(KWmaCafMimeType) == 0 )
             {
-            TRAPD(err2, iFileInfoUtil->OpenFileL(
+            // No need to get MMF support
+            MPX_DEBUG1("CMPXMetadataExtractor::SetExtMediaPropertiesL, skip MMF ");   
+            }
+        else
+            {
+            MPX_DEBUG1("CMPXMetadataExtractor::SetExtMediaPropertiesL, get MMF controller");   
+            aFileHandle.Size( size );
+            aProp.SetTObjectValueL<TInt>( KMPXMediaGeneralSize, size );
+
+            // Duration, bitrate, samplerate, etc
+            //
+            if( !aMetadataOnly )
+            {
+                TRAPD(err2, iFileInfoUtil->OpenFileL(
                           aFileHandle, 
                           aProp.ValueText(KMPXMediaGeneralMimeType)));
-            MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL, file info util error %i", err2);
-            if( KErrNone == err2 )
-                {
-                aProp.SetTObjectValueL<TUint>( KMPXMediaAudioBitrate,
-                                               iFileInfoUtil->BitRate() );
-                aProp.SetTObjectValueL<TUint>( KMPXMediaAudioSamplerate,
-                                               iFileInfoUtil->SampleRate() );
-                TInt64 duration = (TInt64) iFileInfoUtil->Duration().Int64() / 1000; // ms
-                aProp.SetTObjectValueL<TInt32>( KMPXMediaGeneralDuration,
-                                              duration );
-                MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL -- duration %i", duration);
+                MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL, file info util error %i", err2);
+                if( KErrNone == err2 )
+                    {
+                    aProp.SetTObjectValueL<TUint>( KMPXMediaAudioBitrate,
+                                                   iFileInfoUtil->BitRate() );
+                    aProp.SetTObjectValueL<TUint>( KMPXMediaAudioSamplerate,
+                                                   iFileInfoUtil->SampleRate() );
+                    TInt64 duration = (TInt64) iFileInfoUtil->Duration().Int64() / 1000; // ms
+                    aProp.SetTObjectValueL<TInt32>( KMPXMediaGeneralDuration,
+                                                    duration );
+
+                    MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL -- duration %i", duration);
+                    }
+                
+                iFileInfoUtil->Reset();
                 }
             }
         }
@@ -618,8 +653,6 @@ void CMPXMetadataExtractor::SetExtMediaPropertiesL( CMPXMedia& aProp,
     //
     aProp.SetTObjectValueL( KMPXMediaGeneralFlags,
                             dbFlags );
-
-    iFileInfoUtil->Reset();
     
     MPX_DEBUG1("CMPXMetadataExtractor::SetExtMediaPropertiesL --->");
     }
@@ -667,8 +700,10 @@ void CMPXMetadataExtractor::ThumbnailReady( TInt /*aError*/,
         MThumbnailData& /*aThumbnail*/, TThumbnailRequestId /*aId*/ )
     {
     MPX_FUNC("CMPXMetadataExtractor::ThumbnailReady()");
+    MPX_DEBUG2("CMPXMetadataExtractor::ThumbnailReady(): iOutstandingThumbnailRequest %d",
+        iOutstandingThumbnailRequest);
     iOutstandingThumbnailRequest--;
-    if ( iOutstandingThumbnailRequest <= KMPXMaxThumbnailRequest )
+    if ( iOutstandingThumbnailRequest < KMPXMaxThumbnailRequest )
         {
         StopWaitLoop();
         }
@@ -867,8 +902,10 @@ void CMPXMetadataExtractor::CheckBeforeSendRequest()
      {
      MPX_FUNC("CMPXMetadataExtractor::CheckBeforeSendRequest()");
 #ifdef RD_MPX_TNM_INTEGRATION
+    MPX_DEBUG2("CMPXMetadataExtractor::CheckBeforeSendRequest(): iOutstandingThumbnailRequest %d",
+        iOutstandingThumbnailRequest);
 	// If thumbnail creation is ongoing, wait til it is done
-    if ( iOutstandingThumbnailRequest > KMPXMaxThumbnailRequest )
+    if ( iOutstandingThumbnailRequest >= KMPXMaxThumbnailRequest )
         {
         MPX_DEBUG1("CMPXMetadataExtractor::CheckBeforeSendRequest(): Thumbnail creation ongoing!");
         iTNMBlockCount++;

@@ -69,7 +69,7 @@ enum TSystemEvent
     EUSBMTPEndEvent,           // MTP end event
     EUSBMTPNotActiveEvent,     // MTP selected but not active
     ESystemEventMax,           // End of event enum
-    EPowerKeyEjectEvent        // Power key eject mmc
+    EDiskDismountEvent         // Disk dismount notification (MPX Harvester internal)
     };
 
 #endif // MPX_HARVESTER_COMMON_H

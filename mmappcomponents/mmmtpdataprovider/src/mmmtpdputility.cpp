@@ -38,6 +38,7 @@
 #include "mmmtpdpfiledefs.h"
 #include "tobjectdescription.h"
 #include "mmmtpdplogger.h"
+#include "mmmtpdp_variant.hrh"
 
 using namespace ContentAccess;
 
@@ -57,82 +58,77 @@ const TInt KRenameThreshold = 100 * 1000; // (100 millisec)
 //
 EXPORT_C TMTPFormatCode MmMtpDpUtility::FormatFromFilename( const TDesC& aFullFileName )
     {
+    TMTPFormatCode format = EMTPFormatCodeUndefined;
+
     if ( aFullFileName.Right( 1 ).CompareF( KTxtBackSlash ) == 0 ) // We have a directory name
         {
-        return EMTPFormatCodeAssociation;
+        format = EMTPFormatCodeAssociation;
         }
-
-    TParsePtrC file( aFullFileName );
-
-    if ( !file.ExtPresent() )
-        return EMTPFormatCodeUndefined;
-
-    // need to do it in popularity of format, to optmize performance
-    if ( file.Ext().CompareF( KTxtExtensionMP3 ) == 0 )
-            return EMTPFormatCodeMP3;
-
-#ifdef __WINDOWS_MEDIA
-    if ( file.Ext().CompareF( KTxtExtensionWMA ) == 0 )
-            return EMTPFormatCodeWMA;
-#endif // __WINDOWS_MEDIA
-
-    if ( ( file.Ext().CompareF( KTxtExtensionMP4 ) == 0 )
-        || ( file.Ext().CompareF( KTxtExtensionM4A ) == 0 ) )
-        return EMTPFormatCodeMP4Container;
-
-    if ( ( file.Ext().CompareF( KTxtExtension3GP ) == 0 )
-        || ( file.Ext().CompareF( KTxtExtension3G2 ) == 0 )
-        || ( file.Ext().CompareF( KTxtExtensionO4A ) == 0 )
-        || ( file.Ext().CompareF( KTxtExtensionO4V ) == 0 ) )
-        return EMTPFormatCode3GPContainer;
-
-    if ( file.Ext().CompareF( KTxtExtensionAAC ) == 0 )
-        return EMTPFormatCodeAAC;
-
-    if ( file.Ext().CompareF( KTxtExtensionWAV ) == 0 )
-        return EMTPFormatCodeWAV;
-
-#ifdef __WINDOWS_MEDIA
-    if ( file.Ext().CompareF( KTxtExtensionWMV ) == 0 )
-        return EMTPFormatCodeWMV;
-
-    if ( file.Ext().CompareF( KTxtExtensionASF ) == 0 )
-        return EMTPFormatCodeASF;
-
-#endif // __WINDOWS_MEDIA
-
-    if ( file.Ext().CompareF( KTxtExtensionODF ) == 0 )
+    else 
         {
-        HBufC8* mime = MmMtpDpUtility::ContainerMimeType( file.FullName() );
-        if ( mime != NULL )
-            {
-            // 3GP
-            if ( mime->CompareF( KMimeTypeAudio3gpp ) == 0
-                || mime->CompareF( KMimeTypeVideo3gpp ) == 0 )
-                {
-                delete mime;
-                mime = NULL;
-                return EMTPFormatCode3GPContainer;
-                }
-            }
+        TParsePtrC file( aFullFileName );
 
-        if ( mime != NULL )
+        if ( file.ExtPresent() )
             {
-            delete mime;
-            mime = NULL;
+            // need to do it in popularity of format, to optmize performance
+            if ( file.Ext().CompareF( KTxtExtensionMP3 ) == 0 )
+                format = EMTPFormatCodeMP3;
+#ifdef __WINDOWS_MEDIA
+            else if ( file.Ext().CompareF( KTxtExtensionWMA ) == 0 )
+                format = EMTPFormatCodeWMA;
+#endif // __WINDOWS_MEDIA
+            else if (( file.Ext().CompareF( KTxtExtensionPLA ) == 0 ) 
+                || ( file.Ext().CompareF( KTxtExtensionVIR ) == 0 ) )
+                format = EMTPFormatCodeAbstractAudioVideoPlaylist;
+            else if ( ( file.Ext().CompareF( KTxtExtensionMP4 ) == 0 )
+                || ( file.Ext().CompareF( KTxtExtensionM4A ) == 0 ) )
+                format = EMTPFormatCodeMP4Container;
+            else if ( ( file.Ext().CompareF( KTxtExtension3GP ) == 0 )
+                || ( file.Ext().CompareF( KTxtExtension3G2 ) == 0 )
+                || ( file.Ext().CompareF( KTxtExtensionO4A ) == 0 )
+                || ( file.Ext().CompareF( KTxtExtensionO4V ) == 0 ) )
+                format = EMTPFormatCode3GPContainer;
+            else if ( file.Ext().CompareF( KTxtExtensionAAC ) == 0 )
+                format = EMTPFormatCodeAAC;
+            else if ( file.Ext().CompareF( KTxtExtensionWAV ) == 0 )
+                format = EMTPFormatCodeWAV;
+#ifdef __WINDOWS_MEDIA
+            else if ( file.Ext().CompareF( KTxtExtensionWMV ) == 0 )
+                format = EMTPFormatCodeWMV;
+            else if ( file.Ext().CompareF( KTxtExtensionASF ) == 0 )
+                format = EMTPFormatCodeASF;
+#endif // __WINDOWS_MEDIA
+            else if ( file.Ext().CompareF( KTxtExtensionODF ) == 0 )
+                {
+                HBufC8* mime = MmMtpDpUtility::ContainerMimeType( file.FullName() );
+                if ( mime != NULL )
+                    {
+                    // 3GP
+                    if ( mime->CompareF( KMimeTypeAudio3gpp ) == 0
+                        || mime->CompareF( KMimeTypeVideo3gpp ) == 0 )
+                        {
+                        delete mime;
+                        mime = NULL;
+                        format = EMTPFormatCode3GPContainer;
+                        }
+                    }
+
+                if ( mime != NULL )
+                    {
+                    delete mime;
+                    mime = NULL;
+                    }
+                }
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+            else if ( file.Ext().CompareF( KTxtExtensionALB ) == 0 )
+                format = EMTPFormatCodeAbstractAudioAlbum;
+#endif // MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+            else if ( file.Ext().CompareF( KTxtExtensionM3U ) == 0 )
+                format = EMTPFormatCodeM3UPlaylist;
             }
         }
 
-    if ( file.Ext().CompareF( KTxtExtensionALB ) == 0 )
-        return EMTPFormatCodeAbstractAudioAlbum;
-
-    if (( file.Ext().CompareF( KTxtExtensionPLA ) == 0 ) || ( file.Ext().CompareF( KTxtExtensionVIR ) == 0 ) )
-        return EMTPFormatCodeAbstractAudioVideoPlaylist;
-
-    if ( file.Ext().CompareF( KTxtExtensionM3U ) == 0 )
-        return EMTPFormatCodeM3UPlaylist;
-
-    return EMTPFormatCodeUndefined;
+    return format;
     }
 
 // -----------------------------------------------------------------------------

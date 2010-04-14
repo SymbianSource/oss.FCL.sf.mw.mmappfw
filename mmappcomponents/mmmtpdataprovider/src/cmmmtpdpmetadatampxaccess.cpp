@@ -668,7 +668,6 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
     CMPXMedia& aMediaProp )
     {
     PRINT1( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::SetMetadataValueL aPropCode = 0x%x" ), aPropCode );
-    CMTPTypeString* textData = CMTPTypeString::NewLC(); // + textData
     CMTPTypeArray* desData = NULL;
     TMTPTypeUint16 uint16Data;
     TMTPTypeUint32 uint32Data;
@@ -684,14 +683,12 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
         case EMTPObjectPropCodeComposer:
         case EMTPObjectPropCodeAlbumArtist:
             {
-            PRINT1( _L( "MM MTP <> SetMetadataValueL Before Copy, string length = %d" ), aNewData.Size() );
-            MMTPType::CopyL( aNewData, *textData );
-            PRINT1( _L( "MM MTP <> SetMetadataValueL string length = %d" ), textData->StringChars().Length() );
-            aMediaProp.SetTextValueL( attrib, textData->StringChars() );
-            HBufC* log = textData->StringChars().AllocL();
-            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL string = %S" ), log );
-            delete log;
-            log = NULL;
+            const CMTPTypeString& textData = static_cast<const CMTPTypeString&>( aNewData );
+            HBufC* string = textData.StringChars().AllocLC();    // + string
+            PRINT2( _L( "MM MTP <> SetMetadataValueL des.ptr() = 0x%x, string length = %d" ),string->Des().Ptr(), string->Des().Length() );
+            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL string = %S" ), string );
+            aMediaProp.SetTextValueL( attrib, string->Des() );
+            CleanupStack::PopAndDestroy( string );               // - string
             }
             break;
 
@@ -735,10 +732,10 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
 
         case EMTPObjectPropCodeOriginalReleaseDate:
             {
-            MMTPType::CopyL( aNewData, *textData );
+            const CMTPTypeString& textData = static_cast<const CMTPTypeString&>( aNewData );
 
             TBuf<KMtpMaxStringLength> data;
-            data.Copy( textData->StringChars().Left( KMtpMaxDateTimeStringLength ) );
+            data.Copy( textData.StringChars().Left( KMtpMaxDateTimeStringLength ) );
             PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL 0xDC99 date = %S" ),
                 &data );
             if ( data.Length() < KMtpMaxDateTimeStringLength )
@@ -821,23 +818,18 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
             TUint length = desData->NumElements();
             PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL length = %d" ),
                 length );
-            if ( length != 0 )
-                {
-                length = ( length < KMTPMaxDescriptionLen ) ? length : KMTPMaxDescriptionLen;
-                HBufC* text = HBufC::NewLC( length );    // + text
-                TPtr ptr = text->Des();
 
-                for ( TUint i = 0; i < length; i++ )
-                    ptr.Append( desData->ElementUint( i ) );
-                PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL text = %S" ),
-                    text );
-                aMediaProp.SetTextValueL( KMPXMediaGeneralComment, *text );
-                CleanupStack::PopAndDestroy( text );    // - text
-                }
-            else
-                {
-                aMediaProp.SetTextValueL( KMPXMediaGeneralComment, KEmptyText );
-                }
+            length = ( length < KMTPMaxDescriptionLen ) ? length : KMTPMaxDescriptionLen;
+            HBufC* text = HBufC::NewLC( length );    // + text
+            TPtr ptr = text->Des();
+
+            for ( TUint i = 0; i < length; i++ )
+                ptr.Append( desData->ElementUint( i ) );
+            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::SetMetadataValueL text = %S" ),
+                text );
+            aMediaProp.SetTextValueL( KMPXMediaGeneralComment, text->Des() );
+            CleanupStack::PopAndDestroy( text );    // - text
+
             CleanupStack::PopAndDestroy( desData ); // - desData
 #endif //__MUSIC_ID_SUPPORT
             }
@@ -879,7 +871,6 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
             break;
         }
 
-    CleanupStack::PopAndDestroy( textData ); // - textData
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::SetMetadataValueL" ) );
     }
 
@@ -1027,7 +1018,7 @@ void CMmMtpDpMetadataMpxAccess::AddAbstractMediaL( const TDesC& aFullFileName, T
     CleanupClosePushL( abstractMediaAttributes ); // + abstractMediaAttributes
     abstractMediaAttributes.AppendL( KMPXMediaGeneralId );
     abstractMediaAttributes.AppendL( KMPXMediaGeneralTitle );
-    if ( aCategory == EMPXPlaylist )
+    if ( aCategory == EMPXPlaylist )    // rollback until Rename is supported on MPX DB
         {
         abstractMediaAttributes.AppendL( KMPXMediaGeneralUri );
         }
@@ -1075,9 +1066,8 @@ void CMmMtpDpMetadataMpxAccess::AddAbstractMediaL( const TDesC& aFullFileName, T
         media->SetTextValueL( KMPXMediaGeneralUri, aFullFileName );
 
         TParsePtrC parse( aFullFileName );
-
         media->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
-        if ( ( aCategory == EMPXPlaylist ) || ( aCategory == EMPXAbstractAlbum ) )
+        if ( aCategory == EMPXPlaylist )    // rollback until Rename is supported on MPX DB
             {
             media->SetTextValueL( KMPXMediaGeneralTitle, parse.Name() );
             }
@@ -1323,7 +1313,7 @@ void CMmMtpDpMetadataMpxAccess::GetAllAbstractMediaL( const TDesC& aStoreRoot,
     CleanupClosePushL( abstractMediaAttributes ); // + abstractMediaAttributes
     abstractMediaAttributes.AppendL( KMPXMediaGeneralId );
     abstractMediaAttributes.AppendL( KMPXMediaGeneralTitle );
-    if ( aCategory == EMPXPlaylist )
+    if ( aCategory == EMPXPlaylist )    // rollback until Rename is supported on MPX DB
         {
         abstractMediaAttributes.AppendL( KMPXMediaGeneralUri );
         }
@@ -1457,7 +1447,7 @@ HBufC* CMmMtpDpMetadataMpxAccess::GetAbstractMediaNameL( CMPXMedia* aAbstractMed
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::GetAbstractMediaNameL" ) );
     HBufC* name = NULL;
-    if ( aCategory == EMPXPlaylist )
+    if ( aCategory == EMPXPlaylist )    // rollback until Rename is supported on MPX DB
         {
         if( !aAbstractMedia->IsSupported( KMPXMediaGeneralUri ) )
             {
