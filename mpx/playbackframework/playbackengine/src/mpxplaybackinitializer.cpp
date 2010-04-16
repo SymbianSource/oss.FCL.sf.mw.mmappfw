@@ -424,7 +424,8 @@ void CMPXPlaybackInitializer::SwapPluginL()
         {
         if ( iMedia )
             {
-            iEngine.RestorePlaybackPositionAndStateL( *iMedia );
+            iEngine.RestorePlaybackPositionL( *iMedia );
+            iEngine.RestorePlaybackStateL(); 
             }
         //
         // Set plug-in handler
@@ -621,12 +622,9 @@ void CMPXPlaybackInitializer::InitL(const CMPXMedia& aMedia,TInt aError)
                     iHandler->SelectPlayersL(t);
                     }
                 }
-            TInt accessPoint = 0;
-            if ( aMedia.IsSupported(KMPXMediaGeneralExtAccessPoint) )
-                {
-                accessPoint = aMedia.ValueTObjectL<TInt>( KMPXMediaGeneralExtAccessPoint );
-                MPX_DEBUG2("CMPXPlaybackInitializer::InitL accessPoint %d", accessPoint );
-                }
+           
+
+            
             HBufC8* mimeType =
                     MPXUser::Alloc8L(aMedia.ValueText(KMPXMediaGeneralMimeType));
             CleanupStack::PushL(mimeType);
@@ -635,7 +633,7 @@ void CMPXPlaybackInitializer::InitL(const CMPXMedia& aMedia,TInt aError)
             // Plugin handler guarantee to choose a plugin
             // In case there is file open in the audio controller
             iHandler->Plugin()->CommandL(EPbCmdClose);
-            InitL(uri, *mimeType, accessPoint);
+            InitL(uri, *mimeType); 
             CleanupStack::PopAndDestroy(mimeType);
             }
         else  // No URI
@@ -840,7 +838,7 @@ void CMPXPlaybackInitializer::HandlePluginHandlerEvent(
 // Initialize.
 // ----------------------------------------------------------------------------
 //
-void CMPXPlaybackInitializer::InitL(const TDesC& aUri, const TDesC8& aType, TInt aAccessPoint)
+void CMPXPlaybackInitializer::InitL(const TDesC& aUri, const TDesC8& aType ) 
     {
     MPX_FUNC("CMPXPlaybackInitializer::InitL");
     CMPXPlaybackPlugin* p = iHandler->Plugin();
@@ -869,13 +867,29 @@ void CMPXPlaybackInitializer::InitL(const TDesC& aUri, const TDesC8& aType, TInt
         // if cast was successful, then init streaming with access point
         if (plugin)
             {
-            if ( aAccessPoint )
+            
+            TInt accessPoint = 0;
+            if ( iMedia->IsSupported(KMPXMediaGeneralExtAccessPoint) ) 
                 {
-                plugin->InitStreamingL( aUri, aType, aAccessPoint );
+                accessPoint = iMedia->ValueTObjectL<TInt>( KMPXMediaGeneralExtAccessPoint ); 
+                MPX_DEBUG2("CMPXPlaybackInitializer::InitL accessPoint %d", accessPoint );
+                }            
+            
+            TInt position = 0;            
+            if (iMedia->IsSupported(KMPXMediaGeneralLastPlaybackPosition))
+                {
+                position = iMedia->ValueTObjectL<TInt>( KMPXMediaGeneralLastPlaybackPosition );
+                MPX_DEBUG2("CMPXPlaybackInitializer::InitL position %d", position );
+                }
+            
+                        
+            if ( accessPoint ) 
+                {
+                plugin->InitStreamingL( aUri, aType, accessPoint, position ); 
                 }
             else
                 {
-                plugin->InitialiseL(aUri);
+                plugin->InitialiseWithPositionL(aUri, position); 
                 }
             }
         else

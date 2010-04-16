@@ -193,7 +193,7 @@ private:
     /**
      * Initialize streaming
      */
-    void InitL(const TDesC& aUri, const TDesC8& aType, TInt aAccessPoint);
+    void InitL(const TDesC& aUri, const TDesC8& aType ); 
     
 private:
     /**

@@ -39,8 +39,9 @@ public:
     * @param aUri URI of the item
     * @param aType the mime type of the item
     * @param aAccessPoint the access point
+    * @param aPosition the starting position
     */
-    virtual void InitStreamingL(const TDesC& aUri, const TDesC8& aType, TInt aAccessPoint) = 0;
+    virtual void InitStreamingL(const TDesC& aUri, const TDesC8& aType, TInt aAccessPoint, TInt aPosition = 0) = 0; 
 
     /**
     * Initializes a file handle for playback.
@@ -48,8 +49,9 @@ public:
     * @since S60 9.2
     * @param aFile file handle of a file
     * @param aAccessPoint the access point
+    * @param aPosition the starting position
     */
-    virtual void InitStreamingL(RFile& aFile, TInt aAccessPoint) = 0;
+    virtual void InitStreamingL(RFile& aFile, TInt aAccessPoint, TInt aPosition = 0) = 0; 
     
 #ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
     /**
@@ -58,17 +60,39 @@ public:
     * @since S60 9.2
     * @param aFile 64 bit file handle of a file
     * @param aAccessPoint the access point
+    * @param aPosition the starting position
     */
-    virtual void InitStreaming64L(RFile64& aFile, TInt aAccessPoint) = 0;
+    virtual void InitStreaming64L(RFile64& aFile, TInt aAccessPoint, TInt aPosition = 0) = 0; 
 
     /**
     * Initializes a song for playback.
     *
     * @since S60 9.2
     * @param aFile 64 bit file handle of a song
+    * @param aPosition the starting position
     */
-    virtual void Initialise64L(RFile64& aSong) = 0;
+    virtual void Initialise64L(RFile64& aSong, TInt aPosition = 0) = 0; 
 #endif // SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
+    
+
+    /**
+    * Initializes a song for playback.
+    *
+    * @since S60 9.2
+    * @param aSong the song path
+    * @param aPosition the starting position
+    */
+    virtual void InitialiseWithPositionL(const TDesC& aSong, TInt aPosition = 0) = 0;
+    
+    /**
+    * Initializes a song for playback.
+    *
+    * @since S60 9.2
+    * @param aFile file handle of a song
+    * @param aPosition the starting position
+    */
+    virtual void InitialiseWithPositionL(RFile& aSong, TInt aPosition = 0) = 0;
+    
     };
     
 #endif // CMPXPLAYBACKPLUGINVERSION2_H
