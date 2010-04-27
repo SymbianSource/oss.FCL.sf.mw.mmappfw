@@ -17,10 +17,8 @@
 
 
 #include <e32base.h>
-#ifdef RD_MULTIPLE_DRIVE
 #include <pathinfo.h>
 #include <driveinfo.h>
-#endif //RD_MULTIPLE_DRIVE
 
 #ifdef __RAMDISK_PERF_ENABLE
 #include <centralrepository.h>
@@ -129,7 +127,7 @@ CMPXHarvesterDatabaseManager::~CMPXHarvesterDatabaseManager()
     TInt count(iDatabases.Count());
     for (TInt i = 0; i < count; ++i)
         {
-        RemoveDummyFile(i);
+        RemoveDummyFile(iDatabases[i]->GetDbDrive());
         }
 #endif // __RAMDISK_PERF_ENABLE
     iDatabases.ResetAndDestroy();
@@ -149,24 +147,18 @@ TInt CMPXHarvesterDatabaseManager::OpenAllDatabasesL()
 
     // Open drives we are interested in.
     //
-#ifdef RD_MULTIPLE_DRIVE
     TDriveList driveList;
     TInt driveCount(0);
     User::LeaveIfError( DriveInfo::GetUserVisibleDrives(
            iFs, driveList, driveCount ) );
 
-    TInt check(KErrNone);
     for( TInt driveNum = EDriveA; driveNum <= EDriveZ; driveNum++ )
         {
-        if (driveList[driveNum] && !IsRemoteDrive(static_cast<TDriveNumber>(driveNum)))
+        if (driveList[driveNum] && IsLocalDrive(static_cast<TDriveNumber>(driveNum)))
             {
-            TFileName drivePath;
-            User::LeaveIfError(
-                PathInfo::GetRootPath( drivePath, driveNum ) );
-            MPX_DEBUG2("CMPXHarvesterDatabaseManager::OpenAllDatabasesL: opening database in %S drive",
-                &drivePath);
-            TRAP( check, GetDatabaseL(static_cast<TDriveNumber>(driveNum)) );
-            if( check == KErrNotFound )
+            MPX_DEBUG2("CMPXHarvesterDatabaseManager::OpenAllDatabasesL: opening database in drive %d", driveNum);
+            TInt index = FindDatabaseIndex ( (TDriveNumber) driveNum );
+            if ( index == KErrNotFound )
                 {
                 MPX_DEBUG1("CMPXHarvesterDatabaseManager::OpenAllDatabasesL: re-creating database");
                 CMPXHarvesterDB* dB = CMPXHarvesterDB::NewL(
@@ -184,62 +176,19 @@ TInt CMPXHarvesterDatabaseManager::OpenAllDatabasesL()
                     CleanupStack::PopAndDestroy( dB );
                     }
                 }
-            else if( check == KErrNone )
+            else
                 {
-                TRAPD(openError, GetDatabaseL(static_cast<TDriveNumber>(driveNum)).OpenL() );
+                CMPXHarvesterDB* dB = iDatabases[index];
+                TRAPD(openError, rtn |= dB->OpenL() );   //lint !e665
                 if(openError != KErrNone)
                     {
                     MPX_DEBUG2("CMPXHarvesterDatabaseManager::OpenAllDatabasesL: opening failed, error=%d, removing database", openError);
-                    TRAP_IGNORE( RemoveDatabaseL(static_cast<TDriveNumber>(driveNum)));
+                    iDatabases.Remove ( index );
+                    delete dB;
                     }
                 }
             }
         }
-#else
-    TInt check(KErrNone);
-    TRAP( check, GetDatabaseL(EDriveC) );
-    if( check == KErrNotFound )
-        {
-        CMPXHarvesterDB* dB = CMPXHarvesterDB::NewL( EDriveC, iFs );
-        CleanupStack::PushL( dB );
-        iDatabases.AppendL( dB );
-        CleanupStack::Pop( dB );
-        TRAP_IGNORE( rtn = dB->OpenL() ); //lint !e665
-        }
-    else if( check == KErrNone )
-        {
-        TRAPD(openError, GetDatabaseL(EDriveC).OpenL() );
-        if(openError != KErrNone)
-            {
-            TRAP_IGNORE( RemoveDatabaseL(EDriveC));
-            }
-        }
-    TRAP( check, GetDatabaseL(EDriveE) );  //lint !e961
-    if( check == KErrNotFound )
-        {
-        CMPXHarvesterDB* dB = CMPXHarvesterDB::NewL( EDriveE, iFs );
-        CleanupStack::PushL( dB );
-        TRAPD(openError, rtn |= dB->OpenL() );  //lint !e665
-        if(openError == KErrNone)
-            {
-             iDatabases.AppendL( dB );
-             CleanupStack::Pop( dB );
-            }
-        else
-            {
-            CleanupStack::PopAndDestroy( dB );
-            }
-        }
-    else if( check == KErrNone )
-        {
-        TRAPD(openError,GetDatabaseL(EDriveE).OpenL() );
-        if(openError != KErrNone)
-            {
-            TRAP_IGNORE( RemoveDatabaseL(EDriveE));
-            }
-        }
-#endif // RD_MULTIPLE_DRIVE
-
     MPX_DEBUG1("CMPXHarvesterDatabaseManager::OpenAllDatabasesL --->");  //lint !e961
     return rtn;
     }
@@ -250,34 +199,86 @@ TInt CMPXHarvesterDatabaseManager::OpenAllDatabasesL()
 //
 void CMPXHarvesterDatabaseManager::OpenDatabaseL( TDriveNumber aDrive )
     {
-    MPX_DEBUG1("CMPXHarvesterDatabaseManager::OpenDatabaseL <---");
+    MPX_DEBUG2("CMPXHarvesterDatabaseManager::OpenDatabaseL %d <---", aDrive);
 
-    // Re-open a specific database
-    //
-    if (!IsRemoteDrive(aDrive))
+    if ( ! IsLocalDrive( aDrive ) )
         {
-        TInt count( iDatabases.Count() );
-        for( TInt i=0; i<count; ++i )
-            {
-            CMPXHarvesterDB* db = (CMPXHarvesterDB*) iDatabases[i];
-            if( db->GetDbDrive() == aDrive )
-                {
-                db->OpenL();
-                break;
-                }
-            }
+        MPX_DEBUG1("CMPXHarvesterDatabaseManager::OpenDatabaseL drive not available -->");
+        return;
+        }
+
+    CMPXHarvesterDB * db = NULL;
+    TInt index = FindDatabaseIndex ( aDrive );
+    if ( index == KErrNotFound )
+        {
+        db = CMPXHarvesterDB::NewL( aDrive, iFs );
+        CleanupStack::PushL( db );
+        iDatabases.AppendL( db );
+        CleanupStack::Pop( db );
+        }
+    else
+        {
+        db = iDatabases[index];
+        }
+
+    // TRAPD(openError, rtn |= dB->OpenL() );  //lint !e665
+    TRAPD( openError, db->OpenL() );
+    if( openError != KErrNone )
+        {
+        MPX_DEBUG2("CMPXHarvesterDatabaseManager::OpenAllDatabasesL: opening failed, error=%d", openError);
+        iDatabases.Remove(index);
+        delete db;
         }
     MPX_DEBUG1("CMPXHarvesterDatabaseManager::OpenDatabaseL --->");
     }
 
 // ---------------------------------------------------------------------------
-// CMPXHarvesterDatabaseManager::CloseAllDatabase
+// CMPXHarvesterDatabaseManager::CloseAllDatabases
 // ---------------------------------------------------------------------------
 //
-void CMPXHarvesterDatabaseManager::CloseAllDatabase()
+void CMPXHarvesterDatabaseManager::CloseAllDatabases()
     {
     // Close all databases for shutdown
     iDatabases.ResetAndDestroy();
+    }
+
+
+// ---------------------------------------------------------------------------
+// CMPXHarvesterDatabaseManager::CloseMassStorageDatabases
+// ---------------------------------------------------------------------------
+//
+void CMPXHarvesterDatabaseManager::CloseMassStorageDatabases()
+    {
+    MPX_FUNC("CMPXHarvesterDatabaseManager::CloseMassStorageDatabases");
+    for (TInt i = 0; i < iDatabases.Count();)
+        {
+        CMPXHarvesterDB * db =iDatabases [i];
+        TDriveNumber drive = db->GetDbDrive();
+        if ( drive != EDriveC )
+            {
+            MPX_DEBUG2("CMPXHarvesterDatabaseManager::CloseMassStorageDatabases closing DB on drive %d", drive);
+        	  db->Close();
+#ifdef __RAMDISK_PERF_ENABLE                
+            if( iRAMDiskPerfEnabled && db->IsUseRamDrive() )
+                {
+                MPX_DEBUG1("CMPXHarvesterDatabaseManager::CloseDatabase DB is on RAM");
+                db->SetRamDriveInfo( iRAMDrive, EFalse ); 
+                TInt err = DoCopyDBFromRam (drive);
+                if ( err )
+                    {
+                    MPX_DEBUG2("CMPXHarvesterDatabaseManager::CloseDatabase DB copy error=%d", err);                
+                    RemoveDummyFile( drive );
+                    }
+                }
+#endif
+            delete db;
+            iDatabases.Remove(i);
+            }
+        else
+            {
+            ++i;
+            }
+        }
     }
 
 // ---------------------------------------------------------------------------
@@ -286,34 +287,84 @@ void CMPXHarvesterDatabaseManager::CloseAllDatabase()
 //
 void CMPXHarvesterDatabaseManager::CloseDatabase( TDriveNumber aDrive )
     {
-     if (!IsRemoteDrive(aDrive))
+    MPX_DEBUG2("-->CMPXHarvesterDatabaseManager::CloseDatabase drive %d", aDrive );
+    TInt index = FindDatabaseIndex( aDrive );
+    if ( index != KErrNotFound )
         {
-        MPX_DEBUG2("CMPXHarvesterDatabaseManager::CloseDatabase drive %d <---", aDrive );
-        TInt count = iDatabases.Count();
-        for ( TInt i=0; i<count; ++i)
-            {
-            CMPXHarvesterDB* db = (CMPXHarvesterDB*) iDatabases[i];
-            if ( db->GetDbDrive() == aDrive)
-                {
-                db->Close();
+        CMPXHarvesterDB * db =iDatabases[index];
+        db->Close();
 #ifdef __RAMDISK_PERF_ENABLE                
-                if( iRAMDiskPerfEnabled && db->IsUseRamDrive() )
-                    {
-                    MPX_DEBUG1("CMPXHarvesterDatabaseManager::CloseDatabase DB is on RAM");
-                    db->SetRamDriveInfo( iRAMDrive, EFalse ); 
-                    TRAPD( err, DoCopyDBFromRamL(aDrive) );
-                    if ( err )
-                        {
-                        MPX_DEBUG2("CMPXHarvesterDatabaseManager::CloseDatabase DB copy error=%d", err);                
-                        RemoveDummyFile(i);
-                        }
-                    }
-#endif
-                break;
+        if( iRAMDiskPerfEnabled && db->IsUseRamDrive() )
+            {
+            MPX_DEBUG1("CMPXHarvesterDatabaseManager::CloseDatabase DB is on RAM");
+            db->SetRamDriveInfo( iRAMDrive, EFalse ); 
+            TInt err = DoCopyDBFromRam(aDrive);
+            if ( err )
+                {
+                MPX_DEBUG2("CMPXHarvesterDatabaseManager::CloseDatabase DB copy error=%d", err);                
+                RemoveDummyFile( aDrive );
                 }
             }
+#endif
+        delete db;
+        iDatabases.Remove(index);
         }
-    MPX_DEBUG1("CMPXHarvesterDatabaseManager::CloseDatabase --->");
+    MPX_DEBUG1("<--CMPXHarvesterDatabaseManager::CloseDatabase");
+    }
+
+// ---------------------------------------------------------------------------
+// CMPXHarvesterDatabaseManager::DropDatabase
+// ---------------------------------------------------------------------------
+//
+void CMPXHarvesterDatabaseManager::DropDatabase( TDriveNumber aDrive )
+    {
+    MPX_DEBUG2("CMPXHarvesterDatabaseManager::DropDatabase drive %d <---", aDrive );
+    TInt index = FindDatabaseIndex( aDrive );
+    if ( index != KErrNotFound )
+        {
+        CMPXHarvesterDB * db =iDatabases[index];
+#ifdef __RAMDISK_PERF_ENABLE                
+        if( iRAMDiskPerfEnabled && db->IsUseRamDrive() )
+            {
+            MPX_DEBUG1("CMPXHarvesterDatabaseManager::DropDatabase DB is on RAM");
+            db->Close();
+            // delete db on ram drive.
+            TFileName src = GenerateHarvesterDbName( TDriveUnit(aDrive), ETrue );
+            BaflUtils::DeleteFile(iFs, src);
+            }
+#endif
+        delete db;
+        iDatabases.Remove(index);
+        }
+    MPX_DEBUG1("CMPXHarvesterDatabaseManager::DropDatabase --->");
+    }
+// ---------------------------------------------------------------------------
+// CMPXHarvesterDatabaseManager::FindDatabaseIndex
+// ---------------------------------------------------------------------------
+//
+TInt CMPXHarvesterDatabaseManager::FindDatabaseIndex ( TDriveNumber aDrive )
+    {
+    TInt count = iDatabases.Count();
+    for( TInt i=0; i<count; ++i )
+        {
+        CMPXHarvesterDB* db = (CMPXHarvesterDB*) iDatabases[i];
+        if( db->GetDbDrive() == aDrive )
+            {
+            MPX_DEBUG3("CMPXHarvesterDatabaseManager::FindDatabaseIndex drive=%d returns index %d ", aDrive, i);
+            return i;
+            }
+        }
+    MPX_DEBUG2("CMPXHarvesterDatabaseManager::FindDatabaseIndex drive=%d returns KErrNotFound", aDrive);
+    return KErrNotFound;
+    }
+
+// ---------------------------------------------------------------------------
+// CMPXHarvesterDatabaseManager::DataaseIsOpen
+// ---------------------------------------------------------------------------
+//
+TBool CMPXHarvesterDatabaseManager::DatabaseIsOpen( TDriveNumber aDrive )
+    {
+    return FindDatabaseIndex( aDrive ) != KErrNotFound;
     }
 
 // ---------------------------------------------------------------------------
@@ -322,54 +373,9 @@ void CMPXHarvesterDatabaseManager::CloseDatabase( TDriveNumber aDrive )
 //
 CMPXHarvesterDB& CMPXHarvesterDatabaseManager::GetDatabaseL( TDriveNumber aDrive )
     {
-    CMPXHarvesterDB* db( NULL );
-
-    // Find the database
-    TInt count = iDatabases.Count();
-    for( TInt i=0; i<count; ++i )
-        {
-        CMPXHarvesterDB* tmp = (CMPXHarvesterDB*) iDatabases[i];
-        if( tmp->GetDbDrive() == aDrive )
-            {
-            db = tmp;
-            break;
-            }
-        }
-
-    // Not found, so we leave
-    if( db == NULL )
-        {
-        User::Leave( KErrNotFound );
-        }
-    return *db;
-    }
-
-// ---------------------------------------------------------------------------
-// CMPXHarvesterDatabaseManager::RemoveDatabase
-// ---------------------------------------------------------------------------
-//
-void CMPXHarvesterDatabaseManager::RemoveDatabaseL( TDriveNumber aDrive )
-    {
-
-    TBool bFound(EFalse);
-    // Find the database
-    TInt count = iDatabases.Count();
-    for(TInt index=0; index<count; ++index )
-        {
-        if((iDatabases[index]!=NULL) && ( iDatabases[index]->GetDbDrive() == aDrive ))
-            {
-            bFound = ETrue;
-            delete iDatabases[index];
-            iDatabases.Remove(index);
-            break;
-            }
-        }
-
-    // Not found, so we leave
-    if( !bFound )
-        {
-        User::Leave( KErrNotFound );
-        }
+    TInt index = FindDatabaseIndex( aDrive );
+    User::LeaveIfError (index); // Not found, so we leave
+    return *iDatabases[index];
     }
 
 // ---------------------------------------------------------------------------
@@ -402,17 +408,27 @@ void CMPXHarvesterDatabaseManager::RecreateDatabases()
     {
     MPX_DEBUG1("CMPXHarvesterDatabaseManager::RecreateDatabases <--");
     TInt count( iDatabases.Count() );
-    for( TInt i=0; i<count; ++i )
+    for( TInt i=0; i<count; )
         {
         // Close db, delete and recreate
         //
         MPX_DEBUG2("RecreateDatabasesL() -- %i", i);
-        CMPXHarvesterDB* cur = (CMPXHarvesterDB*)iDatabases[i];
+        CMPXHarvesterDB* cur = iDatabases[i];
         cur->Close();
         cur->DeleteDatabase();
         // trap leave just in case 1 db had err
         //
-        TRAP_IGNORE( cur->OpenL() );
+        TRAPD( openError, cur->OpenL() );
+        if( openError != KErrNone )
+            {
+            MPX_DEBUG2("CMPXHarvesterDatabaseManager::RecreateDatabases: opening failed, error=%d", openError);
+            iDatabases.Remove(i);
+            delete cur;
+            }
+        else 
+            {
+            ++i;
+            }
         }
     }
 
@@ -430,6 +446,18 @@ TBool CMPXHarvesterDatabaseManager::IsRemoteDrive(TDriveNumber aDrive)
         isRemoteDrive = driveInfo.iDriveAtt & KDriveAttRemote;
         }
     return isRemoteDrive;
+    }
+
+// ---------------------------------------------------------------------------
+// CMPXHarvesterDatabaseManager::IsLocalDrive
+// ---------------------------------------------------------------------------
+//
+TBool CMPXHarvesterDatabaseManager::IsLocalDrive( TDriveNumber aDrive )
+    {
+    TDriveInfo driveInfo;
+    return (iFs.Drive ( driveInfo, aDrive) == KErrNone )
+           && driveInfo.iType != EMediaNotPresent 
+           && ! (driveInfo.iDriveAtt & KDriveAttRemote);
     }
 
 // ---------------------------------------------------------------------------
@@ -551,7 +579,7 @@ void CMPXHarvesterDatabaseManager::CopyDBsToRamL( TBool aMtpMode )
                 {
                 MPX_DEBUG2("CMPXHarvesterDatabaseManager::CopyDBsToRamL error=%d", err);
                 // delete dummy file
-                RemoveDummyFile(i);
+                RemoveDummyFile( (TDriveNumber)(TInt)drive );
                 
                 // delete db in ram drive
                 TFileName ramDb = GenerateHarvesterDbName( drive, ETrue );
@@ -626,7 +654,7 @@ void CMPXHarvesterDatabaseManager::CopyDBsFromRamL()
             TRAP( err, iDatabases[i]->SetDbStateL(EDbClose) );
             if ( err == KErrNone )
                 {
-                TRAP( err, DoCopyDBFromRamL(drive) );
+                err = DoCopyDBFromRam(drive);
                 }
             else
                 {
@@ -640,7 +668,7 @@ void CMPXHarvesterDatabaseManager::CopyDBsFromRamL()
                 {
                 MPX_DEBUG2("CMPXHarvesterDatabaseManager::CopyDBsFromRamL copy error=%d", err);                
                 //anyting wrong, delete the temp file.
-                RemoveDummyFile(i);
+                RemoveDummyFile( (TDriveNumber)(TInt)drive );
                 }
 
             // Restore the db state.
@@ -655,40 +683,39 @@ void CMPXHarvesterDatabaseManager::CopyDBsFromRamL()
     }
 
 // ---------------------------------------------------------------------------
-// CMPXHarvesterDatabaseManager::DoCopyDBFromRamL
+// CMPXHarvesterDatabaseManager::DoCopyDBFromRam
 // ---------------------------------------------------------------------------
 //
-void CMPXHarvesterDatabaseManager::DoCopyDBFromRamL(TDriveUnit aDriveUnit)
+TInt CMPXHarvesterDatabaseManager::DoCopyDBFromRam(TDriveUnit aDriveUnit)
     {
-    MPX_FUNC("CMPXHarvesterDatabaseManager::DoCopyDBFromRamL");
+    MPX_FUNC("CMPXHarvesterDatabaseManager::DoCopyDBFromRam");
     TFileName dst;
     TFileName src;
     TInt err = KErrNone;
     
     dst = GenerateHarvesterDbName( aDriveUnit );
     src = GenerateHarvesterDbName( aDriveUnit, ETrue );
-    MPX_DEBUG3("CMPXHarvesterDatabaseManager::DoCopyDBFromRamL from %S to %S", &src, &dst );
+    MPX_DEBUG3("CMPXHarvesterDatabaseManager::DoCopyDBFromRam from %S to %S", &src, &dst );
 
     TFileName dummyDbFileName = GenerateDummyDbName( aDriveUnit ); 
 
     //Copy Db from RAM to replace dummy file
     err = BaflUtils::CopyFile(iFs, src, dummyDbFileName);
-    MPX_DEBUG2("CMPXHarvesterDatabaseManager::DoCopyDBFromRamL database copied from ram drive err=%d.", err);
+    MPX_DEBUG2("CMPXHarvesterDatabaseManager::DoCopyDBFromRam database copied from ram drive err=%d.", err);
     
     // delete db on ram drive.
     TInt delErr = BaflUtils::DeleteFile(iFs, src);
-    MPX_DEBUG3("CMPXHarvesterDatabaseManager::DoCopyDBFromRamL db on ram drive deleted file=%S, err=%d", &src, delErr);
+    MPX_DEBUG3("CMPXHarvesterDatabaseManager::DoCopyDBFromRam db on ram drive deleted file=%S, err=%d", &src, delErr);
 
-    // Make sure we del db from ram drive before leaving.
-    User::LeaveIfError( err );
+    // Make sure we del db from ram drive before returning.
+    if (err != KErrNone)
+        {
+        return err;
+        }
     
-    // Delete existing DB on drive
-    delErr = BaflUtils::DeleteFile(iFs, dst);
-    MPX_DEBUG2("CMPXHarvesterDatabaseManager::DoCopyDBFromRamL destination file deleted err=%d", delErr);
-
-    // rename dummy file to real db name
-    User::LeaveIfError( BaflUtils::RenameFile(iFs, dummyDbFileName, dst) );
-    MPX_DEBUG1("CMPXHarvesterDatabaseManager::DoCopyDBFromRamL dummy file renamed.");
+    err = iFs.Replace(dummyDbFileName, dst);
+    MPX_DEBUG2("CMPXHarvesterDatabaseManager::DoCopyDBFromRam dummy file replaced, err=%d.", err);
+    return err;
     }
 
 // ---------------------------------------------------------------------------
@@ -872,12 +899,11 @@ TInt64 CMPXHarvesterDatabaseManager::CalculateInitalDummyDBSizeL( TVolumeInfo aV
 // CMPXHarvesterDatabaseManager::RemoveDummyFile
 // ---------------------------------------------------------------------------
 //
-void CMPXHarvesterDatabaseManager::RemoveDummyFile( TInt aIndex )
+void CMPXHarvesterDatabaseManager::RemoveDummyFile( TDriveNumber aDrive )
     {
     MPX_FUNC("CMPXHarvesterDatabaseManager::RemoveDummyFile");
     
-    TDriveUnit driveUnit(iDatabases[aIndex]->GetDbDrive());
-    TFileName file = GenerateDummyDbName(driveUnit);
+    TFileName file = GenerateDummyDbName(TDriveUnit(aDrive));
     
     if ( (file.Length() > 0) &&
          (BaflUtils::FileExists(iFs, file)) )

@@ -407,7 +407,7 @@ void CMPXCollectionHelperImp::RenameL( const TDesC& aOldUri,
     MPX_FUNC("CMPXCollectionHelperImp::RenameL");
     MPX_DEBUG3("aOldUri = %S, aNewUri = %S", &aOldUri, &aNewUri);
 
-    if (aItemCat != EMPXSong && aItemCat != EMPXPlaylist)
+    if (aItemCat != EMPXSong && aItemCat != EMPXPlaylist && aItemCat != EMPXAbstractAlbum)
         {
         User::Leave(KErrArgument);
         }

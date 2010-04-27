@@ -179,14 +179,21 @@ void CMediaMtpDataProvider::ProcessNotificationL( TMTPNotification aNotification
             break;
 
         case EMTPStorageAdded:
+            PRINT( _L( "MM MTP <> CMediaMtpDataProvider::ProcessNotificationL EMTPStorageAdded event recvd" ) );
             break;
 
         case EMTPStorageRemoved:
+            PRINT( _L( "MM MTP <> CMediaMtpDataProvider::ProcessNotificationL EMTPStorageRemoved event recvd" ) );
             break;
 
         case EMTPRenameObject:
             PRINT( _L( "MM MTP <> CMediaMtpDataProvider::ProcessNotificationL EMTPRenameObject event recvd" ) );
             RenameObjectL( *reinterpret_cast<const TMTPNotificationParamsHandle*> ( aParams ) );
+            break;
+
+        case EMTPObjectAdded:
+            PRINT( _L( "MM MTP <> CMediaMtpDataProvider::ProcessNotificationL EMTPObjectAdded event recvd" ) );
+            ObjectAddedL(*reinterpret_cast<const TUint32*>(aParams));
             break;
 
         default:
@@ -271,6 +278,8 @@ void CMediaMtpDataProvider::SessionClosedL( const TMTPNotificationParamsSessionC
 
     // introduce to cleanup DBs at each close session
     iMediaEnumerator->SessionClosedL();
+    CMmMtpDpAccessSingleton::CloseSessionL();
+
     PRINT( _L( "MM MTP <= CMediaMtpDataProvider::SessionClosedL" ) );
     }
 
@@ -302,6 +311,27 @@ void CMediaMtpDataProvider::RenameObjectL( const TMTPNotificationParamsHandle& a
     iRenameObject->StartL( aObject.iHandleId, aObject.iFileName );
 
     PRINT( _L( "MM MTP <= CMediaMtpDataProvider::RenameObjectL" ) );
+    }
+
+// -----------------------------------------------------------------------------
+// CMediaMtpDataProvider::ObjectAddedL
+// Process the added object
+// -----------------------------------------------------------------------------
+//
+void CMediaMtpDataProvider::ObjectAddedL( TUint32 aObjectHandle )
+    {
+    PRINT1( _L( "MM MTP => CMediaMtpDataProvider::ObjectAddedL aHandle=0x%x" ), aObjectHandle );
+
+    CMTPObjectMetaData* object(CMTPObjectMetaData::NewLC());
+    Framework().ObjectMgr().ObjectL( aObjectHandle, *object );
+
+    //Since the object's processor is not route to media dp, its format code should be reset
+    TUint formatCode = MmMtpDpUtility::FormatFromFilename( object->DesC( CMTPObjectMetaData::ESuid ) );
+    object->SetUint( CMTPObjectMetaData::EFormatCode, formatCode );
+    GetWrapperL().AddObjectL( *object );
+    PRINT2( _L( "MM MTP => CMediaMtpDataProvider::ObjectAddedL formatCode=0x%x Suid=%S" ), formatCode, &(object->DesC( CMTPObjectMetaData::ESuid ) ) );
+    CleanupStack::PopAndDestroy( object );
+    PRINT( _L( "MM MTP <= CMediaMtpDataProvider::ObjectAddedL" ) );
     }
 
 // -----------------------------------------------------------------------------
@@ -435,9 +465,7 @@ void CMediaMtpDataProvider::SupportedL( TMTPSupportCategory aCategory,
         #endif
         //ODF container
         aStrings.AppendL(KFormatExtensionODFAudio3GPP);
-        aStrings.AppendL(KFormatExtensionODFAudioMP4);
         aStrings.AppendL(KFormatExtensionODFVideo3GPP);
-        aStrings.AppendL(KFormatExtensionODFVideoMP4);
 
         aStrings.AppendL(KFormatExtensionO4A);
         aStrings.AppendL(KFormatExtensionO4V);

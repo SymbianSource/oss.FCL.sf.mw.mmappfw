@@ -1478,6 +1478,23 @@ void CMPXPlaybackEngine::HandlePluginEventInitialisedL(TMPXPlaybackState& s, TIn
             {
             iProperties[EPbPropertyPosition] = 0;
             }
+	
+	//check whether plugin is KMPXPlaybackPluginVersion2, if not, set saved position
+    CDesCArray* interfaces = iPluginHandler->SupportedInterfacesL( iPluginUid );
+    TBool version2InterfaceSupported = EFalse;
+    if ( interfaces->MdcaCount() )
+        {
+        TInt pos(0);            
+        version2InterfaceSupported = !interfaces->FindIsq( KMPXPlaybackPluginVersion2, pos );
+        }
+    delete interfaces;
+    
+    if ( !version2InterfaceSupported )
+        {
+        // Set position to restore saved position.
+        TRAP_IGNORE( // uPnP leaves if set position in stop state
+                PluginL()->SetL( EPbPropertyPosition, iProperties[EPbPropertyPosition] ));
+        }
 
     iAutoResumeHandler->HandleOpenFileComplete();
     
@@ -2620,7 +2637,7 @@ void CMPXPlaybackEngine::DoStopL(TBool aSavePlaybackInfo)
     MPX_DEBUG1("==>CMPXPlaybackEngine::DoStopL()");
     Suspend();
     if (iState == EPbStatePaused || iState == EPbStatePlaying ||
-        iState == EPbStateInitialising)
+        iState == EPbStateInitialising || iState == EPbStateBuffering)
         {
         if (aSavePlaybackInfo && (iState == EPbStatePaused || iState == EPbStatePlaying ))
             {

@@ -39,7 +39,7 @@ EXPORT_C CDescriptionUtility::~CDescriptionUtility()
     // Do nothing
     }
 
-EXPORT_C CMTPTypeObjectPropDesc* CDescriptionUtility::NewCommonObjectPropertyL( TUint16 aPropCode )
+CMTPTypeObjectPropDesc* CDescriptionUtility::NewCommonObjectPropertyL( TUint16 aPropCode )
     {
     CMTPTypeObjectPropDesc* propertyDesc = NULL;
 

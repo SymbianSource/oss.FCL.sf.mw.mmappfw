@@ -79,11 +79,12 @@ CMPXHarvesterDB::~CMPXHarvesterDB()
 //
 TInt CMPXHarvesterDB::OpenL()
     {
-    MPX_FUNC("CMPXHarvesterDB::OpenL");
+    MPX_DEBUG1("-->CMPXHarvesterDB::OpenL");
 
     // There is no need to re-open if it was already open
     if( iDBOpen )
         {
+        MPX_DEBUG1("<--CMPXHarvesterDB::OpenL rtn=0 (already open)");
         return KErrNone;
         }
 
@@ -131,6 +132,7 @@ TInt CMPXHarvesterDB::OpenL()
     if( idErr != KErrNone )
         {
         // Delete the database because this is not readable
+        MPX_DEBUG2("CMPXHarvesterDB::OpenL -- Deleting unreadable DB %i", idErr);
         Close();
         User::LeaveIfError(DeleteDatabase());
         rtn = KErrCorrupt;
@@ -144,7 +146,8 @@ TInt CMPXHarvesterDB::OpenL()
         User::LeaveIfError(DeleteDatabase());
         rtn = OpenL();
         }
-
+    
+    MPX_DEBUG2("<--CMPXHarvesterDB::OpenL rtn=%d", rtn);
     return rtn;
     }
 
@@ -294,6 +297,7 @@ TInt CMPXHarvesterDB::OpenDBL()
         TRAPD(err, iDatabase->OpenL( iStore, iStore->Root() ) );
         if( err != KErrNone )
             {
+            MPX_DEBUG2("CMPXHarvesterDB::OpenDBL RDbStoreDatabase::OpenL error %d", err);
             delete iDatabase;
             iDatabase = NULL;
             CreateDBL();

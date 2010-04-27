@@ -17,22 +17,15 @@
 
 
 #include <e32base.h>
-#ifdef RD_MULTIPLE_DRIVE
 #include <pathinfo.h>
 #include <driveinfo.h>
-#endif //RD_MULTIPLE_DRIVE
 #include <mpxlog.h>
 #include "mpxfoldermonitor.h"
 #include "mpxfileadditionobserver.h"
 #include "mpxfoldermonitorobserver.h"
 
 // CONSTANTS
-#ifdef RD_MULTIPLE_DRIVE
 _LIT( KMPXMusicPath, "\\Music\\");
-#else
-_LIT( KMPXMusicPath, "\\Music\\");
-_LIT( KMPXDataPath, "\\Data\\");
-#endif //RD_MULTIPLE_DRIVE
 
 
 // ---------------------------------------------------------------------------
@@ -94,7 +87,6 @@ void CMPXFolderMonitor::StartL( TDriveNumber aDrive )
     delete iFolderName;
     iFolderName = NULL;
 
-#ifdef RD_MULTIPLE_DRIVE
     switch( aDrive )
         {
         case EDriveC:
@@ -135,46 +127,6 @@ void CMPXFolderMonitor::StartL( TDriveNumber aDrive )
             }
         }
     MPX_DEBUG2("CMPXFolderMonitor::Start: Use %S path", iFolderName);
-#else
-    switch( aDrive )
-        {
-        case EDriveC:
-            {
-            TDriveName driveName = TDriveUnit( aDrive ).Name();
-            TInt length = KMPXDataPath().Length() + driveName.Length();
-
-            iFolderName = HBufC::NewL(length);
-
-            TPtr folderPtr( iFolderName->Des() );
-            folderPtr.Append( driveName );
-            folderPtr.Append( KMPXDataPath );
-
-            break;
-            }
-        case EDriveE:
-        // deliberate fall through, same actions for E & F drive
-
-        case EDriveF:
-            {
-
-            TDriveName driveName = TDriveUnit( aDrive ).Name();
-            TInt length = KMPXMusicPath().Length() + driveName.Length();
-
-            iFolderName = HBufC::NewL(length);
-
-            TPtr folderPtr( iFolderName->Des() );
-            folderPtr.Append( driveName );
-            folderPtr.Append( KMPXMusicPath );
-
-            break;
-            }
-
-        default:
-            {
-            User::Leave( KErrNotSupported );
-            }
-        }
-#endif // RD_MULTIPLE_DRIVE
 
     // Start listening
     //

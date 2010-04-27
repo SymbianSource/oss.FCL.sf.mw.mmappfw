@@ -60,7 +60,5 @@ LIBRARY                 mpxcommon.lib
 LIBRARY                 mpxplaylistengine.lib
 LIBRARY                 mpxplaybackutility.lib
 LIBRARY                 usbman.lib
-#ifdef RD_MULTIPLE_DRIVE
 LIBRARY                 PlatformEnv.lib
-#endif //RD_MULTIPLE_DRIVE
 LIBRARY                 disknotifyhandler.lib

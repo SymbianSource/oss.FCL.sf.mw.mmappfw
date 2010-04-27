@@ -75,7 +75,7 @@ public:
     * @param aFullFileName, full file name of file
     * @return void
     */
-    void AddObjectL( const CMTPObjectMetaData& aObject );
+    IMPORT_C void AddObjectL( const CMTPObjectMetaData& aObject );
 
     /**
     * Set abstract media to DB
@@ -215,7 +215,7 @@ private:
 
     void ConstructL();
 
-    TMPXGeneralCategory ContainerCategory( const TDesC& aFullFileName );
+    TMPXGeneralCategory ContainerCategoryL( const TDesC& aFullFileName );
 
     /**
     * Remove all dummy file of which format is "pla", and leave the "m3u"
@@ -225,10 +225,11 @@ private:
 private:
     CMmMtpDpMetadataMpxAccess* iMmMtpDpMetadataMpxAccess;
     CMmMtpDpMetadataVideoAccess* iMmMtpDpMetadataVideoAccess;
-    TBool iOpenSession;
 
     MMTPDataProviderFramework& iFramework;
     RFs& iFs;    // should not remove this member data!!!
+
+    TInt iOpenCount;	// introduce to fix CollectionHelper Flush problem
 
     CDesCArray* iAbstractMediaArray;
 

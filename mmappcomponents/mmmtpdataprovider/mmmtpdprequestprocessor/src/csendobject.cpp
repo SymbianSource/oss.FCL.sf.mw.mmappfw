@@ -1108,8 +1108,18 @@ TBool CSendObject::GetFullPathNameL( const TDesC& aFileName )
 
     if ( result && ( iObjectFormat != MmMtpDpUtility::FormatFromFilename( iFullPath ) ) )
         {
-        PRINT2( _L( "MM MTP <> %S does not match 0x%x" ), &iFullPath, iObjectFormat );
-        result = EFalse;
+        TParsePtrC file( aFileName );
+        if ( ( iObjectFormat == EMTPFormatCode3GPContainer ) && (file.Ext().CompareF( KTxtExtensionODF ) == 0))
+            {
+            PRINT( _L( "MM MTP <> might happen if function is called before physical file arrives" ) );
+            // might happen if function is called before physical file arrives
+            // do nothing
+            }
+        else
+            {
+            PRINT2( _L( "MM MTP <> %S does not match 0x%x" ), &iFullPath, iObjectFormat );
+            result = EFalse;
+            }
         }
 
     PRINT1( _L( "MM MTP <= CSendObject::GetFullPathNameL result = %d" ), result );

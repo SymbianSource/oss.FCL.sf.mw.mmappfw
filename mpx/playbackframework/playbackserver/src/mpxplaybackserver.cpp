@@ -196,8 +196,16 @@ void CMPXPlaybackServer::RemoveClient(const CMPXMessageQueue& aMsgQueue)
             if (cl->ClientCount()==0)
                 {
                 MPX_DEBUG1("CMPXPlaybackServer::RemoveClient delete a player");
+                CMPXPlaybackEngine* enginePtr = p; 
                 delete p;
-                iPlayers.Remove(i);
+				//Due to callbacks in PlaybackServer we have to remove engine from the iPlayers array after deleting.
+                //enginePtr is a invalid pointer as p is already deleted
+    		    //Find the index of deleted engine using its address
+				TInt engineIndex = iPlayers.Find(enginePtr);
+                if ( engineIndex != KErrNotFound )
+                    {
+                    iPlayers.Remove(engineIndex);
+                    }
                 }
             break;
             }

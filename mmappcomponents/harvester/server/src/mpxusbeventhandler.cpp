@@ -19,9 +19,7 @@
 #include <e32base.h>
 #include <f32file.h>
 #include <e32property.h>
-#ifdef RD_MULTIPLE_DRIVE
 #include <driveinfo.h>
-#endif //RD_MULTIPLE_DRIVE
 #include <mpxpskeywatcher.h>
 #include <coreapplicationuisdomainpskeys.h>
 #include <UsbWatcherInternalPSKeys.h>
@@ -151,11 +149,9 @@ void CMPXUsbEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ )
     
     // Use the default MMC drive
     TInt removableDrive( EDriveE );
-#ifdef RD_MULTIPLE_DRIVE
     User::LeaveIfError( DriveInfo::GetDefaultDrive(
         DriveInfo::EDefaultRemovableMassStorage,
         removableDrive ) );
-#endif // RD_MULTIPLE_DRIVE
 
     // Handle the Key event
     TInt value;
@@ -176,9 +172,7 @@ void CMPXUsbEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ )
             iObserver.HandleSystemEventL( EUSBMTPEndEvent, removableDrive );
             }
         MPX_DEBUG1("CMPXUsbEventHandler::DoHandlePSEvent - USB Start");
-#ifdef RD_MULTIPLE_DRIVE
         removableDrive = -1;
-#endif // RD_MULTIPLE_DRIVE
 
         // Notify the state change (may happen more than once)
         iObserver.HandleSystemEventL( EUSBMassStorageStartEvent, removableDrive );

@@ -194,6 +194,9 @@ EXPORT_C void CMPXCollectionEngine::NotifyL( TMPXCollectionBroadCastMsg aMsg,
     TInt command = KErrNotSupported;
     TInt data = 0;
     TBool clearCache ( EFalse );
+    TBool notify( ETrue );
+    TInt count = iContexts.Count();
+    CMPXCollectionClientContext* context( NULL );
     switch( aMsg )
         {
         case EMcMsgFormatStart:
@@ -207,8 +210,14 @@ EXPORT_C void CMPXCollectionEngine::NotifyL( TMPXCollectionBroadCastMsg aMsg,
             clearCache = ETrue;
             break;
             }
+        case EMcMsgDiskInserted:        	
+            for( TInt i=0; i<count; ++i )
+                {
+                context = iContexts[i];
+                context->NotifyL( aMsg, aData );
+                }
+            notify = EFalse;
         case EMcMsgFormatEnd:
-        case EMcMsgDiskInserted:
         case EMcMsgUSBMassStorageEnd:
             {
             command = EMcReOpenCollection;
@@ -281,15 +290,15 @@ EXPORT_C void CMPXCollectionEngine::NotifyL( TMPXCollectionBroadCastMsg aMsg,
         rfs.Close();
     	}
     
-    TInt count = iContexts.Count();
-    for( TInt i=0; i<count; ++i )
-        {
-        CMPXCollectionClientContext* context;
-        context = iContexts[i];
-        context->NotifyL( aMsg, aData );
-        }
+    if ( notify )
+    	{
+		for( TInt i=0; i<count; ++i )
+			{
+			context = iContexts[i];
+			context->NotifyL( aMsg, aData );
+			}
+    	}
     }
-
 void CMPXCollectionEngine::Command( TMPXCollectionCommand aCmd, TInt aData )
     {
     TArray<CMPXCollectionPlugin*> plugins = iPluginHandler->LoadedPlugins();

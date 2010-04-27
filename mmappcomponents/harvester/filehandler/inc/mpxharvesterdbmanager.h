@@ -54,8 +54,7 @@ public:
     TInt OpenAllDatabasesL();
 
     /**
-    * Reopen a particular database
-    * (For MMC events)
+    * Open a particular database
     * @param TDriveNumber aDrive
     */
     void OpenDatabaseL( TDriveNumber aDrive );
@@ -63,26 +62,38 @@ public:
     /**
     * Close all databases
     */
-    void CloseAllDatabase();
+    void CloseAllDatabases();
+    
+    /**
+    * Close all databases on mass storage drives
+    */
+    void CloseMassStorageDatabases();
 
     /**
     * Close a particular DB
-    * (For MMC events)
     * @param TDriveNumber the Drive
     */
     void CloseDatabase( TDriveNumber aDrive );
+    
 
     /**
     * Get a particular database
     * @param TDriveNumber the Drive
     */
     CMPXHarvesterDB& GetDatabaseL( TDriveNumber aDrive );
-
+	
+	/**
+    * Abruptly close a particular DB without trying to access it
+    * To be used when drive is no more accessible
+    * @param TDriveNumber the Drive
+    */
+    void DropDatabase( TDriveNumber aDrive );
+    
     /**
-     * Remove a particular database from the array
-     * @param TDriveNumber the Drive
+     * Return whether database is open on the specified drive
      */
-    void RemoveDatabaseL( TDriveNumber aDrive );
+    TBool DatabaseIsOpen( TDriveNumber aDrive );
+
 
     /**
     * Return the number of databases
@@ -152,6 +163,18 @@ public:
 #endif //__RAMDISK_PERF_ENABLE
 
 private: // new functions
+	
+	 /**
+	  * Find database index in the internal table
+	  * Return KErrNotFound if not found
+	  */
+   TInt FindDatabaseIndex ( TDriveNumber aDrive );
+   
+	 /**
+	  * Return whether drive exists and is local
+	  */
+   TBool IsLocalDrive( TDriveNumber aDrive );
+
     
 #ifdef __RAMDISK_PERF_ENABLE
     /**
@@ -174,7 +197,7 @@ private: // new functions
     /**
     * Copy database from RAM disk
     */
-    void DoCopyDBFromRamL(TDriveUnit aDriveUnit); 
+    TInt DoCopyDBFromRam(TDriveUnit aDriveUnit); 
 
     /**
     * To block a disk space so that it can gurantee for a write back from RAM disk
@@ -193,9 +216,9 @@ private: // new functions
     /**
     * Remove dummy file
     *
-    * @return TInt index to the database handler
+    * @param aDrive Drive
     */
-    void RemoveDummyFile( TInt aIndex );
+    void RemoveDummyFile( TDriveNumber aDrive );
     
     /**
      * Update the database from ram drive.

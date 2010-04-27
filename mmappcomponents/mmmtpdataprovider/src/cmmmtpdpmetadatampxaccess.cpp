@@ -105,7 +105,7 @@ void CMmMtpDpMetadataMpxAccess::ConstructL()
 //
 CMmMtpDpMetadataMpxAccess::~CMmMtpDpMetadataMpxAccess()
     {
-    if ( iCollectionHelper )
+    if ( iCollectionHelper != NULL )
         {
         iCollectionHelper->Close();
         iCollectionHelper = NULL;
@@ -115,6 +115,36 @@ CMmMtpDpMetadataMpxAccess::~CMmMtpDpMetadataMpxAccess()
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     delete iPerfLog;
 #endif
+    }
+
+// ---------------------------------------------------------------------------
+// CMmMtpDpMetadataMpxAccess::OpenSession
+// This is introduced to fix CollectionHelper Flush problem
+// ---------------------------------------------------------------------------
+//
+void CMmMtpDpMetadataMpxAccess::OpenSession()
+    {
+    // do nothing
+    }
+
+// ---------------------------------------------------------------------------
+// CMmMtpDpMetadataMpxAccess::CloseSession
+// This is introduced to fix CollectionHelper Flush problem
+// ---------------------------------------------------------------------------
+//
+void CMmMtpDpMetadataMpxAccess::CloseSession()
+    {
+    PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::CloseSession" ) );
+
+    // flush cache
+    if ( iCollectionHelper != NULL )
+        {
+        PRINT( _L( "MM MTP <> Delete & Close CollectionHelper" ) );
+        iCollectionHelper->Close();
+        iCollectionHelper = NULL;
+        }
+
+    PRINT( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::CloseSession" ) );
     }
 
 // ---------------------------------------------------------------------------
@@ -644,6 +674,7 @@ void CMmMtpDpMetadataMpxAccess::SetObjectMetadataValueL( const TUint16 aPropCode
     TParsePtrC parse( aFullFileName );
     media->SetTextValueL( KMPXMediaGeneralUri, aFullFileName );
     media->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
+    media->SetTObjectValueL( KMPXMediaGeneralModified, EFalse );
 
     PERFLOGSTART( KSetMetadataValue );
     SetMetadataValueL( aPropCode, aNewData, *media );
@@ -1018,10 +1049,7 @@ void CMmMtpDpMetadataMpxAccess::AddAbstractMediaL( const TDesC& aFullFileName, T
     CleanupClosePushL( abstractMediaAttributes ); // + abstractMediaAttributes
     abstractMediaAttributes.AppendL( KMPXMediaGeneralId );
     abstractMediaAttributes.AppendL( KMPXMediaGeneralTitle );
-    if ( aCategory == EMPXPlaylist )    // rollback until Rename is supported on MPX DB
-        {
-        abstractMediaAttributes.AppendL( KMPXMediaGeneralUri );
-        }
+    abstractMediaAttributes.AppendL( KMPXMediaGeneralUri );
 
     PERFLOGSTART( KMpxCollectionFindAllLBeforeAdd );
     CMPXMedia* foundMedia = CollectionHelperL()->FindAllL( *searchMedia,
@@ -1067,10 +1095,7 @@ void CMmMtpDpMetadataMpxAccess::AddAbstractMediaL( const TDesC& aFullFileName, T
 
         TParsePtrC parse( aFullFileName );
         media->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
-        if ( aCategory == EMPXPlaylist )    // rollback until Rename is supported on MPX DB
-            {
-            media->SetTextValueL( KMPXMediaGeneralTitle, parse.Name() );
-            }
+        media->SetTextValueL( KMPXMediaGeneralTitle, parse.Name() );
         media->SetTObjectValueL<TBool>( KMPXMediaGeneralSynchronized, ETrue );
         media->SetCObjectValueL( KMPXMediaArrayContents, abstractMediaArray );
         media->SetTObjectValueL( KMPXMediaArrayCount, abstractMediaArray->Count() );
@@ -1132,7 +1157,8 @@ void CMmMtpDpMetadataMpxAccess::SetReferenceL( const TDesC& aRefOwnerName,
         // TODO: need to confirm that should set drive letter or storage root path.
         TParsePtrC parse( aRefFileArray[j] );
         media->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
-
+        media->SetTObjectValueL( KMPXMediaGeneralModified, EFalse );
+  
         // Add media into array contents
         abstractMediaArray->AppendL( media );
 
@@ -1313,10 +1339,8 @@ void CMmMtpDpMetadataMpxAccess::GetAllAbstractMediaL( const TDesC& aStoreRoot,
     CleanupClosePushL( abstractMediaAttributes ); // + abstractMediaAttributes
     abstractMediaAttributes.AppendL( KMPXMediaGeneralId );
     abstractMediaAttributes.AppendL( KMPXMediaGeneralTitle );
-    if ( aCategory == EMPXPlaylist )    // rollback until Rename is supported on MPX DB
-        {
-        abstractMediaAttributes.AppendL( KMPXMediaGeneralUri );
-        }
+
+    abstractMediaAttributes.AppendL( KMPXMediaGeneralUri );
 
     PERFLOGSTART( KMpxCollectionGetAbstractMedia );
     CMPXMedia* foundMedia = CollectionHelperL()->FindAllL( *searchMedia,
@@ -1447,21 +1471,13 @@ HBufC* CMmMtpDpMetadataMpxAccess::GetAbstractMediaNameL( CMPXMedia* aAbstractMed
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataMpxAccess::GetAbstractMediaNameL" ) );
     HBufC* name = NULL;
-    if ( aCategory == EMPXPlaylist )    // rollback until Rename is supported on MPX DB
+    if ( aCategory == EMPXPlaylist || aCategory == EMPXAbstractAlbum )
         {
         if( !aAbstractMedia->IsSupported( KMPXMediaGeneralUri ) )
             {
             User::Leave( KErrNotSupported );
             }
         name = aAbstractMedia->ValueText( KMPXMediaGeneralUri ).AllocL();
-        }
-    else if ( aCategory == EMPXAbstractAlbum )
-        {
-        if ( !aAbstractMedia->IsSupported( KMPXMediaGeneralTitle ) )
-            {
-            User::Leave( KErrNotSupported );
-            }
-        name = aAbstractMedia->ValueText( KMPXMediaGeneralTitle ).AllocL();
         }
     else
         {

@@ -6,4 +6,6 @@ EXPORTS
 	_ZTV19CMPXFileInfoUtility @ 5 NONAME ; #<VT>#
 	_ZTV21CMPXMetadataExtractor @ 6 NONAME ; #<VT>#
 	_ZN21CMPXMetadataExtractor16ExtractAlbumArtLEP9CMPXMedia @ 7 NONAME
+	_ZN21CMPXMetadataExtractor13CancelRequestEv @ 8 NONAME
+	_ZN21CMPXMetadataExtractor17CreateMediaAsyncLERK7TDesC16P29MMPXMetadataExtractorObserveri @ 9 NONAME
 

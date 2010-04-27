@@ -100,7 +100,7 @@ EXPORT_C TMTPFormatCode MmMtpDpUtility::FormatFromFilename( const TDesC& aFullFi
 #endif // __WINDOWS_MEDIA
             else if ( file.Ext().CompareF( KTxtExtensionODF ) == 0 )
                 {
-                HBufC8* mime = MmMtpDpUtility::ContainerMimeType( file.FullName() );
+                HBufC8* mime = MmMtpDpUtility::OdfMimeTypeL( file.FullName() );
                 if ( mime != NULL )
                     {
                     // 3GP
@@ -409,54 +409,6 @@ TInt MmMtpDpUtility::UpdateObjectFileName( RFs& aFs,
     }
 
 // -----------------------------------------------------------------------------
-// MetadataAccessWrapper::ContainerMimeType
-// Get mime type from file
-// -----------------------------------------------------------------------------
-//
-HBufC8* MmMtpDpUtility::ContainerMimeType( const TDesC& aFullPath )
-    {
-    PRINT( _L( "MM MTP => MmMtpDpUtility::ContainerMimeType" ) );
-
-    // parse the file path
-    TParsePtrC pathParser( aFullPath );
-
-    // get the extension of file
-    TPtrC ext( pathParser.Ext() );
-    if ( ext.Length() <= 0 )
-        {
-        PRINT( _L( "MM MTP <> MmMtpDpUtility::ContainerMimeType file ext len == 0" ) );
-        return NULL;
-        }
-
-    HBufC8* mimebuf = NULL;
-    TInt err = KErrNone;
-
-    // MP4/3GP
-    if ( ext.CompareF( KTxtExtensionMP4 ) == 0
-        || ext.CompareF( KTxtExtension3GP ) == 0
-        || ext.CompareF( KTxtExtension3G2 ) == 0 )
-        {
-        TRAP( err, mimebuf = Mp4MimeTypeL( aFullPath ) );
-        PRINT1( _L("MM MTP <> MmMtpDpUtility::ContainerMimeType, Mp4MimeTypeL err = %d"), err );
-        }
-    else if ( ext.CompareF( KTxtExtensionODF ) == 0 )
-        {
-        TRAP( err, mimebuf = OdfMimeTypeL( aFullPath ) );
-        PRINT1( _L("MM MTP <> MmMtpDpUtility::ContainerMimeType, OdfMimeTypeL err = %d"), err );
-        }
-#ifdef __WINDOWS_MEDIA
-    else if ( ext.CompareF( KTxtExtensionASF ) == 0 )
-        {
-        TRAP( err, mimebuf = AsfMimeTypeL( aFullPath ) );
-        PRINT1( _L("MM MTP <> MmMtpDpUtility::ContainerMimeType, AsfMimeTypeL err = %d"), err );
-        }
-#endif
-
-    PRINT( _L( "MM MTP <= MmMtpDpUtility::ContainerMimeType" ) );
-    return mimebuf;
-    }
-
-// -----------------------------------------------------------------------------
 // MetadataAccessWrapper::Mp4MimeTypeL
 // Get mime type from mp4 file
 // -----------------------------------------------------------------------------
@@ -519,7 +471,7 @@ HBufC8* MmMtpDpUtility::Mp4MimeTypeL( const TDesC& aFullPath )
             // is video file
             else if ( mp4err == MP4_OK )
                 {
-                if ( file.Ext().CompareF( KTxtExtension3GP ) == 0 
+                if ( file.Ext().CompareF( KTxtExtension3GP ) == 0
                     || file.Ext().CompareF( KTxtExtension3G2 ) == 0 )
                     {
                     mimebuf = KMimeTypeVideo3gpp().Alloc();
@@ -562,44 +514,35 @@ HBufC8* MmMtpDpUtility::OdfMimeTypeL( const TDesC& aFullPath )
     PRINT( _L( "MM MTP => MmMtpDpUtility::OdfMimeTypeL" ) );
     HBufC8* mimebuf = NULL;
 
-    TParsePtrC file( aFullPath );
+    CContent* content = CContent::NewL( aFullPath );
+    CleanupStack::PushL( content ); // + content
 
-    if ( file.Ext().CompareF( KTxtExtensionODF ) == 0 )
+    HBufC* buffer = HBufC::NewL( KMimeTypeMaxLength );
+    CleanupStack::PushL( buffer ); // + buffer
+
+    TPtr data = buffer->Des();
+    TInt err = content->GetStringAttribute( EMimeType, data );
+
+    if ( err == KErrNone )
         {
-        CContent* content = CContent::NewL( aFullPath );
-        CleanupStack::PushL( content ); // + content
+        mimebuf = HBufC8::New( buffer->Length() );
 
-        HBufC* buffer = HBufC::NewL( KMimeTypeMaxLength );
-        CleanupStack::PushL( buffer ); // + buffer
-
-        TPtr data = buffer->Des();
-        TInt err = content->GetStringAttribute( EMimeType, data );
-
-        if ( err == KErrNone )
-            {
-            mimebuf = HBufC8::New( buffer->Length() );
-
-            if (mimebuf == NULL)
-                {
-                User::LeaveIfError( KErrNotFound );
-                }
-
-            mimebuf->Des().Copy( *buffer );
-            }
-
-        // leave if NULL
         if ( mimebuf == NULL )
             {
-            User::Leave( KErrNotFound );
+            User::LeaveIfError( KErrNotFound );
             }
 
-        CleanupStack::PopAndDestroy( buffer ); // - buffer
-        CleanupStack::PopAndDestroy( content ); // - content
+        mimebuf->Des().Copy( *buffer );
         }
-    else
+
+    // leave if NULL
+    if ( mimebuf == NULL )
         {
-        User::Leave( KErrNotSupported );
+        User::Leave( KErrNotFound );
         }
+
+    CleanupStack::PopAndDestroy( buffer ); // - buffer
+    CleanupStack::PopAndDestroy( content ); // - content
 
     PRINT( _L( "MM MTP <= MmMtpDpUtility::OdfMimeTypeL" ) );
     return mimebuf;
@@ -617,62 +560,52 @@ HBufC8* MmMtpDpUtility::AsfMimeTypeL( const TDesC& aFullPath )
     HBufC8* mimebuf = NULL;
 
 #ifdef __WINDOWS_MEDIA
-    TParsePtrC file( aFullPath );
+    CHXMetaDataUtility *hxUtility = CHXMetaDataUtility::NewL();
+    CleanupStack::PushL( hxUtility );
 
-    if ( file.Ext().CompareF( KTxtExtensionASF ) == 0 )
+    hxUtility->OpenFileL( aFullPath );
+    PRINT( _L( "MM MTP <> MmMtpDpUtility::AsfMimeTypeL OpenFileL" ) );
+
+    HXMetaDataKeys::EHXMetaDataId id;
+    TUint count = 0;
+    TBool isAudio = EFalse;
+    hxUtility->GetMetaDataCount( count );
+    for ( TUint i = 0; i < count; i++ )
         {
-        CHXMetaDataUtility *hxUtility = CHXMetaDataUtility::NewL();
-        CleanupStack::PushL( hxUtility );
+        HBufC* buf = NULL;
+        hxUtility->GetMetaDataAt( i, id, buf );
 
-        hxUtility->OpenFileL( aFullPath );
-        PRINT( _L( "MM MTP <> MmMtpDpUtility::AsfMimeTypeL OpenFileL" ) );
-
-        HXMetaDataKeys::EHXMetaDataId id;
-        TUint count = 0;
-        TBool isAudio = EFalse;
-        hxUtility->GetMetaDataCount( count );
-        for ( TUint i = 0; i < count; i++ )
+        if ( id == HXMetaDataKeys::EHXMimeType )
             {
-            HBufC* buf = NULL;
-            hxUtility->GetMetaDataAt( i, id, buf );
+            TPtr des = buf->Des();
 
-            if ( id == HXMetaDataKeys::EHXMimeType )
+            if ( des.Find( KHxMimeTypeWma() ) != KErrNotFound )
                 {
-                TPtr des = buf->Des();
-
-                if ( des.Find( KHxMimeTypeWma() ) != KErrNotFound )
-                    {
-                    isAudio = ETrue;
-                    }
-                else if ( des.Find( KHxMimeTypeWmv() ) != KErrNotFound )
-                    {
-                    PRINT( _L( "MM MTP <> MmMtpDpUtility::AsfMimeTypeL, video" ) );
-                    mimebuf = KMimeTypeVideoWm().Alloc();
-                    break;
-                    }
+                isAudio = ETrue;
                 }
-            else if ( i == count - 1 )
+            else if ( des.Find( KHxMimeTypeWmv() ) != KErrNotFound )
                 {
-                if ( isAudio )
-                    {
-                    PRINT( _L( "MM MTP <> MmMtpDpUtility::AsfMimeTypeL, audio" ) );
-                    mimebuf = KMimeTypeAudioWm().Alloc();
-                    }
-                else
-                    {
-                    User::Leave( KErrNotFound );
-                    }
+                PRINT( _L( "MM MTP <> MmMtpDpUtility::AsfMimeTypeL, video" ) );
+                mimebuf = KMimeTypeVideoWm().Alloc();
+                break;
                 }
             }
-
-        hxUtility->ResetL();
-        CleanupStack::PopAndDestroy( hxUtility );
+        else if ( i == count - 1 )
+            {
+            if ( isAudio )
+                {
+                PRINT( _L( "MM MTP <> MmMtpDpUtility::AsfMimeTypeL, audio" ) );
+                mimebuf = KMimeTypeAudioWm().Alloc();
+                }
+            else
+                {
+                User::Leave( KErrNotFound );
+                }
+            }
         }
-    else
-        {
-        User::Leave( KErrNotSupported );
-        }
 
+    hxUtility->ResetL();
+    CleanupStack::PopAndDestroy( hxUtility );
 #else
     User::Leave( KErrNotSupported );
 #endif
@@ -713,7 +646,7 @@ TMmMtpSubFormatCode MmMtpDpUtility::SubFormatCodeFromMime( const TDesC8& aMimeTy
     else
         {
         PRINT( _L( "MM MTP <= MmMtpDpUtility::SubFormatCodeFromMime format not supported" ) );
-        subFormatCode = EMTPSubFormatCodeUndefine;
+        subFormatCode = EMTPSubFormatCodeUndefined;
         }
 
     PRINT1( _L( "MM MTP <= MmMtpDpUtility::SubFormatCodeFromMime SubFormatCode = %d" ), subFormatCode );

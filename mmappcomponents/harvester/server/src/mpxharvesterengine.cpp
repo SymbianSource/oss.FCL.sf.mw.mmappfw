@@ -17,9 +17,7 @@
 
 
 #include <e32std.h>
-#ifdef RD_MULTIPLE_DRIVE
 #include <driveinfo.h>
-#endif //RD_MULTIPLE_DRIVE
 #include <mpxlog.h>
 #include <mpxmedia.h>
 #include <mpxcollectionutility.h>
@@ -97,11 +95,9 @@ void CMPXHarvesterEngine::ConstructL()
 
     // MMC Removal monitor for Removable Drive
     TInt removableDrive( EDriveE );
-#ifdef RD_MULTIPLE_DRIVE
     User::LeaveIfError( DriveInfo::GetDefaultDrive(
         DriveInfo::EDefaultRemovableMassStorage,
         removableDrive ) );
-#endif // RD_MULTIPLE_DRIVE
     iMediaRemovalMonitor = CMPXMediaRemovalMonitor::NewL(
         removableDrive, iFsSession, *this );
 
@@ -441,6 +437,26 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
                                               TInt aData )
     {
     MPX_DEBUG2("CMPXHarvesterEngine::HandleSystemEventL %i <---", aEvent);
+    
+    if( !iTempCollectionUtil )
+        {
+        iTempCollectionUtil = MMPXCollectionUtility::NewL( NULL, KMcModeDefault );
+        }
+        
+    // Must close collections ASAP in case drives may dismount soon       
+    TRAP_IGNORE( 
+        if (aEvent == EUSBMassStorageStartEvent)
+            {
+            DoStopPlaybackL();
+            iTempCollectionUtil->Collection().CommandL ( EMcCloseCollection, -1 ); 
+            iFileHandler->HandleSystemEventL ( EDiskDismountEvent, -1 );
+            }
+        else if ( aEvent == EDiskDismountEvent )
+            {
+            DoStopPlaybackL();
+            iTempCollectionUtil->Collection().CommandL ( EMcCloseCollection, aData );
+            }
+        );
 
     // The engine is a delegator, it sends the events to
     // different classes to do the actual work
@@ -454,11 +470,14 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
         case EDiskDismountEvent:
             {
             notify=EFalse;
-            TRAP_IGNORE( DoStopPlaybackL() );
             break;
             }
+        case EUSBMassStorageStartEvent:
+            {
+            iDiskOpActive = ETrue;
+            }
+            break;
         case EFormatStartEvent:
-        case EUSBMassStorageStartEvent:   // deliberate fall through
         case EUSBMTPStartEvent:           // deliberate fall through
         case EDiskInsertedEvent:          // deliberate fall through
         case EDiskRemovedEvent:           // deliberate fall through
@@ -471,10 +490,6 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
 
     // Send a message to the collection server about the event
     //
-    if( !iTempCollectionUtil )
-        {
-        iTempCollectionUtil = MMPXCollectionUtility::NewL( NULL, KMcModeDefault );
-        }
     if( notify )
         {
         TRAP_IGNORE(
@@ -482,13 +497,6 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
                                                           aData )
              );
         }
-	else if ( aEvent == EDiskDismountEvent ) 
-	    {
-        TRAP_IGNORE
-		    ( 
-            iTempCollectionUtil->Collection().CommandL ( EMcCloseCollection, aData ) 
-            );
-		}
 
     // Avoid Message queue already exist problem
     //
