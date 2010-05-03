@@ -16,7 +16,6 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
 #include <mtp/mmtpobjectmgr.h>
@@ -54,7 +53,7 @@ MMmRequestProcessor* CMediaMtpDataProviderSetObjectPropValue::NewL( MMTPDataProv
 //
 void CMediaMtpDataProviderSetObjectPropValue::ConstructL()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -65,9 +64,9 @@ void CMediaMtpDataProviderSetObjectPropValue::ConstructL()
 CMediaMtpDataProviderSetObjectPropValue::CMediaMtpDataProviderSetObjectPropValue( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
-    CSetObjectPropValue( aFramework, aConnection, aDpConfig )
+        CSetObjectPropValue( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -77,7 +76,7 @@ CMediaMtpDataProviderSetObjectPropValue::CMediaMtpDataProviderSetObjectPropValue
 //
 CMediaMtpDataProviderSetObjectPropValue::~CMediaMtpDataProviderSetObjectPropValue()
     {
-
+    // Do nothing
     }
 
 TBool CMediaMtpDataProviderSetObjectPropValue::IsSpecificPropCodeReadOnly( TUint16 aPropCode ) const
@@ -132,7 +131,6 @@ void CMediaMtpDataProviderSetObjectPropValue::ReceiveDataSpecificObjectPropertyL
         case EMTPObjectPropCodeWidth: // 0xDC87
         case EMTPObjectPropCodeHeight: // 0xDC88
         case EMTPObjectPropCodeDuration: // 0xDC89
-        case EMTPObjectPropCodeUseCount: // 0xDC91
         case EMTPObjectPropCodeSampleRate: // 0xDE93
         case EMTPObjectPropCodeAudioWAVECodec: // 0xDE99
         case EMTPObjectPropCodeAudioBitRate: // 0xDE9A
@@ -185,7 +183,6 @@ TMTPResponseCode CMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectP
         case EMTPObjectPropCodeWidth: //0xDC87
         case EMTPObjectPropCodeHeight: //0xDC88
         case EMTPObjectPropCodeDuration: //0xDC89
-        case EMTPObjectPropCodeUseCount: //0xDC91
         case EMTPObjectPropCodeSampleRate: //0xDE93
         case EMTPObjectPropCodeAudioWAVECodec: //0xDE99
         case EMTPObjectPropCodeAudioBitRate: //0xDE9A
@@ -221,12 +218,10 @@ TMTPResponseCode CMediaMtpDataProviderSetObjectPropValue::ServiceSpecificObjectP
                 }
             else
                 {
-                TMTPTypeUint8 newValue( iMTPTypeUint8 );
-
                 // there's no DB field to remember the value, so return an error
                 // if there's a mismatch to CAF protection status
-                if ( ( ( drmStatus == EMTPDrmStatusProtected) && ( newValue.Value() == 0 ) ) ||
-                    ( ( drmStatus == EMTPDrmStatusNotProtected ) && ( newValue.Value() == 1 ) ) )
+                if ( ( ( drmStatus == EMTPDrmStatusProtected) && ( iMTPTypeUint8.Value() == 0 ) ) ||
+                    ( ( drmStatus == EMTPDrmStatusNotProtected ) && ( iMTPTypeUint8.Value() == 1 ) ) )
                     {
                     responseCode = EMTPRespCodeAccessDenied;
                     }

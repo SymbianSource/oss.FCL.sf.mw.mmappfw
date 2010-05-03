@@ -17,10 +17,8 @@
 
 
 #include <mtp/cmtptypearray.h>
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpreferencemgr.h>
 #ifdef _DEBUG
-#include <mtp/cmtpobjectmetadata.h>
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/tmtptypeuint128.h>
 #endif

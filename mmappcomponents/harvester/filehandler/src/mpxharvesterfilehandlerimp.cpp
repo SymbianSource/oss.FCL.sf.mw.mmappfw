@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Handles all file related activities
-*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.5.1 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -224,6 +224,7 @@ void CMPXHarvesterFileHandlerImp::ConstructL()
     // Create DRM Notifier and register for AddRemove event
     iDrmNotifier = CDRMNotifier::NewL();
     iDrmNotifier->RegisterEventObserverL( *this, KEventAddRemove );
+    iCurUSBEvent = KErrNotFound;
     }
 
 // ---------------------------------------------------------------------------
@@ -428,7 +429,7 @@ void CMPXHarvesterFileHandlerImp::CancelScan()
 void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
                                                       TInt aData )
     {
-    MPX_DEBUG2("CMPXHarvesterFileHandlerImp::HandleSystemEventL %i", aEvent);
+    MPX_DEBUG3("CMPXHarvesterFileHandlerImp::HandleSystemEventL %i, drive %d", aEvent, aData);
     // How to handle each event
     //
     // 1: Format and eject, we stop scanning and close only the mmc db
@@ -465,7 +466,7 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
             User::LeaveIfError(
                 iFs.DriveToChar( driveNum, driveChar ) );
             MPX_DEBUG5 ("CMPXHarvesterFileHandlerImp::HandleSystemEventL - drive %c: is %S, %S and %S",
-                driveChar,
+                (TUint)driveChar,
                 (driveStatus&DriveInfo::EDrivePresent)?&drivePresent:&driveNotPresent,
                 (driveStatus&DriveInfo::EDriveInUse)?&driveInUse:&driveAvailable,
                 (driveStatus&DriveInfo::EDriveFormatted)?&driveFormatted:&driveNotFormatted);
@@ -487,6 +488,7 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
             iIdle->Cancel();
             CancelScan();
 #ifdef RD_MULTIPLE_DRIVE
+            TBool dbClosed( EFalse );
             for( TInt driveNum = EDriveA; driveNum <= EDriveZ; driveNum++ )
                 {
                 if (driveList[driveNum] && (!iDBManager->IsRemoteDrive(static_cast<TDriveNumber>(driveNum))))
@@ -500,8 +502,25 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
                         iDBManager->CloseDatabase( (TDriveNumber) driveNum );
                         // Save the drive
                         iRemovedDrive = driveNum;
+                        dbClosed = ETrue;
                         break;
                         }
+                    }
+                }
+            
+            if( !dbClosed )
+                {
+                // GetUserVisibleDrives / RFs::DriveList does not return drive at all
+                // if it is dismounted using file server methods. This occurs at least
+                // when removing card using power menu eject. 
+                // If the drive reported as removed is not ready, close db on that drive.
+                TUint driveStatus(0);
+                TInt err( DriveInfo::GetDriveStatus( iFs, aData, driveStatus ) );
+                MPX_DEBUG4("Drive %d status 0x%x, err %d", aData, driveStatus, err);
+                if( err == KErrNotReady )
+                    {
+                    iDBManager->CloseDatabase( (TDriveNumber) aData );
+                    iRemovedDrive = aData;
                     }
                 }
 #else
@@ -529,6 +548,10 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
             }
         case EUSBMassStorageStartEvent:
             {
+            if (iCurUSBEvent == EUSBMassStorageStartEvent)
+            	{
+            	break;
+            	}            
             iIdle->Cancel();
             CancelScan();
 #ifdef RD_MULTIPLE_DRIVE
@@ -546,6 +569,7 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
 #else
             iDBManager->CloseDatabase( (TDriveNumber) aData );
 #endif // RD_MULTIPLE_DRIVE
+            iCurUSBEvent = EUSBMassStorageStartEvent;
             break;
             }
         case EUSBMassStorageEndEvent:
@@ -565,25 +589,47 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
 #else
             iDBManager->OpenDatabaseL( (TDriveNumber) aData );
 #endif // RD_MULTIPLE_DRIVE
+            iCurUSBEvent = EUSBMassStorageEndEvent;
             break;
             }
         case EUSBMTPNotActiveEvent: // deliberate fall through
             {
+            if (iCurUSBEvent == EUSBMTPNotActiveEvent)
+            	{
+            	break;
+            	}
             if ( iRefreshing )
                 {
                 // Notify clients that refresh is cancelled.
                 iCollectionUtil->Collection().NotifyL( EMcMsgRefreshEnd, KErrLocked );
                 }
+            CancelScan();
+            iCurUSBEvent = EUSBMTPNotActiveEvent;
+            break;
             }
         case EUSBMTPStartEvent:
             {
             CancelScan();
+            iCurUSBEvent = EUSBMTPStartEvent;
             // nothing to do, db is needed for MTP
+#ifdef __RAMDISK_PERF_ENABLE
+            // if statement needed because of fall through above.
+            if ( aEvent == EUSBMTPStartEvent )
+                {
+                // copy dbs to ram drive
+                iDBManager->CopyDBsToRamL(ETrue);
+                }
+#endif //__RAMDISK_PERF_ENABLE
             break;
             }
         case EUSBMTPEndEvent:
             {
+            iCurUSBEvent = EUSBMTPEndEvent;
             // nothing to do, db is updated by MTP
+#ifdef __RAMDISK_PERF_ENABLE
+            // copy dbs from ram drive
+            iDBManager->CopyDBsFromRamL();
+#endif //__RAMDISK_PERF_ENABLE
             break;
             }
         case EPowerKeyEjectEvent:
@@ -705,6 +751,10 @@ TInt CMPXHarvesterFileHandlerImp::AddFileL( CMPXMedia& aMediaProp )
                 }
             }
         // Add to database
+#ifdef __RAMDISK_PERF_ENABLE
+        // EnsureRamSpaceL will copy dbs from ram if ram space is low or dbs exceeded max space.
+        iDBManager->EnsureRamSpaceL();
+#endif // __RAMDISK_PERF_ENABLE
         CMPXHarvesterDB& db = iDBManager->GetDatabaseL( ::ExtractDrive( path ) );
         CMPXHarvesterDatabaseTable* table = db.OpenFileL( path );
         CleanupStack::PushL( table );
@@ -721,6 +771,10 @@ TInt CMPXHarvesterFileHandlerImp::AddFileL( CMPXMedia& aMediaProp )
 
         // Return the collection that it should belong to.
         r = col.iUid;
+#ifdef __RAMDISK_PERF_ENABLE
+        // This feature will be turned on in the second phase.
+        //TRAP_IGNORE( iDBManager->UpdateDBsFromRamL(0) );
+#endif // __RAMDISK_PERF_ENABLE
         }
     else
         {
@@ -742,6 +796,10 @@ TInt CMPXHarvesterFileHandlerImp::RemoveFileL( const TDesC& aPath, TBool aEndTra
     TInt r(0);
 
     // Open the db
+#ifdef __RAMDISK_PERF_ENABLE
+    // EnsureRamSpaceL will copy dbs from ram if ram space is low or dbs exceeded max space.
+    iDBManager->EnsureRamSpaceL();
+#endif // __RAMDISK_PERF_ENABLE
     CMPXHarvesterDB& db = iDBManager->GetDatabaseL( ::ExtractDrive(aPath) );
 	MPX_PERF_START( MPX_PERF_HARV_DB_DELETE_SUB1 );
     CMPXHarvesterDatabaseTable* table = db.OpenFileL( aPath );
@@ -1024,6 +1082,11 @@ void CMPXHarvesterFileHandlerImp::HandleScanStateCompleteL( TScanState aState,
                 }
             case ECleanupBrokenLink:
                 {
+#ifdef __RAMDISK_PERF_ENABLE
+                // copy dbs to ram drive
+                iDBManager->CopyDBsToRamL();
+#endif //__RAMDISK_PERF_ENABLE
+    
                 MPX_DEBUG1("Start Metadata Scan");
                 iMetadataScanner->Start();
                 break;
@@ -1224,6 +1287,10 @@ void CMPXHarvesterFileHandlerImp::HandleOpenDriveL( TDriveNumber aDrive,
 
     // Delete previous table and open the next one
     Reset();
+#ifdef __RAMDISK_PERF_ENABLE
+    // EnsureRamSpaceL will copy dbs from ram if ram space is low or dbs exceeded max space.
+    iDBManager->EnsureRamSpaceL();
+#endif // __RAMDISK_PERF_ENABLE
     MPX_TRAPD( err, iCurDB = &iDBManager->GetDatabaseL( aDrive ) );
     if ( err != KErrNone )
         {
@@ -1374,6 +1441,10 @@ void CMPXHarvesterFileHandlerImp::AddFilesToCollectionL(
 
             iAddedCount++;
             }
+#ifdef __RAMDISK_PERF_ENABLE
+        // This feature will be turned on in the second phase.
+        //TRAP_IGNORE( iDBManager->UpdateDBsFromRamL(iAddedCount) );
+#endif // __RAMDISK_PERF_ENABLE
         }
     else if ( addErr == KErrDiskFull )
         {
@@ -1556,6 +1627,10 @@ void CMPXHarvesterFileHandlerImp::AddPlaylistToCollectionL(
             User::Leave( KErrDiskFull );
             }
         }
+#ifdef __RAMDISK_PERF_ENABLE
+        // This feature will be turned on in the second phase.
+        //TRAP_IGNORE( iDBManager->UpdateDBsFromRamL(iAddedCount) );
+#endif // __RAMDISK_PERF_ENABLE
 
     MPX_DEBUG1("CMPXHarvesterFileHandlerImp::AddPlaylistToCollectionL --->");
     }
@@ -1922,6 +1997,10 @@ void CMPXHarvesterFileHandlerImp::OpenDBForPathL( const TDesC& aPath )
     {
     Reset();
     TDriveNumber num = ::ExtractDrive( aPath );
+#ifdef __RAMDISK_PERF_ENABLE
+    // EnsureRamSpaceL will copy dbs from ram if ram space is low or dbs exceeded max space.
+    iDBManager->EnsureRamSpaceL();
+#endif // __RAMDISK_PERF_ENABLE
     iCurDB = &iDBManager->GetDatabaseL( num );
     iCurTable = iCurDB->OpenFileL( aPath );
     }
@@ -1949,6 +2028,11 @@ void CMPXHarvesterFileHandlerImp::DoCompleteRefreshL( TInt aErr )
         // Rollback the changes on databases in transaction
         iDBManager->Rollback();
         }
+
+#ifdef __RAMDISK_PERF_ENABLE
+    // copy dbs from ram drive
+    iDBManager->CopyDBsFromRamL();
+#endif //__RAMDISK_PERF_ENABLE
 
     if( aErr == KErrNone || aErr == KErrCancel )
         {

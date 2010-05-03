@@ -40,25 +40,37 @@ class CSendObject : public CRequestProcessor
     {
 public:
     /**
+    * Two-phase construction method
+    * @param aFramework The data provider framework
+    * @param aConnection The connection from which the request comes
+    * @param aDpConfig Configuration of data provider
+    * @return The pointer to the created request processor object
+    */
+    IMPORT_C static MMmRequestProcessor* NewL( MMTPDataProviderFramework& aFramework,
+        MMTPConnection& aConnection,
+        MMmMtpDpConfig& aDpConfig );
+
+    /**
     * Destructor
     */
     IMPORT_C virtual ~CSendObject();
 
 protected:
     /**
-    * Standard C++ Constructor
-    * @param aFramework    The data provider framework
-    * @param aConnection   The connection from which the request comes
-    * @param aWrapper      Medadata access interface
+    * Standard C++ construction method
+    * @param aFramework The data provider framework
+    * @param aConnection The connection from which the request comes
+    * @param aDpConfig Configuration of data provider
+    * @return The pointer to the created request processor object
     */
-    IMPORT_C CSendObject( MMTPDataProviderFramework& aFramework,
+    CSendObject( MMTPDataProviderFramework& aFramework,
         MMTPConnection& aConnection,
         MMmMtpDpConfig& aDpConfig );
 
     /**
     * 2nd Phase Constructor
     */
-    IMPORT_C void ConstructL();
+    void ConstructL();
 
 protected:
     // from CRequestProcessor
@@ -103,31 +115,6 @@ protected:
     * Override from CRequestProcessor, can not be neglected
     */
     IMPORT_C void UsbDisconnect();
-
-    // new protected function
-    /**
-     * Called by dp derived processor
-     */
-    IMPORT_C TMTPResponseCode SetMetaDataToWrapperL( const TUint16 aPropCode,
-        MMTPType& aNewData,
-        const CMTPObjectMetaData& aObjectMetaData );
-
-protected:
-    // new virtual functions
-    /**
-     *
-     */
-    virtual TMTPResponseCode SetSpecificObjectPropertyL( TUint16 aPropCode,
-        const CMTPObjectMetaData& aObject,
-        const CMTPTypeObjectPropListElement& aElement ) = 0;
-
-    /**
-     * Check datatypes for DP specific PropCodes
-     */
-    virtual TMTPResponseCode CheckSepecificPropType( TUint16 aPropCode, TUint16 aDataType ) = 0;
-
-    virtual TInt HandleSpecificWrapperError(TInt aError,
-            const CMTPObjectMetaData& aObject) = 0;
 
 private:
     /**
@@ -186,7 +173,7 @@ private:
     /*
      * Handle response phase of SetObjectPropListL operation
      */
-    TMTPResponseCode SetObjectPropListL( const CMTPTypeObjectPropList& aPropList );
+    TMTPResponseCode SetObjectPropListL();
 
     /**
      *
@@ -197,7 +184,7 @@ private:
     * Check if the object is too large
     * @return ETrue if yes, otherwise EFalse
     */
-    TBool IsTooLarge( TUint32 aObjectSize ) const;
+    TBool IsTooLarge( TUint64 aObjectSize ) const;
 
     /**
     * Check if we can store the file on the storage
@@ -226,7 +213,7 @@ private:
     /**
     * Set protection status of object which could be read/write-only
     */
-    void SetProtectionStatusL();
+    void SetProtectionStatus();
 
     /**
     * Save object information of object whose size is zero
@@ -299,6 +286,7 @@ private:
 
     TUint32 iPreviousTransactionID;
     TUint32 iPreviousOperation;
+
     };
 
 #endif // CSENDOBJECT_H

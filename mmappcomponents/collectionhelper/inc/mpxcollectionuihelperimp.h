@@ -649,6 +649,16 @@ private: // from base class
     void HandleOpenL(const CMPXCollectionPlaylist& aPlaylist,TInt aError);
 
     /**
+    * From MMPXCollectionObserver
+    *  Handles completion of a asynchronous command.
+    *
+    *  @param aCommandResult result of the command, NULL if error
+    *  @param aError error code    
+    */
+    virtual void HandleCommandComplete(CMPXCommand* aCommandResult, 
+                                       TInt aError);
+
+    /**
     * From MMPXMoveItemObserver
     * @param aErr, error for the operation
     */
@@ -848,6 +858,7 @@ private: // data
     TInt                                iEmbeddedPluginInfo;
     TBool                               iInitialized;  // collection db merging
     TBool                               iIncAdding;  // Incremental adding guard
+    TInt 								iRefCount;
     };
 
 #endif // CMPX_COLLECTION_UI_HELPER_H

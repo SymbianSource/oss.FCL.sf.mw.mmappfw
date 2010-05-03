@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extracts metadata from a file
-*  Version     : %version: da1mmcf#38.1.4.2.6.1.5 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#38.1.4.2.6.1.5.3.1 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -51,6 +51,9 @@ const TInt KMPXTimeoutTimer = 3000000; // 3 seconds
 const TInt KMPXMaxThumbnailRequest = 5; 
 #endif //RD_MPX_TNM_INTEGRATION
 
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
+_LIT( KNonEmbeddedArtExt, ".alb" );
+#endif
 //Helper functions
 static void FindAndReplaceForbiddenChars(TDes& aString, TInt aLen)
     {
@@ -337,14 +340,21 @@ void CMPXMetadataExtractor::SetMediaPropertiesL( CMPXMedia& aMedia,
         TMetaDataFieldId fieldType;
 
         HBufC* value = NULL;
-        TRAPD( err, value = metaCont.At( i, fieldType ).AllocL() );
-        CleanupStack::PushL(value);
-        if ( KErrNone != err )
-        {
-            CleanupStack::PopAndDestroy(value);
-            continue;
-        }
-
+        metaCont.FieldIdAt( i, fieldType );  // get the field type
+        
+        // get the value, except for album art
+        if ( fieldType != EMetaDataJpeg )
+           {
+           TRAPD( err, value = metaCont.At( i, fieldType ).AllocL() );
+           CleanupStack::PushL( value );
+           if ( KErrNone != err )
+               {
+               MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL - error = %i", err);           
+               CleanupStack::PopAndDestroy( value );
+               continue;
+               }     
+           }
+        
         switch( fieldType )
             {
             case EMetaDataSongTitle:
@@ -445,7 +455,14 @@ void CMPXMetadataExtractor::SetMediaPropertiesL( CMPXMedia& aMedia,
                 {
 #ifdef RD_MPX_TNM_INTEGRATION
                 MPX_PERF_START(CMPXMetadataExtractor_SetMediaPropertiesL_JPEG_TNM);
-                HBufC8* value8 = MPXUser::Alloc8L(metaCont.At( i, fieldType ));
+                TPtrC8 ptr8 = metaCont.Field8( EMetaDataJpeg );
+                HBufC8* value8; 
+                TRAPD( err, value8 = ptr8.AllocL() );
+                if ( KErrNone != err )
+                    {
+                    MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL - error jpeg = %i", err);           
+                    User::Leave( err );  
+                    }                 
                 CleanupStack::PushL( value8 );
                 AddMediaAlbumArtL( aMedia, aFile, *value8 );
                 CleanupStack::Pop(value8);
@@ -478,7 +495,10 @@ void CMPXMetadataExtractor::SetMediaPropertiesL( CMPXMedia& aMedia,
                 break;
                 }
             }
-        CleanupStack::PopAndDestroy(value);
+        if (fieldType != EMetaDataJpeg)
+            {
+            CleanupStack::PopAndDestroy( value );       
+            }
         }
 
     MPX_DEBUG1("CMPXMetadataExtractor::SetMediaPropertiesL --->" );
@@ -717,7 +737,31 @@ EXPORT_C TInt CMPXMetadataExtractor::ExtractAlbumArtL( CMPXMedia* aMedia )
     // Get full file name.
     const TDesC& path = aMedia->ValueText(KMPXMediaGeneralUri);
     MPX_DEBUG2("CMPXMetadataExtractor::ExtractAlbumArtL Filename:%S ", &path );
-    
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
+    TParsePtrC parse( path );
+    TPtrC ext( parse.Ext() );
+    if (ext.CompareF(KNonEmbeddedArtExt)== 0)
+        {
+		#ifdef RD_MPX_TNM_INTEGRATION
+
+        //check if can send TN request, If thumbnail creation is ongoing, wait til it is done
+        CheckBeforeSendRequest();
+
+        CThumbnailObjectSource* source = CThumbnailObjectSource::NewLC(
+           path, KImageFileType  );
+          
+       
+
+        iTNManager->CreateThumbnails( *source );
+        
+        iOutstandingThumbnailRequest++;
+        CleanupStack::PopAndDestroy( source );
+
+        #endif
+        }
+    else
+        {
+#endif
     // create wanted fields array
     RArray<TMetaDataFieldId> wantedFields;
     CleanupClosePushL( wantedFields );
@@ -746,7 +790,9 @@ EXPORT_C TInt CMPXMetadataExtractor::ExtractAlbumArtL( CMPXMedia* aMedia )
 
     // Reset the utility
     iMetadataUtility->ResetL();
-    
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
+      }
+#endif
     return err;
     }
 
@@ -761,13 +807,20 @@ TInt CMPXMetadataExtractor::GetMediaAlbumArtL( CMPXMedia& aMedia,
     // get metadata container.
     const CMetaDataFieldContainer& metaCont = iMetadataUtility->MetaDataFieldsL();
 
-    TPtrC data = metaCont.Field( EMetaDataJpeg );
+    TPtrC8 data8 = metaCont.Field8( EMetaDataJpeg );
     
-    if ( data.Length() )
+    if ( data8.Length() )
         {
         MPX_DEBUG1("CMPXMetadataExtractor::GetMediaAlbumArtL(): Album art exist.");
+
 #ifdef RD_MPX_TNM_INTEGRATION
-        HBufC8* value8 = MPXUser::Alloc8L( data );       
+        HBufC8* value8; 
+        TRAPD( err, value8 = data8.AllocL() );
+        if ( KErrNone != err )
+            {
+            MPX_DEBUG2("CMPXMetadataExtractor::GetMediaAlbumArtL - error jpeg = %i", err);           
+            User::Leave( err );  
+            }              
         CleanupStack::PushL( value8 );
         AddMediaAlbumArtL( aMedia, aFile, *value8 );
         CleanupStack::Pop(value8);
@@ -793,26 +846,9 @@ void CMPXMetadataExtractor::AddMediaAlbumArtL( CMPXMedia& aMedia,
     MPX_FUNC("CMPXMetadataExtractor::AddMediaAlbumArtL()");
 #ifdef RD_MPX_TNM_INTEGRATION
     
-    // If thumbnail creation is ongoing, wait til it is done
-    if ( iOutstandingThumbnailRequest > KMPXMaxThumbnailRequest )
-        {
-        MPX_DEBUG1("CMPXMetadataExtractor::AddMediaAlbumArtL(): Thumbnail creation ongoing!");
-        iTNMBlockCount++;
-        // Cancel timer.
-        CancelTimeoutTimer();
-        // Start timer in case there is no callback from ThumbNail Manager. 
-        iTimer->Start(
-            KMPXTimeoutTimer,
-            KMPXTimeoutTimer,
-            TCallBack(TimeoutTimerCallback, this ));
-        
-        // Start wait loop until we get a callback from ThumbNail Manager.
-        if ( !iTNSyncWait->IsStarted() )
-            {
-            iTNSyncWait->Start();
-            }
-        }
-    
+    //check if can send TN request, If thumbnail creation is ongoing, wait til it is done
+    CheckBeforeSendRequest();
+
     aMedia.SetTextValueL( KMPXMediaMusicAlbumArtFileName, aFile );
     
     TBuf<256> mimeType;
@@ -826,3 +862,29 @@ void CMPXMetadataExtractor::AddMediaAlbumArtL( CMPXMedia& aMedia,
     
 #endif // RD_MPX_TNM_INTEGRATION          
     }
+
+void CMPXMetadataExtractor::CheckBeforeSendRequest()
+     {
+     MPX_FUNC("CMPXMetadataExtractor::CheckBeforeSendRequest()");
+#ifdef RD_MPX_TNM_INTEGRATION
+	// If thumbnail creation is ongoing, wait til it is done
+    if ( iOutstandingThumbnailRequest > KMPXMaxThumbnailRequest )
+        {
+        MPX_DEBUG1("CMPXMetadataExtractor::CheckBeforeSendRequest(): Thumbnail creation ongoing!");
+        iTNMBlockCount++;
+        // Cancel timer.
+        CancelTimeoutTimer();
+        // Start timer in case there is no callback from ThumbNail Manager.
+        iTimer->Start(
+            KMPXTimeoutTimer,
+            KMPXTimeoutTimer,
+            TCallBack(TimeoutTimerCallback, this ));
+
+        // Start wait loop until we get a callback from ThumbNail Manager.
+        if ( !iTNSyncWait->IsStarted() )
+            {
+            iTNSyncWait->Start();
+            }
+        }
+#endif // RD_MPX_TNM_INTEGRATION
+     }

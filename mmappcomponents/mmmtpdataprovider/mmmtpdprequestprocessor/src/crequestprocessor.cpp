@@ -18,12 +18,11 @@
 
 #include <mtp/mtpprotocolconstants.h>
 #include <mtp/tmtptyperequest.h>
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/tmtptypeevent.h>
 #include <mtp/mmtpconnection.h>
 #include <mtp/mmtpobjectmgr.h>
 #include <e32property.h>
-#include <MtpPrivatePSKeys.h>
+#include <mtpprivatepskeys.h>
 
 #include "crequestprocessor.h"
 #include "crequestchecker.h"
@@ -39,13 +38,15 @@ static const TInt KNullBufferSize = 4096;
 EXPORT_C CRequestProcessor::CRequestProcessor( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     TInt aElementCount,
-    const TMTPRequestElementInfo* aElements ):
-    CActive( EPriorityStandard ),
-    iFramework( aFramework ),
-    iConnection( aConnection ),
-    iElementCount( aElementCount ),
-    iElements( aElements )
+    const TMTPRequestElementInfo* aElements ) :
+        CActive( EPriorityStandard ),
+        iFramework( aFramework ),
+        iConnection( aConnection ),
+        iElementCount( aElementCount ),
+        iElements( aElements )
     {
+    // Note: It has been moved to specific operation handler
+    // Some operations don't need add into active scheduler
     // CActiveScheduler::Add( this );
     }
 
@@ -56,7 +57,9 @@ EXPORT_C CRequestProcessor::CRequestProcessor( MMTPDataProviderFramework& aFrame
 //
 EXPORT_C CRequestProcessor::~CRequestProcessor()
     {
-//    Cancel();
+    // Note: It has been moved to specific operation handler
+    // Some operations don't need add into active scheduler
+    // Cancel();
     iNullBuffer.Close();
     delete iRequestChecker;
     }
@@ -390,7 +393,7 @@ EXPORT_C TMTPResponseCode CRequestProcessor::CheckRequestL()
 //
 EXPORT_C void CRequestProcessor::RunL()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -400,7 +403,7 @@ EXPORT_C void CRequestProcessor::RunL()
 //
 EXPORT_C void CRequestProcessor::DoCancel()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -410,8 +413,11 @@ EXPORT_C void CRequestProcessor::DoCancel()
 //
 EXPORT_C TInt CRequestProcessor::RunError( TInt aError )
     {
-    PRINT1( _L( "MM MTP <> CRequestProcessor RunError = %d" ), aError );
+    if ( aError != KErrNone )
+        PRINT1( _L( "MM MTP <> CRequestProcessor RunError = %d" ), aError );
+
     TRAP_IGNORE( SendResponseL( EMTPRespCodeGeneralError ) );
+
     return KErrNone;
     }
 

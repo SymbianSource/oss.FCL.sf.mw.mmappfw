@@ -17,13 +17,10 @@
 
 
 #include <mtp/cmtptypefile.h>
-#include <mtp/mmtpdataproviderframework.h>
-#include <mtp/cmtpobjectmetadata.h>
 
 #include "cgetpartialobject.h"
 #include "mmmtpdplogger.h"
 #include "tmmmtpdppanic.h"
-#include "ttypeflatbuf.h"
 #include "mmmtpdpconfig.h"
 
 /**
@@ -41,7 +38,7 @@ const TMTPRequestElementInfo KMTPGetPartialObjectPolicy[] =
 //
 EXPORT_C MMmRequestProcessor* CGetPartialObject::NewL( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
-    MMmMtpDpConfig& aDpConfig )
+    MMmMtpDpConfig& /*aDpConfig*/ )
     {
     CGetPartialObject* self = new (ELeave) CGetPartialObject( aFramework, aConnection );
     CleanupStack::PushL( self );
@@ -57,8 +54,6 @@ EXPORT_C MMmRequestProcessor* CGetPartialObject::NewL( MMTPDataProviderFramework
 //
 EXPORT_C CGetPartialObject::~CGetPartialObject()
     {
-    delete iBuffer;
-    delete iPartialData;
     delete iFileObject;
     }
 
@@ -69,15 +64,23 @@ EXPORT_C CGetPartialObject::~CGetPartialObject()
 //
 EXPORT_C CGetPartialObject::CGetPartialObject( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection ) :
-    CRequestProcessor( aFramework,
-        aConnection,
-        sizeof( KMTPGetPartialObjectPolicy ) / sizeof( TMTPRequestElementInfo ),
-        KMTPGetPartialObjectPolicy ),
-    iFramework ( aFramework ),
-    iFs( iFramework.Fs() ),
-    iBufferPtr8( NULL, 0 )
+        CRequestProcessor( aFramework,
+            aConnection,
+            sizeof( KMTPGetPartialObjectPolicy ) / sizeof( TMTPRequestElementInfo ),
+            KMTPGetPartialObjectPolicy ),
+        iFramework ( aFramework )
     {
     PRINT( _L( "Operation: GetPartialObject(0x101B)" ) );
+    }
+
+// -----------------------------------------------------------------------------
+// CGetPartialObject::ConstructL()
+// Second-phase construction
+// -----------------------------------------------------------------------------
+//
+void CGetPartialObject::ConstructL()
+    {
+    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -106,14 +109,17 @@ EXPORT_C TMTPResponseCode CGetPartialObject::CheckRequestL()
 TBool CGetPartialObject::VerifyParametersL()
     {
     PRINT( _L( "MM MTP => CGetPartialObject::VerifyParametersL" ) );
+
     __ASSERT_DEBUG( iRequestChecker, Panic( EMmMTPDpRequestCheckNull ) );
     TBool result = EFalse;
     iObjectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
-    PRINT1( _L( "MM MTP <> CGetPartialObject::VerifyParametersL iObjectHandle = 0x%x" ), iObjectHandle );
     iOffset = Request().Uint32( TMTPTypeRequest::ERequestParameter2 );
-    PRINT1( _L( "MM MTP <> CGetPartialObject::VerifyParametersL iOffset = %d" ), iOffset );
-    TUint32 maxLength = Request().Uint32( TMTPTypeRequest::ERequestParameter3 );
-    PRINT1( _L( "MM MTP <> CGetPartialObject::VerifyParametersL maxLength = %d" ), maxLength );
+    iPartialDataLength = Request().Uint32( TMTPTypeRequest::ERequestParameter3 );
+
+    PRINT3( _L( "MM MTP <> CGetPartialObject::VerifyParametersL iObjectHandle = 0x%x, iOffset = 0x%x, iMaxLength = 0x%x " ),
+        iObjectHandle,
+        iOffset,
+        iPartialDataLength );
 
     //get object info, but do not have the ownship of the object
     CMTPObjectMetaData* objectInfo = iRequestChecker->GetObjectInfo( iObjectHandle );
@@ -122,28 +128,12 @@ TBool CGetPartialObject::VerifyParametersL()
     const TDesC& suid( objectInfo->DesC( CMTPObjectMetaData::ESuid ) );
     PRINT1( _L( "MM MTP <> CGetPartialObject::VerifyParametersL suid = %S" ), &suid );
 
-    if ( objectInfo->Uint( CMTPObjectMetaData::EDataProviderId )
-        == iFramework.DataProviderId() )
-        result = ETrue;
-
     TEntry fileEntry;
-    User::LeaveIfError( iFs.Entry( suid, fileEntry ) );
-    TInt64 fileSize = fileEntry.iSize;
-    if( ( iOffset < fileEntry.iSize ) && result )
+    User::LeaveIfError( iFramework.Fs().Entry( suid, fileEntry ) );
+    if ( iOffset < fileEntry.FileSize() )
         {
-        if ( maxLength == fileSize )
-            {
-            iCompleteFile = ETrue;
-            }
-
-        if( iOffset + maxLength > fileSize )
-            {
-            maxLength = fileSize - iOffset;
-            }
-        iPartialDataLength = maxLength;
         result = ETrue;
         }
-    PRINT1( _L( "MM MTP <> CGetPartialObject::VerifyParametersL iPartialDataLength = %d" ), iPartialDataLength );
 
     PRINT1( _L( "MM MTP <= CGetPartialObject::VerifyParametersL result = %d" ), result );
     return result;
@@ -157,29 +147,23 @@ TBool CGetPartialObject::VerifyParametersL()
 EXPORT_C void CGetPartialObject::ServiceL()
     {
     PRINT( _L( "MM MTP => CGetPartialObject::ServiceL" ) );
+
     // Get file information
     CMTPObjectMetaData* objectInfo = iRequestChecker->GetObjectInfo( iObjectHandle );
     __ASSERT_DEBUG( objectInfo, Panic( EMmMTPDpObjectNull ) );
-    iFileSuid.SetLength( 0 );
-    iFileSuid.Append( objectInfo->DesC( CMTPObjectMetaData::ESuid ) );
 
-    if ( iCompleteFile )
-        {
-        // Pass the complete file back to the host
-        delete iFileObject;
-        iFileObject = NULL;
-        iFileObject = CMTPTypeFile::NewL( iFramework.Fs(), iFileSuid, EFileRead );
-        SendDataL( *iFileObject );
-        }
-    else
-        {
-        // Send partial file fragment back.
-        BuildPartialDataL();
-        delete iPartialData;
-        iPartialData = NULL;
-        iPartialData  = new (ELeave) TMTPTypeFlatBuf( iBufferPtr8 );
-        SendDataL( *iPartialData );
-        }
+    // NOTE: Change all TBuf<KMaxFileName> into TFileName for easily change when fs change the limitation of filename
+    TFileName fileSuid;
+    fileSuid.Append( objectInfo->DesC( CMTPObjectMetaData::ESuid ) );
+
+    iFileObject = CMTPTypeFile::NewL( iFramework.Fs(),
+        fileSuid,
+        ( TFileMode ) ( EFileRead | EFileShareReadersOnly ),
+        iPartialDataLength,
+        iOffset );
+
+    SendDataL( *iFileObject );
+
     PRINT( _L( "MM MTP <= CGetPartialObject::ServiceL" ) );
     }
 
@@ -191,50 +175,12 @@ EXPORT_C void CGetPartialObject::ServiceL()
 EXPORT_C TBool CGetPartialObject::DoHandleResponsePhaseL()
     {
     PRINT( _L( "MM MTP => CGetPartialObject::DoHandleResponsePhaseL" ) );
-    TUint32 dataLength = iPartialDataLength;
-    PRINT1( _L( "MM MTP <> CGetPartialObject::DoHandleResponsePhaseL dataLength = %d" ), dataLength );
+
+    TUint32 dataLength = iFileObject->GetByteSent();
     SendResponseL( EMTPRespCodeOK, 1, &dataLength );
-    PRINT( _L( "MM MTP <= CGetPartialObject::DoHandleResponsePhaseL" ) );
+
+    PRINT1( _L( "MM MTP <= CGetPartialObject::DoHandleResponsePhaseL dataLength = %d" ), dataLength );
     return EFalse;
-    }
-
-// -----------------------------------------------------------------------------
-// CGetPartialObject::ConstructL()
-// Second-phase construction
-// -----------------------------------------------------------------------------
-//
-void CGetPartialObject::ConstructL()
-    {
-    SetPSStatus();
-    }
-
-// -----------------------------------------------------------------------------
-// CGetPartialObject::BuildPartialDataL()
-// Populate the partial data object
-// -----------------------------------------------------------------------------
-//
-void CGetPartialObject::BuildPartialDataL()
-    {
-    PRINT( _L( "MM MTP => CGetPartialObject::BuildPartialDataL" ) );
-    __ASSERT_DEBUG( iRequestChecker, Panic( EMmMTPDpRequestCheckNull ) );
-
-    if ( iBuffer )
-        {
-        delete iBuffer;
-        iBuffer = NULL;
-        }
-
-    // We might fail if we have insufficient memory...
-    iBuffer = HBufC8::NewL( iPartialDataLength );
-    iBuffer->Des().Zero();
-    iBufferPtr8.Set( iBuffer->Des() );
-
-    RFile file;
-    User::LeaveIfError( file.Open( iFs, iFileSuid, EFileRead ) );
-    CleanupClosePushL( file ); // + file
-    User::LeaveIfError( file.Read( iOffset, iBufferPtr8, iPartialDataLength ) );
-    CleanupStack::PopAndDestroy( &file ); // - file
-    PRINT( _L( "MM MTP <= CGetPartialObject::BuildPartialDataL" ) );
     }
 
 // end of file

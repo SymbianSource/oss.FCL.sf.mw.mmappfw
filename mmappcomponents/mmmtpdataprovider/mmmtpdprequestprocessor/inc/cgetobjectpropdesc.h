@@ -11,10 +11,9 @@
 *
 * Contributors:
 *
-* Description:  Get object properties descript operation
+* Description: Request processor which handle common property description
 *
 */
-
 
 #ifndef CGETOBJECTPROPDESC_H
 #define CGETOBJECTPROPDESC_H
@@ -32,33 +31,39 @@ class CGetObjectPropDesc : public CRequestProcessor
     {
 public:
     /**
+    * Two-phase construction method
+    * @param aFramework The data provider framework
+    * @param aConnection The connection from which the request comes
+    * @param aDpConfig Configuration of data provider
+    * @return The pointer to the created request processor object
+    */
+    IMPORT_C static MMmRequestProcessor* NewL( MMTPDataProviderFramework& aFramework,
+        MMTPConnection& aConnection,
+        MMmMtpDpConfig& aDpConfig );
+
+    /**
     * Destructor
     */
     IMPORT_C virtual ~CGetObjectPropDesc();
 
-protected:
+private:
     /**
     * Standard c++ constructor
     * @param aFramework    The data provider framework
     * @param aConnection   The connection from which the request comes
     * @param aWrapper      Medadata access interface
     */
-    IMPORT_C CGetObjectPropDesc( MMTPDataProviderFramework& aFramework,
+    CGetObjectPropDesc( MMTPDataProviderFramework& aFramework,
         MMTPConnection& aConnection,
         MMmMtpDpConfig& aDpConfig );
-    
+
     /**
     * Second phase constructor
     */
-    IMPORT_C void ConstructL();
+    void ConstructL();
 
 protected:
-    //from CRequestProcessor
-    /**
-    * GetObjectPropDesc request handler
-    */
-    IMPORT_C void ServiceL();
-
+    // from CRequestProcessor
     /**
     * Check the current request
     * @return EMTPRespCodeOK if the reqeust is good, otherwise,
@@ -66,9 +71,10 @@ protected:
     */
     IMPORT_C TMTPResponseCode CheckRequestL();
 
-protected:
-    // new virtuals
-    virtual void ServiceSpecificObjectPropertyL( TUint16 aPropCode ) = 0;
+    /**
+    * GetObjectPropDesc request handler
+    */
+    IMPORT_C void ServiceL();
 
 private:
     /**
@@ -85,37 +91,16 @@ private:
     */
     TMTPResponseCode CheckPropCodeL() const;
 
-    /**
-    * Create list of possible protection status and create new ObjectPropDesc
-    */
-    void ServiceProtectionStatusL();
-
-    /**
-    * Create Regular expression for a file name and create new ObjectPropDesc
-    */
-    void ServiceFileNameL();
-
-    /**
-    * Create list of possible nonConsumable values and create new ObjectPropDesc
-    */
-    void ServiceNonConsumableL();
-
-    /*
-     * Get group code according to property code
-     * @param aPropCode Specify the property code of which the group code needed
-     * @return Group code of specified property
-     */
-    TUint32 GetGroupCode( TUint16 aPropCode );
-
-
-protected:
-    // Property object to return with the desc value
-    CMTPTypeObjectPropDesc* iObjectProperty;
-
-    //Format code
-    TUint32 iFormatCode;
+private:
+    TUint iFormatCode;
 
     MMmMtpDpConfig& iDpConfig;
+
+    TUint iPropCode;
+
+    // property description
+    CMTPTypeObjectPropDesc* iPropertyDesc;
+
     };
 
 #endif // CGETOBJECTPROPDESC_H

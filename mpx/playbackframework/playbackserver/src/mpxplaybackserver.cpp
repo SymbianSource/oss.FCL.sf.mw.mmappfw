@@ -129,6 +129,42 @@ void CMPXPlaybackServer::ConstructL()
     }
 
 // ----------------------------------------------------------------------------
+// Searches process id for target selector plugin.
+// When the player has been opened in a mode, which is bound to the same engine
+// than certain application's engine, then need to fetch its process id.
+// (As a reference for parameter aMode see MMPXPlaybackUtility modes.)
+// Otherwise target selector plugin is notified wrongly about client statuses 
+// and key events are not propagated to correct application.
+// ----------------------------------------------------------------------------
+//
+void CMPXPlaybackServer::FindProcessIdForTsp(
+    const CMPXPlaybackEngine* aEngine,
+    TProcessId& aProcessId )
+    {
+    TBool processFound( EFalse );
+    TFindProcess processFinder;
+    TFullName processName;
+
+    while ( processFinder.Next( processName ) == KErrNone && !processFound )
+        {
+        RProcess process;
+        TInt err = process.Open( processFinder );
+        if( err == KErrNone )
+            {
+            if( process.SecureId().iId == aEngine->ModeId().iUid && 
+                process.ExitType() == EExitPending )
+                {
+                MPX_DEBUG4("CMPXPlaybackServer::FindProcessIdForTsp(): pid changed from %d to %d (mode 0x%x)",
+                           TUint(aProcessId), TUint(process.Id()), aEngine->ModeId().iUid);
+                aProcessId = process.Id();
+                processFound = ETrue;
+                }
+            process.Close();
+            }
+        }
+    }
+
+// ----------------------------------------------------------------------------
 // Increments number of sessions this server holds
 // ----------------------------------------------------------------------------
 //
@@ -386,12 +422,13 @@ void CMPXPlaybackServer::HandleActiveEngineL(
     if (!aActive)
         {
 #ifdef RD_TSP_CLIENT_MAPPER
+        TProcessId lastPid( aEngine->LastActiveProcessId() ); 
+        FindProcessIdForTsp( aEngine, lastPid );
         iClientMapper->SetTspTargetClientToOtherType(
                 CTspClientMapper::EStoppedClients,
-                aEngine->LastActiveProcessId());
-        MPX_DEBUG2("CMPXPlaybackServer::HandleActiveEngineL(): Adding to stopped client %d",
-                   TUint( aEngine->LastActiveProcessId()));
-
+                lastPid);
+        MPX_DEBUG2("CMPXPlaybackServer::HandleActiveEngineL(): Added as stopped client %d",
+                   TUint( lastPid));
 #endif
         if (EPbStatePaused != aEngine->State())
             {
@@ -406,11 +443,20 @@ void CMPXPlaybackServer::HandleActiveEngineL(
     else
         {// else aEngine is active player
 #ifdef RD_TSP_CLIENT_MAPPER
-        iClientMapper->SetTspTargetClientToOtherType(
-                CTspClientMapper::EPlayingClients,
-                aEngine->LastActiveProcessId());
-        MPX_DEBUG2("CMPXPlaybackServer::HandleActiveEngineL(): Adding to playing client %d",
-                   TUint( aEngine->LastActiveProcessId()));
+        TProcessId lastPid( aEngine->LastActiveProcessId() ); 
+        FindProcessIdForTsp( aEngine, lastPid );
+        TInt err = iClientMapper->SetTspTargetClientToOtherType( 
+            CTspClientMapper::EPlayingClients, lastPid );
+        if ( err != KErrNone && (TUint)lastPid != KNullProcessId )
+            {
+            // Setting target type failed probably because client PID could not be found.
+            // As a fallback set client as new playing client.
+            MPX_DEBUG2("CMPXPlaybackServer::HandleActiveEngineL(): Adding to playing client %d", 
+                (TUint)lastPid );
+            iClientMapper->SetTspTargetClient( CTspClientMapper::EPlayingClients, lastPid );
+            }
+        MPX_DEBUG2("CMPXPlaybackServer::HandleActiveEngineL(): Added as playing client %d", 
+            (TUint)lastPid );
 #endif
         }
 
@@ -466,9 +512,9 @@ void CMPXPlaybackServer::HandleClientChange(
     if (MMPXClientlistObserver::EAdd == aChangeType)
         {
         iClientMapper->SetTspTargetClient(
-                CTspClientMapper::EPlayingClients,
+                CTspClientMapper::ERegisteredClients,
                 aPid);
-        MPX_DEBUG2("CMPXPlaybackServer::HandleClientChange(): Adding to registered client %d",
+        MPX_DEBUG2("CMPXPlaybackServer::HandleClientChange(): Added as registered client %d",
                    TUint( aPid ));
         }
     else
@@ -476,7 +522,7 @@ void CMPXPlaybackServer::HandleClientChange(
         iClientMapper->RemoveTspTargetClient(
                 CTspClientMapper::EPlayingClients,
                 aPid);
-        MPX_DEBUG2("CMPXPlaybackServer::HandleClientChange(): Adding to EPlayingClients client %d",
+        MPX_DEBUG2("CMPXPlaybackServer::HandleClientChange(): Removed from EPlayingClients client %d",
                    TUint( aPid ));
         }
 #else

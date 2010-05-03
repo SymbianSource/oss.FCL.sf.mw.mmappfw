@@ -22,7 +22,6 @@
 #include "crequestprocessor.h"
 
 // forward declacration
-class CMmMtpDpMetadataAccessWrapper;
 class CMTPTypeObjectInfo;
 class MMmMtpDpConfig;
 
@@ -78,10 +77,10 @@ private:
     void BuildObjectInfoL();
 
 private:
-
     CMTPTypeObjectInfo* iObjectInfo;
 
     MMmMtpDpConfig& iDpConfig;
+
     };
 
 #endif // CGETOBJECTINFO_H

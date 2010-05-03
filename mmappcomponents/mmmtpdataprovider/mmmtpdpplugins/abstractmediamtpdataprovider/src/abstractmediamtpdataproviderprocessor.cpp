@@ -28,49 +28,48 @@
 
 #include "abstractmediamtpdataproviderconst.h"
 #include "cgetobjectpropssupported.h"
-#include "cabstractmediamtpdataprovidergetobjectpropdesc.h"
-#include "cabstractmediamtpdataprovidergetinterdependentpropdesc.h"
+#include "cgetobjectpropdesc.h"
+#include "cgetinterdependentpropdesc.h"
 #include "cgetobject.h"
 #include "cgetobjectinfo.h"
-#include "cabstractmediamtpdataprovidersendobject.h"
+#include "csendobject.h"
 #include "cabstractmediamtpdataprovidergetobjectpropvalue.h"
 #include "cabstractmediamtpdataprovidergetobjectproplist.h"
 #include "cabstractmediamtpdataprovidersetobjectpropvalue.h"
-#include "cabstractmediamtpdataprovidersetobjectproplist.h"
+#include "csetobjectproplist.h"
 #include "cgetobjectreferences.h"
-#include "cabstractmediamtpdataprovidersetobjectreferences.h"
+#include "csetobjectreferences.h"
 #include "cdeleteobject.h"
 #include "cabstractmediamtpdataprovidercopyobject.h"
 #include "cabstractmediamtpdataprovidermoveobject.h"
 #include "cgetpartialobject.h"
 #include "cabstractmediamtpdataproviderabstractmediapreference.h"
-#include "cabstractmediamtpdataprovidergetformatcapabilities.h"
+#include "cgetformatcapabilities.h"
 
 
 /** A mapping table from the operation code to the request processor factory method */
 const TAbstractMediaMtpDataProviderRequestProcessorEntry KAbstractMediaMtpDataProviderRequestProcessorTable[] =
     {
-    {EMTPOpCodeGetObjectPropsSupported, CGetObjectPropsSupported::NewL}, //Get Supported Props
-    {EMTPOpCodeGetObjectPropDesc, CAbstractMediaMtpDataProviderGetObjectPropDesc::NewL}, //Get Props Description
-    {EMTPOpCodeGetInterdependentPropDesc, CAbstractMediaMtpDataProviderGetInterdependentPropDesc::NewL},
-    {EMTPOpCodeGetObjectInfo, CGetObjectInfo::NewL}, //GetObjectInfo
-    {EMTPOpCodeGetObject, CGetObject::NewL}, //GetObject
-    {EMTPOpCodeGetObjectPropValue, CAbstractMediaMtpDataProviderGetObjectPropValue::NewL},
-    {EMTPOpCodeGetObjectPropList, CAbstractMediaMtpDataProviderGetObjectPropList::NewL}, //GetObjectPropList
-    {EMTPOpCodeSendObjectInfo, CAbstractMediaMtpDataProviderSendObject::NewL}, //SendObjectInfo (routed to SendObject)
-    {EMTPOpCodeSendObject, CAbstractMediaMtpDataProviderSendObject::NewL}, //SendObject
-    {EMTPOpCodeSendObjectPropList, CAbstractMediaMtpDataProviderSendObject::NewL}, // SendobjectPropList (routed to SendObject)
-    {EMTPOpCodeSetObjectPropValue, CAbstractMediaMtpDataProviderSetObjectPropValue::NewL},
-    {EMTPOpCodeSetObjectPropList, CAbstractMediaMtpDataProviderSetObjectPropList::NewL}, //SetObjectPropList
-    {EMTPOpCodeGetObjectReferences, CGetObjectReferences::NewL}, //Get Object References
-    {EMTPOpCodeSetObjectReferences, CAbstractMediaMtpDataProviderSetObjectReferences::NewL}, //Set Object References
-    {EMTPOpCodeDeleteObject, CDeleteObject::NewL}, //DeleteObject
-    {EMTPOpCodeCopyObject, CAbstractMediaMtpDataProviderCopyObject::NewL}, // Copy Object
-    {EMTPOpCodeMoveObject, CAbstractMediaMtpDataProviderMoveObject::NewL}, // Move Object
-    {EMTPOpCodeGetPartialObject, CGetPartialObject::NewL}, //GetPartialObject
-    {EMTPExtOpCodeAbstractMediaPreference, CAbstractMediaMtpDataProviderAbstractMediaPreference::NewL}, // WMPReportSyncOnlyAbstractMedias
-    {EMTPOpCodeGetFormatCapabilities, CAbstractMediaMtpDataProviderGetFormatCapabilities::NewL} // GetFormatCapabilities
-
+        { EMTPOpCodeGetObjectPropsSupported, CGetObjectPropsSupported::NewL }, //Get Supported Props
+        { EMTPOpCodeGetObjectPropDesc, CGetObjectPropDesc::NewL }, //Get Props Description
+        { EMTPOpCodeGetInterdependentPropDesc, CGetInterdependentPropDesc::NewL },
+        { EMTPOpCodeGetObjectInfo, CGetObjectInfo::NewL }, //GetObjectInfo
+        { EMTPOpCodeGetObject, CGetObject::NewL }, //GetObject
+        { EMTPOpCodeGetObjectPropValue, CAbstractMediaMtpDataProviderGetObjectPropValue::NewL },
+        { EMTPOpCodeGetObjectPropList, CAbstractMediaMtpDataProviderGetObjectPropList::NewL }, //GetObjectPropList
+        { EMTPOpCodeSendObjectInfo, CSendObject::NewL }, //SendObjectInfo (routed to SendObject)
+        { EMTPOpCodeSendObject, CSendObject::NewL }, //SendObject
+        { EMTPOpCodeSendObjectPropList, CSendObject::NewL }, // SendobjectPropList (routed to SendObject)
+        { EMTPOpCodeSetObjectPropValue, CAbstractMediaMtpDataProviderSetObjectPropValue::NewL },
+        { EMTPOpCodeSetObjectPropList, CSetObjectPropList::NewL }, //SetObjectPropList
+        { EMTPOpCodeGetObjectReferences, CGetObjectReferences::NewL }, //Get Object References
+        { EMTPOpCodeSetObjectReferences, CSetObjectReferences::NewL }, //Set Object References
+        { EMTPOpCodeDeleteObject, CDeleteObject::NewL }, //DeleteObject
+        { EMTPOpCodeCopyObject, CAbstractMediaMtpDataProviderCopyObject::NewL }, // Copy Object
+        { EMTPOpCodeMoveObject, CAbstractMediaMtpDataProviderMoveObject::NewL }, // Move Object
+        { EMTPOpCodeGetPartialObject, CGetPartialObject::NewL }, //GetPartialObject
+        { EMTPExtOpCodeAbstractMediaPreference, CAbstractMediaMtpDataProviderAbstractMediaPreference::NewL }, // WMPReportSyncOnlyAbstractMedias
+        { EMTPOpCodeGetFormatCapabilities, CGetFormatCapabilities::NewL } // GetFormatCapabilities
     };
 
 // -----------------------------------------------------------------------------

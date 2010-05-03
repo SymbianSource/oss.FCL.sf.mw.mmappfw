@@ -621,9 +621,7 @@ void CMPXPlaybackInitializer::InitL(const CMPXMedia& aMedia,TInt aError)
                     {
                     iHandler->SelectPlayersL(t);
                     }
-                }
-           
-
+                }           
             
             HBufC8* mimeType =
                     MPXUser::Alloc8L(aMedia.ValueText(KMPXMediaGeneralMimeType));
@@ -866,8 +864,7 @@ void CMPXPlaybackInitializer::InitL(const TDesC& aUri, const TDesC8& aType )
         
         // if cast was successful, then init streaming with access point
         if (plugin)
-            {
-            
+            {            
             TInt accessPoint = 0;
             if ( iMedia->IsSupported(KMPXMediaGeneralExtAccessPoint) ) 
                 {

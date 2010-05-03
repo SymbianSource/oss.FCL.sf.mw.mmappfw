@@ -11,7 +11,7 @@
 *
 * Contributors:
 *
-* Description: 
+* Description:
 *
 */
 
@@ -22,7 +22,6 @@
 // class forward
 class MMTPConnection;
 class TMTPTypeRequest;
-class MMTPDataProviderFramework;
 class MMmRequestProcessor;
 class MMmMtpDpConfig;
 

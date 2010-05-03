@@ -18,9 +18,7 @@
 
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
-#include <mtp/cmtpobjectmetadata.h>
 #include <f32file.h>
 
 #include "cgetobjectpropvalue.h"
@@ -28,9 +26,8 @@
 #include "cmmmtpdpmetadataaccesswrapper.h"
 #include "mmmtpdplogger.h"
 #include "mmmtpdpconfig.h"
+#include "tobjectdescription.h"
 
-_LIT( KMtpDateTimeFormat, "%F%Y%M%DT%H%T%S" );
-const TInt KMtpMaxDateTimeStringLength = 15;
 
 // -----------------------------------------------------------------------------
 // Verification data for the GetObjectPropValue request
@@ -138,15 +135,13 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
     TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
     TUint32 propCode = Request().Uint32( TMTPTypeRequest::ERequestParameter2 );
     PRINT2( _L( "MM MTP <> CGetObjectPropValue::ServiceL objectHandle = 0x%x, propCode = 0x%x" ),
-            objectHandle, propCode );
+        objectHandle, propCode );
 
     // don't have the ownship of the object
     iObjectInfo = iRequestChecker->GetObjectInfo( objectHandle );
     TPtrC suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
     PRINT1( _L( "MM MTP <> CGetObjectPropValue::ServiceL object file name is %S" ), &suid );
     TParsePtrC parse( suid );
-
-    iDpConfig.GetWrapperL().SetStorageRootL( parse.Drive() );
 
     if ( iMTPTypeString != NULL )
         {
@@ -182,7 +177,7 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
             {
             iMTPTypeUint16.Set( 0 );
             iMTPTypeUint16 = MmMtpDpUtility::GetProtectionStatusL( iFramework.Fs(),
-                    iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
+                iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
             SendDataL( iMTPTypeUint16 );
             }
             break;
@@ -231,26 +226,21 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
         // Name and DataAdded (audio only) fall under the same branch while dateadded(video)/modified/created fall under another
         case EMTPObjectPropCodeName: // 0xDC44
         case EMTPObjectPropCodeDateAdded: // 0xDC4E
+        case EMTPObjectPropCodeAlbumArtist:
             {
-            if ( ( propCode == EMTPObjectPropCodeName)
-                || ( ( !MmMtpDpUtility::IsVideoL(iObjectInfo->DesC( CMTPObjectMetaData::ESuid ), iFramework ) )
-                        && ( propCode == EMTPObjectPropCodeDateAdded ) ) )
-                {
-                iMTPTypeString = CMTPTypeString::NewL();
-                ServiceMetaDataFromWrapperL( propCode, *iMTPTypeString, *iObjectInfo );
-                break;
-                }
+            iMTPTypeString = CMTPTypeString::NewL();
+            ServiceMetaDataFromWrapperL( propCode, *iMTPTypeString, *iObjectInfo );
             }
+            break;
         //lint -fallthrough
         case EMTPObjectPropCodeDateCreated:
         case EMTPObjectPropCodeDateModified:
             {
-            TTime dataModified;
-            dataModified = MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(),
-                iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
-
             TBuf<KMtpMaxDateTimeStringLength> timeStr;
-            dataModified.FormatL( timeStr, KMtpDateTimeFormat );
+            MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(),
+                iObjectInfo->DesC( CMTPObjectMetaData::ESuid ),
+                timeStr );
+
             PRINT1( _L( "MM MTP <> CGetObjectPropValue::ServiceL Date time %S" ), &timeStr );
             iMTPTypeString = CMTPTypeString::NewL( timeStr );
             SendDataL( *iMTPTypeString );
@@ -260,7 +250,7 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
         // Consumable
         case EMTPObjectPropCodeNonConsumable:
             {
-            iMTPTypeUint8.Set( 0 );
+            iMTPTypeUint8.Set( iObjectInfo->Uint( CMTPObjectMetaData::ENonConsumable ) );
             SendDataL( iMTPTypeUint8 );
             }
             break;

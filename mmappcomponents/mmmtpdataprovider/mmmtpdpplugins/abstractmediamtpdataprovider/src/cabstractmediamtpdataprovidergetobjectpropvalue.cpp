@@ -16,6 +16,9 @@
 */
 
 
+#include <mtp/cmtptypearray.h>
+#include <f32file.h>
+
 #include "cabstractmediamtpdataprovidergetobjectpropvalue.h"
 #include "abstractmediamtpdataproviderconst.h"
 #include "mmmtpdplogger.h"
@@ -49,7 +52,7 @@ MMmRequestProcessor* CAbstractMediaMtpDataProviderGetObjectPropValue::NewL( MMTP
 //
 void CAbstractMediaMtpDataProviderGetObjectPropValue::ConstructL()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -59,7 +62,7 @@ void CAbstractMediaMtpDataProviderGetObjectPropValue::ConstructL()
 //
 CAbstractMediaMtpDataProviderGetObjectPropValue::~CAbstractMediaMtpDataProviderGetObjectPropValue()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -72,7 +75,7 @@ CAbstractMediaMtpDataProviderGetObjectPropValue::CAbstractMediaMtpDataProviderGe
     MMmMtpDpConfig& aDpConfig ) :
     CGetObjectPropValue( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -81,10 +84,64 @@ CAbstractMediaMtpDataProviderGetObjectPropValue::CAbstractMediaMtpDataProviderGe
 // invoked or invalid propcode
 // -----------------------------------------------------------------------------
 //
-void CAbstractMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL( TUint16 /*aPropCode*/ )
+void CAbstractMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL( TUint16 aPropCode )
     {
-    PRINT( _L( "MM MTP <> CAbstractMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL, leave with KErrNotSupported"));
-    User::Leave( KErrNotSupported );
+    PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL" ) );
+    switch ( aPropCode )
+        {
+        case EMTPObjectPropCodeRepresentativeSampleFormat:
+            {
+            iMTPTypeUint16.Set( 0 );
+            SendDataL( iMTPTypeUint16 );
+            }
+            break;
+
+        case EMTPObjectPropCodeRepresentativeSampleSize: // fall through
+        case EMTPObjectPropCodeRepresentativeSampleHeight: // fall through
+        case EMTPObjectPropCodeRepresentativeSampleWidth:
+            {
+            iMTPTypeUint32.Set( 0 );
+            SendDataL( iMTPTypeUint32 );
+            }
+            break;
+
+        case EMTPObjectPropCodeRepresentativeSampleData:
+            {
+            if ( iMTPTypeArray != NULL )
+                {
+                delete iMTPTypeArray;
+                iMTPTypeArray = NULL;
+                }
+            iMTPTypeArray = CMTPTypeArray::NewL( EMTPTypeAUINT8 );
+
+            const TDesC& suid = iObjectInfo->DesC( CMTPObjectMetaData::ESuid );
+            PRINT1( _L( "MM MTP <> EMTPObjectPropCodeRepresentativeSampleData file suid=%S" ), &suid );
+            RFile sampleFile;
+            User::LeaveIfError( sampleFile.Open( iFramework.Fs(), suid, EFileShareReadersOnly ) );
+            CleanupClosePushL( sampleFile );    // + sampleFile
+
+            TInt size = 0;
+            User::LeaveIfError( sampleFile.Size( size ) );
+            PRINT1( _L( "MM MTP <> EMTPObjectPropCodeRepresentativeSampleData sampleFile.Size() size=%d" ), size );
+
+            if( size > 0 )
+                {
+                HBufC8* sampleData = HBufC8::NewLC( size * sizeof(TUint8) );    // + sampleData
+                TPtr8 samplePtr = sampleData->Des();
+                User::LeaveIfError( sampleFile.Read( samplePtr ) );
+                iMTPTypeArray->SetByDesL( samplePtr );
+                CleanupStack::PopAndDestroy( sampleData );    // - sampleData
+                }
+            CleanupStack::PopAndDestroy( &sampleFile );    // - sampleFile
+
+            SendDataL( *iMTPTypeArray );
+            }
+            break;
+
+        default:
+            PRINT( _L( "MM MTP <> CAbstractMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL, leave with KErrNotSupported"));
+            User::Leave( KErrNotSupported );
+        }
     }
 
 // end of file

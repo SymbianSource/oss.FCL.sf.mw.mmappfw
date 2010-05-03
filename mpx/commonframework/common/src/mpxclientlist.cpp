@@ -24,6 +24,41 @@
 #include "mpxclientlist.h"
 #include <mpxsubscription.h>
 
+// ============================ LOCAL FUNCTIONS ==============================
+
+// ----------------------------------------------------------------------------
+// Searches process id for target selector plugin.
+// When the player has been opened in a mode, which is bound to the same engine
+// than certain application's engine, then need to fetch its process id.
+// (As a reference for parameter aMode see MMPXPlaybackUtility modes.)
+// Otherwise target selector plugin is notified wrongly about registered client
+// and key events are not propagated to correct application.
+// ----------------------------------------------------------------------------
+//
+static void FindProcessIdForTsp( TInt aMode, TProcessId& aProcessId )
+    {
+    TBool processFound( EFalse );
+    TFindProcess processFinder;
+    TFullName processName;
+
+    while ( processFinder.Next( processName ) == KErrNone && !processFound )
+        {
+        RProcess process;
+        TInt err = process.Open( processFinder );
+        if( err == KErrNone )
+            {
+            if( process.SecureId().iId == aMode && process.ExitType() == EExitPending )
+                {
+                MPX_DEBUG4("FindProcessIdForTsp(): pid changed from %d to %d (mode 0x%x)",
+                           TUint(aProcessId), TUint(process.Id()), aMode);
+                aProcessId = process.Id();
+                processFound = ETrue;
+                }
+            process.Close();
+            }
+        }
+    }
+
 // ============================ MEMBER FUNCTIONS ==============================
 
 // ----------------------------------------------------------------------------
@@ -109,6 +144,7 @@ EXPORT_C void CMPXClientList::AddClientL(
         iClientProcesses.AppendL(pid);
         if (iObserver)
             {
+            FindProcessIdForTsp(aMode, pid);
             iObserver->HandleClientChange(pid, MMPXClientlistObserver::EAdd);
             }
         }
@@ -140,6 +176,7 @@ EXPORT_C void CMPXClientList::AddClientL(
         iClientProcesses.AppendL(pid);
         if (iObserver)
             {
+            FindProcessIdForTsp(aMode, pid);
             iObserver->HandleClientChange(pid, MMPXClientlistObserver::EAdd);
             }
         }
@@ -176,7 +213,9 @@ EXPORT_C void CMPXClientList::RemoveClient(TInt aIndex)
             {
             if (iObserver)
                 {
-                iObserver->HandleClientChange(id->iPid, MMPXClientlistObserver::ERemove);
+                TProcessId pid(id->iPid);
+                FindProcessIdForTsp(id->iMode, pid);
+                iObserver->HandleClientChange(pid, MMPXClientlistObserver::ERemove);
                 }
             iClientProcesses.Remove(i);
             }
@@ -493,8 +532,8 @@ CMPXClientList::CClientId::CClientId(
     :   iTid(aTid),
         iPid(aPid),
         iMode(aMode),
-        iMsgQueue(aMsgQueue),
-        iCategory(aCategory)
+        iCategory(aCategory),
+        iMsgQueue(aMsgQueue)
         {}
 
 // -----------------------------------------------------------------------------

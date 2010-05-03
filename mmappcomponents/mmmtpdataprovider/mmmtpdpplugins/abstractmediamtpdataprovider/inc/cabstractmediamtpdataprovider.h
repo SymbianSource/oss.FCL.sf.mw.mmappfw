@@ -24,7 +24,7 @@
 #include "abstractmediamtpdataproviderprocessor.h"
 #include "mmmtpenumerationcallback.h"
 #include "mmmtpdpconfig.h"
-
+#include "mmmtpdp_variant.hrh"
 
 // Forward declaration
 class MMmRequestProcessor;
@@ -66,9 +66,20 @@ public:
     TUint32 GetDefaultStorageIdL() const;
 
     /**
-    * @return the reference of CMmMtpDpMetadataAccessWrapper to enumerator
+    * Get db handler wrapper
+    * @return wrapper references
     */
     CMmMtpDpMetadataAccessWrapper& GetWrapperL();
+
+    /**
+    * @return The utility to setting properties
+    */
+    CPropertySettingUtility* PropSettingUtility();
+
+    /**
+    * @return The utiltiy to setting descriptions
+    */
+    CDescriptionUtility* DescriptionUtility();
 
 protected:
     // from CMTPDataProviderPlugin
@@ -97,7 +108,7 @@ protected:
 
     /**
     * Notify the data provider that the session has been closed
-    * @param aConnection    The connection of the sesssion
+    * @param aSession    The connection of the sesssion
     */
     void SessionClosedL( const TMTPNotificationParamsSessionChange& aSession );
 
@@ -168,6 +179,8 @@ private:
 
     void GetSupportedPropertiesL();
 
+    void GetAllSupportedPropL();
+
 private:
     // data
     RPointerArray<MMmRequestProcessor> iActiveProcessors;
@@ -175,13 +188,21 @@ private:
     RArray<TUint32> iPendingEnumerations;
 
     TInt iActiveProcessor;
+    TBool iActiveProcessorRemoved;
 
     CAbstractMediaMtpDataProviderRenameObject *iRenameObject;
     TBool iIsSessionOpen;
 
     RArray<TUint> iSupportedFormat;
 
-    RArray<TUint> iSupportedProperties;
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
+    RArray<TUint> iSupportedPropAbstractAlbum;
+#endif
+    RArray<TUint> iSupportedPropPlaylist;
+    RArray<TUint> iSupportedPropAll;
+
+    CPropertySettingUtility* iPropSettingUtility;
+    CDescriptionUtility* iDescriptionUtility;
 
     };
 

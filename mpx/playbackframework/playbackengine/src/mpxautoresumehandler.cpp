@@ -29,6 +29,20 @@ const TInt KMPXErrDiedTimeout = 2000000;
 // Time to wait before resume after call has ended.
 const TInt KMPXResumeWaitTime = 3000000; // 3.0s
 
+// TODO: the following constants and definitions are copied from nssvascoreconstant.h, which is not
+// included directly because it is an App layer API. Way to fix this is to ask Speechsrv to move the header file to MW layer.
+const TUid KSINDUID = {KUidSystemCategoryValue};
+const TInt ERecognitionState=0;
+
+// Recognition state values for the P&S key ERecognitionState
+enum TRecognitionStateValues
+    {
+    ERecognitionStarted = 0, 
+    ERecognitionSpeechEnd, 
+    ERecognitionSuccess, 
+    ERecognitionFail
+    };
+// End TODO
 
 
 // ================= MEMBER FUNCTIONS =======================
@@ -60,6 +74,9 @@ void CMPXAutoResumeHandler::ConstructL()
     // Listen to call type changes
     iTypeObserver = CMPXPSKeyWatcher::NewL(KPSUidCtsyCallInformation,
                                            KCTsyCallType,this);
+    
+    iVoiceCmdObserver = CMPXPSKeyWatcher::NewL( KSINDUID, ERecognitionState, this );
+    
     iResumeTimer = CPeriodic::NewL(CActive::EPriorityStandard);
     }
 
@@ -88,6 +105,7 @@ CMPXAutoResumeHandler* CMPXAutoResumeHandler::NewL(
 //
 CMPXAutoResumeHandler::~CMPXAutoResumeHandler()
     {
+    delete iVoiceCmdObserver;
     delete iStateObserver;
     delete iTypeObserver;
     if ( iResumeTimer )
@@ -135,13 +153,15 @@ void CMPXAutoResumeHandler::HandlePlaybackComplete(TInt aError)
     MPX_DEBUG2("CMPXAutoResumeHandler::HandlePlaybackComplete(%d) entering", aError);
     iPausedForCall = EFalse;
     if ( KErrDied == aError ||
-         KErrAccessDenied == aError )
+         KErrAccessDenied == aError || 
+         KErrInUse == aError )
         {
         iKErrDiedTime.HomeTime();
 
         TInt callType = EPSCTsyCallTypeNone;
         TInt callState = EPSCTsyCallStateNone;
-
+        TInt voiceCmdState(0);
+        
         if (!iTypeObserver->GetValue(callType) &&
             !iStateObserver->GetValue(callState))
             {
@@ -155,8 +175,16 @@ void CMPXAutoResumeHandler::HandlePlaybackComplete(TInt aError)
                 iPausedForCall = ETrue;
                 }
             }
+        
+        if ( !iPausedForCall && !iVoiceCmdObserver->GetValue( voiceCmdState ) ) // key exist if voice commanding is in progress
+            {
+            // Paused due voice command activity
+            iPausedForVoiceCmd = ETrue;
+            }
         }
-    MPX_DEBUG1("CMPXAutoResumeHandler::HandlePlaybackComplete() exiting");
+    
+    MPX_DEBUG3("CMPXAutoResumeHandler::HandlePlaybackComplete() exiting: iPausedForCall=%d, iPausedForVoiceCmd=%d",
+               iPausedForCall, iPausedForVoiceCmd);
     }
 
 // -----------------------------------------------------------------------------
@@ -175,10 +203,18 @@ void CMPXAutoResumeHandler::CancelResumeTimer()
 // CMPXAutoResumeHandler::HandlePSEvent
 // -----------------------------------------------------------------------------
 //
-void CMPXAutoResumeHandler::HandlePSEvent(TUid /*aUid*/, TInt /*aKey*/)
+void CMPXAutoResumeHandler::HandlePSEvent(TUid aUid, TInt /*aKey*/)
     {
     MPX_FUNC("CMPXAutoResumeHandler::HandlePSEvent()");
-    TRAP_IGNORE(DoHandleStateChangeL());
+    
+    if ( aUid == KSINDUID )
+        {
+        DoHandleVoiceCmdChange();
+        }
+    else
+        {
+        TRAP_IGNORE(DoHandleStateChangeL());
+        }
     }
 
 // -----------------------------------------------------------------------------
@@ -246,6 +282,19 @@ void CMPXAutoResumeHandler::DoHandleStateChangeL()
             iPausedForCall = ETrue;
             }
         }
+    
+    if ( shouldPause && iVoiceCmdResumeOngoing )
+        {
+        // Resume timer has been started after a voice command, cancel it now
+        // so that playback is not resumed while calling
+        if ( iResumeTimer->IsActive() )
+            {
+            iResumeTimer->Cancel();
+            }
+        iVoiceCmdResumeOngoing = EFalse;
+        iPausedForCall = ETrue; // resume playback once call has been ended
+        }
+    
     MPX_DEBUG2("CMPXAutoResumeHandler::DoHandleStateChangeL(): iPausedForCall = %d", iPausedForCall);
     }
 
@@ -317,6 +366,8 @@ void CMPXAutoResumeHandler::HandleResumeTimerCallback()
     {
     MPX_FUNC("CMPXAutoResumeHandler::HandleResumeTimerCallback() entering");
 
+    iVoiceCmdResumeOngoing = EFalse;
+    
     CancelResumeTimer();
     TRAP_IGNORE( iEngine.HandleCommandL( EPbCmdPlayWithFadeIn ));
     }
@@ -372,6 +423,41 @@ void CMPXAutoResumeHandler::SetAutoResume(TBool aAutoResume)
     {
     MPX_DEBUG2("CMPXAutoResumeHandler::SetAutoResume(): AutoResume = %d", aAutoResume);
     iAutoResume = aAutoResume;
+    }
+
+// -----------------------------------------------------------------------------
+// CMPXAutoResumeHandler::DoHandleVoiceCmdChange
+// -----------------------------------------------------------------------------
+//
+void CMPXAutoResumeHandler::DoHandleVoiceCmdChange()
+    {
+    MPX_FUNC("CMPXAutoResumeHandler::DoHandleVoiceCmdChange()");
+    
+    TInt voiceCmdState( 0 );
+    TInt err( iVoiceCmdObserver->GetValue( voiceCmdState ) );
+    
+    MPX_DEBUG4("CMPXAutoResumeHandler::DoHandleVoiceCmdChange(): iPausedForVoiceCmd = %d, err=%d, state=%d", 
+                    iPausedForVoiceCmd, err, voiceCmdState);
+    
+    if ( iPausedForVoiceCmd && !iPausedForCall )
+        {
+        if ( err == KErrNotFound ) // voice command has been finished once the P&S key is deleted 
+            {
+            if ( iResumeTimer->IsActive() )
+                  iResumeTimer->Cancel();
+            
+            iResumeTimer->Start( KMPXResumeWaitTime, KMPXResumeWaitTime, TCallBack(ResumeTimerCallback, this) );
+            
+            iPausedForVoiceCmd = EFalse;
+            
+            iVoiceCmdResumeOngoing = ETrue; // flag for cancelling resume timer due to a call
+            }
+        }
+    
+    if ( iPausedForCall ) // ensure that not interfering with call handling in any circumstances
+        {
+        iPausedForVoiceCmd = EFalse;
+        }
     }
 
 //  End of File

@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extended collection helper with an internal caching array
-*  Version     : %version: da1mmcf#27.1.12 % 
+*  Version     : %version: da1mmcf#27.1.12.3.1 % 
 *
 */
 
@@ -157,9 +157,24 @@ void CMPXCollectionCachedHelper::AddL( CMPXMedia* aMedia )
         {
         Commit();
         }
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
+    TBool extract = ETrue;
+    if( aMedia->IsSupported( KMPXMediaMTPSampleDataFlag ) )
+        {
+        
+        extract = aMedia->ValueTObjectL<TBool>( KMPXMediaMTPSampleDataFlag );
+        MPX_DEBUG2("CMPXCollectionCachedHelper::AddL KMPXMediaMTPSampleDataFlag is set. extract=%d", extract );
+        }
     
+    if( extract )
+        {
+        // Extract album art from the file
+        iMetadataExtractor->ExtractAlbumArtL( aMedia );
+        }
+#else
     // Extract album art from the file
     iMetadataExtractor->ExtractAlbumArtL( aMedia );
+#endif
     
     CMPXMedia* copy = CMPXMedia::NewL( *aMedia );
     CleanupStack::PushL( copy );
@@ -332,7 +347,20 @@ void CMPXCollectionCachedHelper::CleanupDeletedMediasL()
 void CMPXCollectionCachedHelper::SetL( CMPXMedia*& aMedia )
     {
     MPX_DEBUG1("CMPXCollectionCachedHelper::::SetL <--");     
-    
+
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED    
+    if( aMedia->IsSupported( KMPXMediaMTPSampleDataFlag ) )
+        {
+        TBool flag = aMedia->ValueTObjectL<TBool>( KMPXMediaMTPSampleDataFlag );            
+        MPX_DEBUG2("CMPXCollectionCachedHelper::SetL KMPXMediaMTPSampleDataFlag is set. flag=%d", flag );
+        if( flag )
+            {        
+            iMetadataExtractor->ExtractAlbumArtL( aMedia );
+            }
+        return;
+        }
+#endif
+            
     const TDesC& newUri = aMedia->ValueText( KMPXMediaGeneralUri );
     TInt count( iCache->Count() );
     
@@ -719,7 +747,11 @@ const CMPXMedia& CMPXCollectionCachedHelper::GetL( const TDesC& aFile,
 
     MPX_DEBUG1("CMPXCollectionCachedHelper::GetL <--");
 
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
+    if (aItemCat != EMPXSong && aItemCat != EMPXPlaylist && aItemCat != EMPXAbstractAlbum)
+#else
     if (aItemCat != EMPXSong && aItemCat != EMPXPlaylist)
+#endif
         {
         User::Leave(KErrArgument);
         }
@@ -751,11 +783,20 @@ const CMPXMedia& CMPXCollectionCachedHelper::GetL( const TDesC& aFile,
                           EMPXMediaGeneralTitle | EMPXMediaGeneralDate |
                           EMPXMediaGeneralDuration | EMPXMediaGeneralComment |
                           EMPXMediaGeneralUri ));
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
         attributes.AppendL(
             TMPXAttribute(KMPXMediaIdMusic,
                           EMPXMediaMusicArtist | EMPXMediaMusicAlbum |
                           EMPXMediaMusicAlbumTrack | EMPXMediaMusicComposer |
-                          EMPXMediaMusicYear | EMPXMediaMusicGenre));
+                          EMPXMediaMusicYear | EMPXMediaMusicGenre | 
+                          EMPXMediaMusicAlbumArtist));
+#else
+	    attributes.AppendL(
+            TMPXAttribute(KMPXMediaIdMusic,
+	                      EMPXMediaMusicArtist | EMPXMediaMusicAlbum |
+	                      EMPXMediaMusicAlbumTrack | EMPXMediaMusicComposer |
+	                      EMPXMediaMusicYear | EMPXMediaMusicGenre));
+#endif
         attributes.AppendL(KMPXMediaAudioAudioAll);
         attributes.AppendL(KMPXMediaMTPAll);
 
@@ -997,6 +1038,14 @@ void CMPXCollectionCachedHelper::DoAppendMusicL( CMPXMedia& aSrc,
              aSrc.ValueTObjectL<TInt>( KMPXMediaMusicRating ) 
                                      );   
         }
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED 
+    if( atts&EMPXMediaMusicAlbumArtist ) // Text
+        {
+        aDestination.SetTextValueL( KMPXMediaMusicAlbumArtist,
+                     aSrc.ValueText(KMPXMediaMusicAlbumArtist ) 
+                                  );
+        }
+#endif
     MPX_DEBUG1("CMPXCollectionCachedHelper::DoAppendMusicL -->");     
     }
 

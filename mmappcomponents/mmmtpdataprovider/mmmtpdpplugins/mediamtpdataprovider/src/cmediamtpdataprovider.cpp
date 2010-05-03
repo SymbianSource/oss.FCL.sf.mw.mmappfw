@@ -15,7 +15,6 @@
 *
 */
 
-
 #include <mtp/mmtpconnection.h>
 #include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpstoragemgr.h>
@@ -26,6 +25,7 @@
 #include <driveinfo.h>
 
 #include "cmediamtpdataprovider.h"
+#include "crequestprocessor.h"
 #include "mediamtpdataproviderconst.h"
 #include "cmediamtpdataproviderenumerator.h"
 #include "mmmtpdplogger.h"
@@ -36,6 +36,8 @@
 #include "crenameobject.h"
 #include "mmmtpdpdefs.h"
 #include "mmmtpdpfiledefs.h"
+#include "cmediamtpdataproviderpropertysettingutility.h"
+#include "cmediamtpdataproviderdescriptionutility.h"
 
 // Class constants.
 // Defines the number of MTP Active Processors allowed
@@ -77,6 +79,7 @@ CMediaMtpDataProvider::CMediaMtpDataProvider( TAny* aParams ) :
     iSupportedPropVideo( KMediaMtpDpArrayGranularity ),
     iSupportedPropAll( KMediaMtpDpArrayGranularity )
     {
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -90,6 +93,8 @@ CMediaMtpDataProvider::~CMediaMtpDataProvider()
 
     CMmMtpDpAccessSingleton::Release();
     delete iMediaEnumerator;
+    delete iPropSettingUtility;
+    delete iDescriptionUtility;
 
     iPendingEnumerations.Close();
     TInt count = iActiveProcessors.Count();
@@ -126,11 +131,14 @@ void CMediaMtpDataProvider::ConstructL()
 
     iMediaEnumerator = CMediaMtpDataProviderEnumerator::NewL( Framework(), *this );
 
-    CMmMtpDpAccessSingleton::CreateL( Framework().Fs(), Framework() );
+    CMmMtpDpAccessSingleton::CreateL( Framework() );
 
     GetSupportedFormatL();
     GetSupportedPropL();
     GetAllSupportedPropL();
+
+    iPropSettingUtility = CMediaMtpDataProviderPropertySettingUtility::NewL();
+    iDescriptionUtility = CMediaMtpDataProviderDescriptionUtility::NewL();
 
     PRINT( _L( "MM MTP <= CMediaMtpDataProvider::ConstructL" ) );
     }
@@ -162,13 +170,11 @@ void CMediaMtpDataProvider::ProcessNotificationL( TMTPNotification aNotification
         {
         case EMTPSessionClosed:
             PRINT( _L( "MM MTP <> CMediaMtpDataProvider::ProcessNotificationL EMTPSessionClosed event recvd" ) );
-
             SessionClosedL( *reinterpret_cast<const TMTPNotificationParamsSessionChange*> ( aParams ) );
             break;
 
         case EMTPSessionOpened:
             PRINT( _L( "MM MTP <> CMediaMtpDataProvider::ProcessNotificationL EMTPSessionOpened event recvd" ) );
-
             SessionOpenedL( *reinterpret_cast<const TMTPNotificationParamsSessionChange*> ( aParams ) );
             break;
 
@@ -205,14 +211,19 @@ void CMediaMtpDataProvider::ProcessRequestPhaseL( TMTPTransactionPhase aPhase,
 
     MMmRequestProcessor* processor = iActiveProcessors[index];
     iActiveProcessor = index;
-    // iActiveProcessorRemoved = EFalse;
+    iActiveProcessorRemoved = EFalse;
     TBool result = processor->HandleRequestL( aRequest, aPhase );
 
-    if( !iIsSessionOpen )
+    if ( !iIsSessionOpen )
         {
         processor->Release();
         }
-
+    // iActiveProcessorRemoved will be set to ETrue in the above function
+    // HandleRequestL(),such as SessionClose()
+    else if ( iActiveProcessorRemoved )
+        {
+        processor->Release(); // destroy the processor
+        }
     else if ( result ) // destroy the processor
         {
         processor->Release();
@@ -231,9 +242,9 @@ void CMediaMtpDataProvider::SessionClosedL( const TMTPNotificationParamsSessionC
     iIsSessionOpen = EFalse;
     TInt count = iActiveProcessors.Count();
     PRINT1( _L( "MM MTP => CMediaMtpDataProvider::SessionClosedL, total processor count = %d" ), count );
-    for( TInt i = 0; i < count; i++ )
+    while ( count-- )
         {
-        MMmRequestProcessor* processor = iActiveProcessors[i];
+        MMmRequestProcessor* processor = iActiveProcessors[count];
 
         // replaced for the Request() is invalid sometimes
         // TUint32 sessionId( processor->Request().Uint32( TMTPTypeRequest::ERequestSessionID ) );
@@ -245,8 +256,16 @@ void CMediaMtpDataProvider::SessionClosedL( const TMTPNotificationParamsSessionC
             {
             processor->UsbDisconnect(); // Rollback
 
-            iActiveProcessors.Remove( i );
-            processor->Release();
+            iActiveProcessors.Remove( count );
+            if ( count == iActiveProcessor )
+                {
+                iActiveProcessorRemoved = ETrue;
+                iActiveProcessor = -1;  // update iActiveProcessor
+                }
+            else
+                {
+                processor->Release();
+                }
             }
         }
 
@@ -400,6 +419,7 @@ void CMediaMtpDataProvider::SupportedL( TMTPSupportCategory aCategory,
 
         //EMTPFormatCode3GPContainer,
         aStrings.AppendL(KFormatExtension3GP);
+        aStrings.AppendL(KFormatExtension3G2);
 
         //EMTPFormatCodeAAC,
         aStrings.AppendL(KFormatExtensionAAC);
@@ -500,12 +520,32 @@ TInt CMediaMtpDataProvider::LocateRequestProcessorL( const TMTPTypeEvent& aEvent
 
 // -----------------------------------------------------------------------------
 // CMediaMtpDataProvider::GetWrapper
-// return the reference of CMmMtpDpMetadataAccessWrapper to enumerator
+// return wrapper references
 // -----------------------------------------------------------------------------
 //
 CMmMtpDpMetadataAccessWrapper& CMediaMtpDataProvider::GetWrapperL()
     {
     return CMmMtpDpAccessSingleton::GetAccessWrapperL();
+    }
+
+// -----------------------------------------------------------------------------
+// CMediaMtpDataProvider::PropSettingUtility
+// return The utility to setting properties
+// -----------------------------------------------------------------------------
+//
+CPropertySettingUtility* CMediaMtpDataProvider::PropSettingUtility()
+    {
+    return iPropSettingUtility;
+    }
+
+// -----------------------------------------------------------------------------
+// CMediaMtpDataProvider::DescriptionUtility
+// return The utiltiy to setting descriptions
+// -----------------------------------------------------------------------------
+//
+CDescriptionUtility* CMediaMtpDataProvider::DescriptionUtility()
+    {
+    return iDescriptionUtility;
     }
 
 // ---------------------------------------------------------------------------

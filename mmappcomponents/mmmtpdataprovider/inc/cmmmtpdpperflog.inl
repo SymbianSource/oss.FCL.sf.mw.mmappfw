@@ -71,10 +71,13 @@ void CMmMtpDpPerfLog::WriteFormat( TRefByValue<const TDesC> aFmt, ... )
     VA_LIST list;
     VA_START( list, aFmt );
 
-    TBuf<KMtpLogBufferSize> buf;
-    
-    buf.AppendFormatList( aFmt, list, &iOverflowHandler );
-    Write( buf );
+    HBufC* buf = HBufC::New( KMtpLogBufferSize );
+    if ( buf )
+        {
+        buf->Des().AppendFormatList( aFmt, list, &iOverflowHandler );
+        Write( *buf );
+        delete buf;
+        }
     }
 
 void CMmMtpDpPerfLog::Start( const TDesC& aDescription )
@@ -187,9 +190,11 @@ void CMmMtpDpPerfLog::Stop( const TDesC& aDescription )
     
     if (totalTimeValue <= 0xFFFFFFFF)
         {
+        //Define the ptr on stack to avoid compiling warnning for wiscw udeb
+        TPtrC ptr( iDescription[index] );
         WriteFormat( _L( "<PERFLOG>%S-%S, usage = %u, last time = %u.%S ms, total time = %u.%S ms, average time = %u.%S ms</PERFLOG>" ), 
             iTitle, 
-            &iDescription[index], 
+            &ptr,
             iTotalUsage[index], 
             lastTimeValue, 
             &lastTimeDecimal, 
@@ -200,9 +205,11 @@ void CMmMtpDpPerfLog::Stop( const TDesC& aDescription )
         }
     else
         {
+        //Define the ptr on stack to avoid compiling warnning for wiscw udeb
+        TPtrC ptr( iDescription[index] );
         WriteFormat( _L( "<PERFLOG>%S-%S, usage = %u, last time = %u.%S ms, total time = %u%u.%S ms, average time = %u.%S ms</PERFLOG>" ), 
             iTitle, 
-            &iDescription[index], 
+            &ptr,
             iTotalUsage[index], 
             lastTimeValue, 
             &lastTimeDecimal, 

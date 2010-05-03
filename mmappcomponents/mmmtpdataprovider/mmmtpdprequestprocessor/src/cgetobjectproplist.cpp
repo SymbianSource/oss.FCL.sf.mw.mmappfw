@@ -18,12 +18,11 @@
 
 #include <bautils.h>
 #include <e32std.h>
-#include <mtp/mmtpdataproviderframework.h>
+
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/cmtptypeobjectproplist.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
-#include <mtp/cmtpobjectmetadata.h>
 
 #include "tobjectdescription.h"
 #include "cgetobjectproplist.h"
@@ -34,12 +33,7 @@
 #include "cmmmtpdpmetadataaccesswrapper.h"
 
 static const TUint32 KMTPAll = 0xffffffff;
-_LIT( KMtpDateTimeFormat, "%F%Y%M%DT%H%T%S" );
-const TInt KMtpMaxDateTimeStringLength = 15;
 
-#if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
-_LIT( KSubFormatParse, "SubFormatParse" );
-#endif
 
 // Verification data for the getObjectPropList request
 const TMTPRequestElementInfo KMTPGetObjectPropListPolicy[] =
@@ -82,13 +76,13 @@ EXPORT_C CGetObjectPropList::~CGetObjectPropList()
 EXPORT_C CGetObjectPropList::CGetObjectPropList( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
-    CRequestProcessor( aFramework,
-        aConnection,
-        sizeof ( KMTPGetObjectPropListPolicy ) / sizeof( TMTPRequestElementInfo ),
-        KMTPGetObjectPropListPolicy ),
-    iHandles ( KMmMtpRArrayGranularity ),
-    iDpConfig( aDpConfig ),
-    iPropertyArray( KMmMtpRArrayGranularity )
+        CRequestProcessor( aFramework,
+            aConnection,
+            sizeof ( KMTPGetObjectPropListPolicy ) / sizeof( TMTPRequestElementInfo ),
+            KMTPGetObjectPropListPolicy ),
+        iHandles ( KMmMtpRArrayGranularity ),
+        iDpConfig( aDpConfig ),
+        iPropertyArray( KMmMtpRArrayGranularity )
     {
     PRINT( _L( "Operation: GetObjectPropList(0x9805)" ) );
     }
@@ -144,7 +138,7 @@ EXPORT_C TMTPResponseCode CGetObjectPropList::CheckRequestL()
 
 // -----------------------------------------------------------------------------
 // CGetObjectPropList::ServiceL
-// service a request at request phase
+// GetObjectPropList request handler
 // -----------------------------------------------------------------------------
 //
 EXPORT_C void CGetObjectPropList::ServiceL()
@@ -167,7 +161,7 @@ EXPORT_C void CGetObjectPropList::ServiceL()
         TInt err = KErrNone;
         for ( TInt i = 0; i < numOfObjects; i++ )
             {
-            TUint32 handle = iHandles[i ];
+            TUint32 handle = iHandles[i];
 
             if ( iFramework.ObjectMgr().ObjectOwnerId( handle )
                 == iFramework.DataProviderId() )
@@ -178,8 +172,6 @@ EXPORT_C void CGetObjectPropList::ServiceL()
 
                 if ( iFramework.ObjectMgr().ObjectL( handle, *iObject ) ) // Populate the object meta data
                     {
-                    SetSubFormatCodeL();
-
                     err = ServiceOneObjectPropertyL( handle, iPropCode );
                     if ( err != KErrNone && err != KErrNotSupported )
                         break;
@@ -187,9 +179,14 @@ EXPORT_C void CGetObjectPropList::ServiceL()
                 }
             }
         PRINT1( _L( "MM MTP <> CGetObjectPropList::ServiceL, one property was queried, Send data to PC! err = %d" ), err );
-        if ( err == KErrNone  || err == KErrNotSupported )
+        if ( err == KErrNone
+            || ( err == KErrNotSupported && 0 < iPropertyList->NumberOfElements() ) )
+            // Make sure the dataset which is returned to pc is valid
             SendDataL( *iPropertyList );
-        else if ( err == KErrNotFound )
+        else if ( err == KErrNotFound || err == KErrNotSupported )
+            // The object entry is not in db
+            // or the ONLY required metadata is not in db.
+            // The second case is the same with GetObjectPropValue and device has nothing to return.
             SendResponseL( EMTPRespCodeAccessDenied );
         else
             SendResponseL( EMTPRespCodeGeneralError );
@@ -200,7 +197,7 @@ EXPORT_C void CGetObjectPropList::ServiceL()
 
 // -----------------------------------------------------------------------------
 // CGetObjectPropList::CheckFormatL
-// Ensures the object format operation parameter is valid
+// Ensure the object format operation parameter is valid
 // -----------------------------------------------------------------------------
 //
 TMTPResponseCode CGetObjectPropList::CheckFormatL() const
@@ -223,7 +220,7 @@ TMTPResponseCode CGetObjectPropList::CheckFormatL() const
 
         for ( TInt i = 0; i < count; i++ )
             {
-            if ( formatCode == (*format)[i ] )
+            if ( formatCode == (*format)[i] )
                 {
                 response = EMTPRespCodeOK;
                 break;
@@ -238,7 +235,7 @@ TMTPResponseCode CGetObjectPropList::CheckFormatL() const
 
 // -----------------------------------------------------------------------------
 // CGetObjectPropList::CheckPropCodeL
-// Ensures the object prop code operation parameter is valid
+// Ensure the object prop code operation parameter is valid
 // -----------------------------------------------------------------------------
 //
 TMTPResponseCode CGetObjectPropList::CheckPropCodeL() const
@@ -259,12 +256,11 @@ TMTPResponseCode CGetObjectPropList::CheckPropCodeL() const
         PRINT1( _L( "MM MTP <> CGetObjectPropList::CheckPropCode, Group Code = 0x%x" ), groupCode );
 
         // check if groupCode is supported
-        TInt count = sizeof ( KSupportedGroupCode )
-            / sizeof ( KSupportedGroupCode[0] );
+        TInt count = sizeof ( KSupportedGroupCode ) / sizeof ( KSupportedGroupCode[0] );
         TInt i = 0;
         for ( ; i < count; i++ )
             {
-            if ( groupCode == KSupportedGroupCode[i ] )
+            if ( groupCode == KSupportedGroupCode[i] )
                 break;
             }
         if ( i == count )
@@ -275,14 +271,11 @@ TMTPResponseCode CGetObjectPropList::CheckPropCodeL() const
         {
         PRINT1( _L( "MM MTP <> CGetObjectPropList::CheckPropCode, Property(0x%x) was queried." ), iPropCode );
 
-        TInt err = KErrNone;
         const RArray<TUint>* properties = NULL;
         if ( formatCode == KMTPFormatsAll )
             properties = iDpConfig.GetAllSupportedProperties();
         else
             properties = iDpConfig.GetSupportedPropertiesL( formatCode );
-
-        User::LeaveIfError( err );
 
         const TInt count = properties->Count();
         TInt i = 0;
@@ -312,7 +305,7 @@ TMTPResponseCode CGetObjectPropList::CheckPropCodeL() const
 
 // -----------------------------------------------------------------------------
 // CGetObjectPropList::CheckDepth
-// Ensures the depth operation parameter is valid
+// Ensure the depth operation parameter is valid
 // -----------------------------------------------------------------------------
 //
 TMTPResponseCode CGetObjectPropList::CheckDepth() const
@@ -341,7 +334,7 @@ TMTPResponseCode CGetObjectPropList::CheckDepth() const
 
 // -----------------------------------------------------------------------------
 // CGetObjectPropList::GetObjectHandlesL
-// Gets the handles for the objects that we want the properties for
+// Get the handles for the objects that we want the properties for
 // -----------------------------------------------------------------------------
 //
 void CGetObjectPropList::GetObjectHandlesL()
@@ -362,8 +355,7 @@ void CGetObjectPropList::GetObjectHandlesL()
         {
         CMTPObjectMetaData* meta( iRequestChecker->GetObjectInfo( iHandle ) );
         TPtrC suid( meta->DesC( CMTPObjectMetaData::ESuid ) );
-        TParsePtrC parse( suid );
-        iDpConfig.GetWrapperL().SetStorageRootL( parse.Drive() );
+        iDpConfig.GetWrapperL().SetStorageRootL( suid );
 
         __ASSERT_DEBUG( meta, Panic( EMmMTPDpObjectNull ) );
 
@@ -383,12 +375,12 @@ void CGetObjectPropList::GetObjectHandlesL()
 
 // -----------------------------------------------------------------------------
 // CGetObjectPropList::GetObjectHandlesL
-// Gets all object handles (for GetObjectHandlesL)
+// Get all object handles (for GetObjectHandlesL)
 // -----------------------------------------------------------------------------
 //
 void CGetObjectPropList::GetObjectHandlesL( TUint32 aStorageId,
     TUint32 aParentHandle,
-    TUint16 aFormat /*= 0x0000*/)
+    TUint16 aFormat /*= 0x0000*/ )
     {
     PRINT2( _L( "MM MTP => CGetObjectPropList::GetObjectHandlesL, aStorageId = 0x%x, aParentHandle = 0x%x" ),
         aStorageId,
@@ -512,20 +504,34 @@ TInt CGetObjectPropList::ServiceAllPropertiesL( TUint32 aHandle )
     const TInt count = properties->Count();
 
     TInt err = KErrNone;
+    TBool successQuery = EFalse;
     for ( TInt i = 0; i < count; i++ )
         {
-        // no need to do the trap anymore, this is being handle internally in Media DP's ServiceSpecificObjectPropertyL, also, this base class should not know too much of different handling between different formats
+        // no need to do the trap anymore, this is being handle internally in Media DP's ServiceSpecificObjectPropertyL,
+        // also, this base class should not know too much of different handling between different formats
         err = ServiceOneObjectPropertyL( aHandle, (*properties)[i] );
-        if ( err == KErrNotSupported )  // Skip
+        if ( err == KErrNone )
+            successQuery = ETrue;
+        if ( err == KErrNotSupported || err == KErrNotFound )  // Skip
             err = KErrNone;
         if ( err != KErrNone )
             break;
         }
 
+    // In PC Suite combined mode, a file that was found at the beginning could be deleted by PC Suite protocol
+    // Need to fail it here.
+    if ( successQuery == EFalse )
+        err = KErrNotFound;
+
     PRINT1( _L( "MM MTP <= CGetObjectPropList::ServiceAllPropertiesL err = %d" ), err );
     return err;
     }
 
+// -----------------------------------------------------------------------------
+// CGetObjectPropList::ServiceGroupPropertiesL
+// Get the grouped object properties for specific object
+// -----------------------------------------------------------------------------
+//
 TInt CGetObjectPropList::ServiceGroupPropertiesL( TUint32 aHandle )
     {
     PRINT1( _L( "MM MTP => CGetObjectPropList::ServiceGroupPropertiesL aHandle = 0x%x" ), aHandle );
@@ -548,7 +554,7 @@ TInt CGetObjectPropList::ServiceGroupPropertiesL( TUint32 aHandle )
     for ( TInt i = 0; i < count; i++ )
         {
         err = ServiceOneObjectPropertyL( aHandle, iPropertyArray[i] );
-        if ( err == KErrNotSupported )  // Skip
+        if ( err == KErrNotSupported || err == KErrNotFound )  // Skip
             err = KErrNone;
         if ( err != KErrNone )
             break;
@@ -561,7 +567,7 @@ TInt CGetObjectPropList::ServiceGroupPropertiesL( TUint32 aHandle )
 
 // -----------------------------------------------------------------------------
 // CGetObjectPropList::ServiceOneObjectPropertyL
-//  Gets the object property information for the required object
+//  Get the object property information for the required object
 // -----------------------------------------------------------------------------
 //
 TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
@@ -585,8 +591,8 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
         case EMTPObjectPropCodeStorageID:
             {
             TMTPTypeUint32 storageId( iObject->Uint( CMTPObjectMetaData::EStorageId ) );
-            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-            iPropertyElement->SetUint32L(CMTPTypeObjectPropListElement::EValue, storageId.Value());
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, storageId.Value() );
             }
             break;
 
@@ -594,8 +600,8 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
         case EMTPObjectPropCodeObjectFormat:
             {
             TMTPTypeUint16 objectFormat( iObject->Uint( CMTPObjectMetaData::EFormatCode ) );
-            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-            iPropertyElement->SetUint16L(CMTPTypeObjectPropListElement::EValue, objectFormat.Value());
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EValue, objectFormat.Value() );
             }
             break;
 
@@ -604,8 +610,8 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
             {
             TMTPTypeUint16 protectionStatus( MmMtpDpUtility::GetProtectionStatusL( iFramework.Fs(),
                 iObject->DesC( CMTPObjectMetaData::ESuid ) ) );
-            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-            iPropertyElement->SetUint16L(CMTPTypeObjectPropListElement::EValue,  protectionStatus.Value());
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EValue,  protectionStatus.Value() );
             }
             break;
 
@@ -630,8 +636,8 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
 #endif // _DEBUG
             TParsePtrC parse( iObject->DesC( CMTPObjectMetaData::ESuid ) );
             textData = CMTPTypeString::NewLC( parse.NameAndExt() );    // + textData
-            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-            iPropertyElement->SetStringL(CMTPTypeObjectPropListElement::EValue, textData->StringChars());
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode) );
+            iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, textData->StringChars() );
             CleanupStack::PopAndDestroy( textData );    // - textData
             }
             break;
@@ -639,8 +645,8 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
         // Parent Object
         case EMTPObjectPropCodeParentObject:
             {
-            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-            iPropertyElement->SetUint32L(CMTPTypeObjectPropListElement::EValue, iObject->Uint( CMTPObjectMetaData::EParentHandle ));
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, iObject->Uint( CMTPObjectMetaData::EParentHandle ) );
             }
             break;
 
@@ -648,51 +654,42 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
         case EMTPObjectPropCodePersistentUniqueObjectIdentifier:
             {
             TMTPTypeUint128 puid = iFramework.ObjectMgr().PuidL( aHandle );
-            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-            iPropertyElement->SetUint128L(CMTPTypeObjectPropListElement::EValue,puid.UpperValue(), puid.LowerValue() );
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetUint128L( CMTPTypeObjectPropListElement::EValue,puid.UpperValue(), puid.LowerValue() );
             }
             break;
 
         case EMTPObjectPropCodeName:
         case EMTPObjectPropCodeDateAdded:
+        case EMTPObjectPropCodeAlbumArtist:
             {
-            if ( ( aPropCode == EMTPObjectPropCodeName )
-                || ( ( !MmMtpDpUtility::IsVideoL( iObject->DesC( CMTPObjectMetaData::ESuid ), iFramework ) )
-                && ( aPropCode == EMTPObjectPropCodeDateAdded ) ) )
-                {
-                textData = CMTPTypeString::NewLC();   // + textData
+            textData = CMTPTypeString::NewLC(); // + textData
 
-                TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( aPropCode,
-                    *textData,
-                    *iObject ) );
+            TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( aPropCode,
+                *textData,
+                *iObject ) );
 
-                PRINT1( _L( "MM MTP <> CGetObjectPropList::ServiceOneObjectPropertyL err = %d" ), err );
+            PRINT1( _L( "MM MTP <> CGetObjectPropList::ServiceOneObjectPropertyL err = %d" ), err );
 
-                if ( err == KErrNone )
-                    {
-                    iPropertyElement = &(iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
-                    iPropertyElement->SetStringL(CMTPTypeObjectPropListElement::EValue, textData->StringChars());
-                    }
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, textData->StringChars() );
 
-                CleanupStack::PopAndDestroy( textData );  // - textData
-                }
+            CleanupStack::PopAndDestroy( textData ); // - textData
             }
             break;
 
         case EMTPObjectPropCodeDateCreated:
         case EMTPObjectPropCodeDateModified:
             {
-            TTime dataModified;
-            dataModified = MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(),
-                iObject->DesC( CMTPObjectMetaData::ESuid ) );
-
             TBuf<KMtpMaxDateTimeStringLength> timeStr;
-            dataModified.FormatL( timeStr, KMtpDateTimeFormat );
+            MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(),
+                iObject->DesC( CMTPObjectMetaData::ESuid ),
+                timeStr );
             PRINT1( _L( "MM MTP <> CGetObjectPropList::ServiceOneObjectPropertyL Date time %S" ), &timeStr );
-            CMTPTypeString* datastring = CMTPTypeString::NewLC( timeStr );  // + datastring
 
-            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-            iPropertyElement->SetStringL(CMTPTypeObjectPropListElement::EValue, datastring->StringChars());
+            CMTPTypeString* datastring = CMTPTypeString::NewLC( timeStr );  // + datastring
+            iPropertyElement = &(iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, datastring->StringChars() );
             CleanupStack::PopAndDestroy( datastring );  // - datastring
             }
             break;
@@ -701,12 +698,15 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
         case EMTPObjectPropCodeNonConsumable:
             {
             iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-            iPropertyElement->SetUint8L(CMTPTypeObjectPropListElement::EValue,0);
+            iPropertyElement->SetUint8L( CMTPTypeObjectPropListElement::EValue,
+                iObject->Uint( CMTPObjectMetaData::ENonConsumable ) );
             }
             break;
 
         default:
             {
+            // "err == KErrNotFound" means the object entry does not exist in DB,
+            // "err == KErrNotSupported" means the entry is there but this metadata not.
             err = ServiceSpecificObjectPropertyL( aPropCode, aHandle );
             }
             break;
@@ -744,8 +744,6 @@ EXPORT_C void CGetObjectPropList::RunL()
 
             if ( iFramework.ObjectMgr().ObjectL( handle, *iObject ) ) // Populate the object meta data
                 {
-                SetSubFormatCodeL();
-
                 if ( iPropCode == KMTPAll )
                     err = ServiceAllPropertiesL( handle );
                 else if ( iPropCode == EMTPObjectPropCodeUndefined )
@@ -773,7 +771,8 @@ EXPORT_C void CGetObjectPropList::RunL()
         }
     else // all handles processed, can send data
         {
-        PRINT( _L( "MM MTP <> CGetObjectPropList::RunL, Finished, Send data to PC!" ) );
+        PRINT1( _L( "MM MTP <> CGetObjectPropList::RunL, Finished, Send data to PC!, iPropertyList->NumberOfElements() = %d" ),
+            iPropertyList->NumberOfElements() );
         SendDataL( *iPropertyList );
         }
     }
@@ -785,8 +784,10 @@ EXPORT_C void CGetObjectPropList::RunL()
 //
 EXPORT_C TInt CGetObjectPropList::RunError( TInt aError )
     {
-    PRINT1( _L( "MM MTP <> CGetObjectPropList::RunError aError = %d" ), aError );
-        TRAP_IGNORE( SendResponseL( EMTPRespCodeGeneralError ) );
+    if ( aError != KErrNone )
+        PRINT1( _L( "MM MTP <> CGetObjectPropList::RunError aError = %d" ), aError );
+
+    TRAP_IGNORE( SendResponseL( EMTPRespCodeGeneralError ) );
 
     return KErrNone;
     }
@@ -798,8 +799,6 @@ EXPORT_C TInt CGetObjectPropList::RunError( TInt aError )
 //
 EXPORT_C void CGetObjectPropList::DoCancel()
     {
-    // TODO: need to send the data here?
-    // SendDataL( *iPropertyList );
     }
 
 void CGetObjectPropList::GetPropertiesL( RArray<TUint>& aPropArray,
@@ -819,44 +818,13 @@ void CGetObjectPropList::GetPropertiesL( RArray<TUint>& aPropArray,
         {
         for ( TInt j = 0; j < count; j++ )
             {
-            if( KPropGroupMapTable[j].iPropCode == (*properties)[i]
+            if( KPropGroupMapTable[j].iPropCode == ( *properties )[i]
                 && KPropGroupMapTable[j].iGroupCode == aGroupCode )
                 {
                 aPropArray.Append( (*properties)[i] );
                 break;
                 }
             }
-        }
-    }
-
-void CGetObjectPropList::SetSubFormatCodeL()
-    {
-    __ASSERT_DEBUG( iObject, Panic( EMmMTPDpObjectNull ) );
-
-    // Note: Parsing out subformat code in external enumeration phase.
-    //       This process was delayed in internal phase to avoid time-out.
-    TUint16 formatCode = iObject->Uint( CMTPObjectMetaData::EFormatCode );
-    TUint subFormatCode = iObject->Uint( CMTPObjectMetaData::EFormatSubCode );
-    PRINT2( _L( "MM MTP <> CGetObjectPropList::SetSubFormatCode, formatCode = 0x%x, subFormatCode = 0x%x" ),
-        formatCode,
-        subFormatCode );
-
-    TBool ifNeedParse = ( ( formatCode == EMTPFormatCodeMP4Container )
-        || ( formatCode == EMTPFormatCode3GPContainer )
-        || ( formatCode== EMTPFormatCodeASF ) )
-        && ( subFormatCode == EMTPSubFormatCodeUnknown );
-    if ( ifNeedParse )
-        {
-        PERFLOGSTART( KSubFormatParse );
-
-        if ( MmMtpDpUtility::IsVideoL( iObject->DesC( CMTPObjectMetaData::ESuid ) ) )
-            subFormatCode = EMTPSubFormatCodeVideo;
-        else
-            subFormatCode = EMTPSubFormatCodeAudio;
-
-        PERFLOGSTOP( KSubFormatParse );
-
-        iObject->SetUint( CMTPObjectMetaData::EFormatSubCode, subFormatCode );
         }
     }
 

@@ -16,7 +16,6 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/cmtptypeobjectproplist.h>
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/cmtptypestring.h>
@@ -27,38 +26,39 @@
 #include "mmmtpdputility.h"
 #include "mmmtpdplogger.h"
 #include "mmmtpdpconfig.h"
+#include "cpropertysettingutility.h"
 
 // -----------------------------------------------------------------------------
-// CSetObjectPropList::NewL
+// CSendObject::NewL
 // Two-phase construction method
 // -----------------------------------------------------------------------------
 //
-//EXPORT_C MMmRequestProcessor* CSetObjectPropList::NewL( MMTPDataProviderFramework& aFramework,
-//    MMTPConnection& aConnection,
-//    CMmMtpDpMetadataAccessWrapper& aWrapper )
-//    {
-//    CSetObjectPropList* self = new ( ELeave ) CSetObjectPropList( aFramework,
-//        aConnection,
-//        aWrapper );
-//    CleanupStack::PushL( self );
-//    self->ConstructL();
-//    CleanupStack::Pop( self );
-//    return self;
-//    }
+EXPORT_C MMmRequestProcessor* CSetObjectPropList::NewL( MMTPDataProviderFramework& aFramework,
+    MMTPConnection& aConnection,
+    MMmMtpDpConfig& aDpConfig )
+    {
+    CSetObjectPropList* self = new ( ELeave ) CSetObjectPropList( aFramework, aConnection, aDpConfig );
+
+    CleanupStack::PushL(self);
+    self->ConstructL();
+    CleanupStack::Pop(self);
+
+    return self;
+    }
 
 // -----------------------------------------------------------------------------
 // CSetObjectPropList::CSetObjectPropList
 // Standard c++ constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CSetObjectPropList::CSetObjectPropList( MMTPDataProviderFramework& aFramework,
+CSetObjectPropList::CSetObjectPropList( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
-    CRequestProcessor( aFramework, aConnection, 0, NULL),
-    iObjectMgr( aFramework.ObjectMgr() ),
-    iFs( aFramework.Fs() ),
-    iDpConfig( aDpConfig ),
-    iUnprocessedIndex ( 0 )
+        CRequestProcessor( aFramework, aConnection, 0, NULL),
+        iObjectMgr( aFramework.ObjectMgr() ),
+        iFs( aFramework.Fs() ),
+        iDpConfig( aDpConfig ),
+        iUnprocessedIndex ( 0 )
     {
     PRINT( _L( "Operation: SetObjectPropList(0x9806)" ) );
     }
@@ -68,7 +68,7 @@ EXPORT_C CSetObjectPropList::CSetObjectPropList( MMTPDataProviderFramework& aFra
 // 2nd Phase Constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CSetObjectPropList::ConstructL()
+void CSetObjectPropList::ConstructL()
     {
     CActiveScheduler::Add( this );
 
@@ -85,6 +85,26 @@ EXPORT_C CSetObjectPropList::~CSetObjectPropList()
     {
     Cancel();
     delete iPropertyList;
+    }
+
+// -----------------------------------------------------------------------------
+// CSetObjectPropList::CheckRequestL
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TMTPResponseCode CSetObjectPropList::CheckRequestL()
+    {
+    PRINT( _L( "MM MTP => CSetObjectPropList::CheckRequestL" ) );
+
+    TMTPResponseCode result = CRequestProcessor::CheckRequestL();
+    if ( result == EMTPRespCodeObjectWriteProtected )
+        {
+        // Return AccessDenied for P4S pass rate, instead of EMTPRespCodeObjectWriteProtected
+        result = EMTPRespCodeAccessDenied;
+        }
+
+    PRINT( _L( "MM MTP <= CSetObjectPropList::CheckRequestL" ) );
+    return result;
     }
 
 // -----------------------------------------------------------------------------
@@ -132,22 +152,23 @@ EXPORT_C TBool CSetObjectPropList::DoHandleResponsePhaseL()
 // Set object proplist
 // -----------------------------------------------------------------------------
 //
-TMTPResponseCode CSetObjectPropList::SetObjectPropListL(
-        const CMTPTypeObjectPropListElement& aPropListElement )
+TMTPResponseCode CSetObjectPropList::SetObjectPropListL( const CMTPTypeObjectPropListElement& aPropListElement )
     {
     PRINT( _L( "MM MTP => CSetObjectPropList::SetObjectPropListL" ) );
 
-    TMTPTypeUint16 protectionStatus( EMTPProtectionNoProtection );
     TMTPResponseCode responseCode( EMTPRespCodeOK );
 
     TUint32 handle = aPropListElement.Uint32L( CMTPTypeObjectPropListElement::EObjectHandle );
     TUint16 propertyCode = aPropListElement.Uint16L( CMTPTypeObjectPropListElement::EPropertyCode );
     TUint16 dataType = aPropListElement.Uint16L( CMTPTypeObjectPropListElement::EDatatype );
     PRINT3( _L( "MM MTP <> handle = 0x%x, propertyCode = 0x%x, dataType = 0x%x" ),
-        handle, propertyCode, dataType );
+        handle,
+        propertyCode,
+        dataType );
 
     responseCode = MmMtpDpUtility::CheckPropType( propertyCode, dataType );
     PRINT1( _L( "MM MTP <> CheckPropType response code is 0x%x" ), responseCode );
+
     if( responseCode != EMTPRespCodeOK )
         return responseCode;
 
@@ -155,12 +176,16 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL(
         == iFramework.DataProviderId() )
         {
         PRINT( _L( "MM MTP => CSetObjectPropList::SetObjectPropListL enter" ) );
+
         CMTPObjectMetaData* object = CMTPObjectMetaData::NewLC(); // + object
         iFramework.ObjectMgr().ObjectL( handle, *object );
 
-        if ( protectionStatus.Value() != EMTPProtectionNoProtection )
+        // Check the file attribution first. If it is Read-Only, nothing should be set into db which is inlined with P4S cases.
+        TUint16 protectionStatus = EMTPProtectionNoProtection;
+        protectionStatus = MmMtpDpUtility::GetProtectionStatusL( iFs, object->DesC( CMTPObjectMetaData::ESuid ) );
+        if ( protectionStatus != EMTPProtectionNoProtection )
             {
-            //for some reason, P4S expects Access Denied response instead of write protected
+            // NOTE: P4S expects AccessDenied response instead of ObjectWriteProtected
             return EMTPRespCodeAccessDenied; // EMTPRespCodeObjectWriteProtected;
             }
 
@@ -172,7 +197,6 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL(
             case EMTPObjectPropCodeObjectSize:
             case EMTPObjectPropCodeParentObject:
             case EMTPObjectPropCodePersistentUniqueObjectIdentifier:
-            case EMTPObjectPropCodeNonConsumable:
             case EMTPObjectPropCodeDateAdded:
             case EMTPObjectPropCodeDateCreated:
             case EMTPObjectPropCodeDateModified:
@@ -181,31 +205,43 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL(
                 }
                 break;
 
+            case EMTPObjectPropCodeNonConsumable:
+                object->SetUint( CMTPObjectMetaData::ENonConsumable,
+                    aPropListElement.Uint8L( CMTPTypeObjectPropListElement::EValue ) );
+                // TODO: need to reconsider,
+                // if propList comprise both non-consumable and objectFileName,
+                // ModifyObjectL would be called twice, need to investigate if it won't affect
+                // performance
+                iFramework.ObjectMgr().ModifyObjectL( *object );
+                break;
+
             case EMTPObjectPropCodeObjectFileName:
                 {
                 TPtrC suid( object->DesC( CMTPObjectMetaData::ESuid ) );
-                TBuf<KMaxFileName> newSuid( aPropListElement.StringL(
-                    CMTPTypeObjectPropListElement::EValue ) );
-                TInt err = KErrNone;
-                err = MmMtpDpUtility::UpdateObjectFileName( iFramework.Fs(), suid, newSuid );
-                PRINT1( _L( "MM MTP <> Update object file name err = %d" ), err );
-                if ( KErrOverflow == err ) // full path name is too long
-                    {
+                TPtrC ptr( aPropListElement.StringL( CMTPTypeObjectPropListElement::EValue ) );
+                if ( KMaxFileName < ptr.Length() )
                     responseCode = EMTPRespCodeInvalidDataset;
-                    }
-                else if ( ( KErrNone == err ) || ( KErrAlreadyExists == err ) )
+                else
                     {
-                    TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( suid, newSuid ) ); //Update MPX DB
-                    PRINT1( _L( "MM MTP <> Rename Object err = %d" ), err );
-                    // it is ok if file is not found in DB, following S60 solution
-                    if ( KErrNotFound == err )
+                    TFileName newSuid( ptr );
+                    TInt err = MmMtpDpUtility::UpdateObjectFileName( iFramework.Fs(), suid, newSuid );
+                    PRINT1( _L( "MM MTP <> Update object file name err = %d" ), err );
+                    if ( KErrOverflow == err ) // full path name is too long
                         {
-                        TRAP( err, iDpConfig.GetWrapperL().AddObjectL( newSuid ) );
-                        PRINT1( _L( "MM MTP <> Add Object err = %d" ), err );
+                        responseCode = EMTPRespCodeInvalidDataset;
                         }
-
-                    if ( KErrNone == err )
+                    else if ( KErrNone == err )    // TODO: ( KErrAlreadyExists == err )
                         {
+                        TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( *object, newSuid ) ); //Update MPX DB
+
+                        PRINT1( _L( "MM MTP <> Rename MPX object file name err = %d" ), err );
+                        // it is ok if file is not found in DB, following S60 solution
+                        if ( KErrNotFound == err )
+                            {
+                            TRAP( err, iDpConfig.GetWrapperL().AddObjectL( *object ) );
+                            PRINT1( _L( "MM MTP <> Add MPX object file name err = %d" ), err );
+                            }
+
                         object->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
                         iFramework.ObjectMgr().ModifyObjectL( *object );
                         }
@@ -218,13 +254,15 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL(
                 break;
 
             case EMTPObjectPropCodeName:
+            case EMTPObjectPropCodeAlbumArtist:
                 {
                 CMTPTypeString* stringData = CMTPTypeString::NewLC(
-                    aPropListElement.StringL(
-                        CMTPTypeObjectPropListElement::EValue ) );// + stringData
+                    aPropListElement.StringL( CMTPTypeObjectPropListElement::EValue ) );// + stringData
 
-                responseCode = ServiceMetaDataToWrapperL( propertyCode,
-                    *stringData, *object );
+                responseCode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
+                    propertyCode,
+                    *stringData,
+                    *object );
 
                 CleanupStack::PopAndDestroy( stringData );// - stringData
                 }
@@ -232,15 +270,9 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL(
 
             default:
                 {
-                /*// trap and handle with response code here, so correct fail index should report
-                TRAPD( err, responseCode = ServiceSpecificObjectPropertyL( propertyCode, *object, aPropListElement ) );
-                PRINT1( _L("MM MTP <> CSetObjectPropList::SetObjectPropListL, ServiceSpecificObjectPropertyL, err = %d"), err );
-
-                if ( err == KErrNotSupported )
-                    {
-                    responseCode = EMTPRespCodeAccessDenied;
-                    }*/
-                responseCode = ServiceSpecificObjectPropertyL( propertyCode, *object,
+                responseCode = iDpConfig.PropSettingUtility()->SetSpecificObjectPropertyL( iDpConfig,
+                    propertyCode,
+                    *object,
                     aPropListElement );
                 }
                 break;
@@ -261,56 +293,6 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL(
 EXPORT_C TBool CSetObjectPropList::HasDataphase() const
     {
     return ETrue;
-    }
-
-// -----------------------------------------------------------------------------
-// CSetObjectPropList::ServiceMetaDataToWrapperL
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C TMTPResponseCode CSetObjectPropList::ServiceMetaDataToWrapperL(
-    const TUint16 aPropCode,
-    MMTPType& aNewData,
-    const CMTPObjectMetaData& aObjectMetaData )
-    {
-    TMTPResponseCode resCode = EMTPRespCodeOK;
-
-    TRAPD( err, iDpConfig.GetWrapperL().SetObjectMetadataValueL( aPropCode,
-        aNewData,
-        aObjectMetaData ) );
-
-    PRINT1( _L("MM MTP <> CSetObjectPropList::ServiceMetaDataToWrapperL err = %d"), err);
-
-    if ( err == KErrNone )
-        {
-        resCode = EMTPRespCodeOK;
-        }
-    else if ( err == KErrTooBig )
-        // according to the codes of S60
-        {
-        resCode = EMTPRespCodeInvalidDataset;
-        }
-    else if ( err == KErrPermissionDenied )
-        {
-        resCode = EMTPRespCodeAccessDenied;
-        }
-    else if ( err == KErrNotFound )
-        {
-        if( MmMtpDpUtility::HasMetadata( aObjectMetaData.Uint( CMTPObjectMetaData::EFormatCode ) ) )
-            SendResponseL( EMTPRespCodeAccessDenied );
-        }
-    else
-        {
-        // add new virtual call to see if the above condition can be handle probably
-        err = HandleSpecificWrapperError( err, aObjectMetaData );
-
-        if ( err != KErrNone )
-            resCode = EMTPRespCodeGeneralError;
-        }
-
-    PRINT1( _L( "MM MTP <= CSetObjectPropList::ServiceMetaDataToWrapperL resCode = 0x%x" ), resCode );
-
-    return resCode;
     }
 
 // -----------------------------------------------------------------------------
@@ -351,15 +333,9 @@ EXPORT_C void CSetObjectPropList::RunL()
 //
 EXPORT_C TInt CSetObjectPropList::RunError( TInt aError )
     {
-    PRINT1( _L( "MM MTP <> CSetObjectPropList::RunError with error %d" ), aError );
+    if ( aError != KErrNone )
+        PRINT1( _L( "MM MTP <> CGetObjectPropList::RunError aError = %d" ), aError );
 
-    // Reschedule ourselves
-    // TODO: go to next index or increase?
-    // iUnprocessedIndex++
-//    TRequestStatus* status = &iStatus;
-//    User::RequestComplete( status, aError );
-//    SetActive();
-    PRINT1( _L( "MM MTP <> CGetObjectPropList::RunError aError = %d" ), aError );
     TRAP_IGNORE( SendResponseL( EMTPRespCodeGeneralError ) );
 
     return KErrNone;
@@ -372,7 +348,6 @@ EXPORT_C TInt CSetObjectPropList::RunError( TInt aError )
 //
 EXPORT_C void CSetObjectPropList::DoCancel()
     {
-
     }
 
 // end of file

@@ -17,11 +17,8 @@
 
 
 #include <bautils.h>
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/mmtpstoragemgr.h>
-#include <mtp/mmtpreferencemgr.h>
-#include <mtp/cmtpobjectmetadata.h>
 #include <mtp/cmtptypearray.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypeobjectproplist.h>
@@ -32,6 +29,7 @@
 #include "mmmtpdputility.h"
 #include "cmmmtpdpmetadataaccesswrapper.h"
 #include "mmmtpdpconfig.h"
+#include "cpropertysettingutility.h"
 
 /**
 * Verification data for the MoveObject request
@@ -39,35 +37,30 @@
 const TMTPRequestElementInfo KMTPMoveObjectPolicy[] =
     {
         {
-        TMTPTypeRequest::ERequestParameter1, EMTPElementTypeObjectHandle,
-                EMTPElementAttrFileOrDir | EMTPElementAttrWrite, 0, 0, 0
+        TMTPTypeRequest::ERequestParameter1,
+        EMTPElementTypeObjectHandle,
+        EMTPElementAttrFile | EMTPElementAttrWrite,
+        0,
+        0,
+        0
         },
         {
-        TMTPTypeRequest::ERequestParameter2, EMTPElementTypeStorageId,
-                EMTPElementAttrWrite, 0, 0, 0
+        TMTPTypeRequest::ERequestParameter2,
+        EMTPElementTypeStorageId,
+        EMTPElementAttrWrite,
+        0,
+        0,
+        0
         },
         {
-        TMTPTypeRequest::ERequestParameter3, EMTPElementTypeObjectHandle,
-                EMTPElementAttrDir | EMTPElementAttrWrite, 1, 0, 0
+        TMTPTypeRequest::ERequestParameter3,
+        EMTPElementTypeObjectHandle,
+        EMTPElementAttrDir | EMTPElementAttrWrite,
+        1,
+        0,
+        0
         }
     };
-
-// -----------------------------------------------------------------------------
-// CMoveObject::NewL
-// Two-phase construction method
-// -----------------------------------------------------------------------------
-//
-//EXPORT_C MMmRequestProcessor* CMoveObject::NewL( MMTPDataProviderFramework& aFramework,
-//        MMTPConnection& aConnection,
-//        CMmMtpDpMetadataAccessWrapper& aWrapper )
-//    {
-//    CMoveObject* self = new (ELeave) CMoveObject( aFramework, aConnection, aWrapper );
-//    CleanupStack::PushL( self );
-//    self->ConstructL();
-//    CleanupStack::Pop( self );
-//
-//    return self;
-//    }
 
 // -----------------------------------------------------------------------------
 // CMoveObject::~CMoveObject
@@ -79,12 +72,10 @@ EXPORT_C CMoveObject::~CMoveObject()
     Cancel();
 
     delete iDest;
-    delete iFileMan;
-    delete iPathToMove;
-    delete iNewRootFolder;
-    iObjectHandles.Close();
+
     if ( iPropertyElement )
         delete iPropertyElement;
+
     delete iPropertyList;
     }
 
@@ -94,15 +85,29 @@ EXPORT_C CMoveObject::~CMoveObject()
 // -----------------------------------------------------------------------------
 //
 EXPORT_C CMoveObject::CMoveObject( MMTPDataProviderFramework& aFramework,
-        MMTPConnection& aConnection,
-        MMmMtpDpConfig& aDpConfig) :
-    CRequestProcessor( aFramework, aConnection, sizeof( KMTPMoveObjectPolicy )
-            /sizeof( TMTPRequestElementInfo ), KMTPMoveObjectPolicy),
-    iDpConfig( aDpConfig ),
-    iObjectHandles( KMmMtpRArrayGranularity ),
-    iMoveObjectIndex( 0 )
+    MMTPConnection& aConnection,
+    MMmMtpDpConfig& aDpConfig ) :
+        CRequestProcessor( aFramework,
+            aConnection,
+            sizeof( KMTPMoveObjectPolicy ) / sizeof( TMTPRequestElementInfo ),
+            KMTPMoveObjectPolicy ),
+        iDpConfig( aDpConfig )
     {
     PRINT( _L( "Operation: MoveObject(0x1019)" ) );
+    }
+
+// -----------------------------------------------------------------------------
+// CMoveObject::ConstructL
+// Second phase constructor
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMoveObject::ConstructL()
+    {
+    iPropertyList = CMTPTypeObjectPropList::NewL();
+
+    // Set the CenRep value of MTP status,
+    // also need to do in other processors which related to MPX
+    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -113,156 +118,18 @@ EXPORT_C CMoveObject::CMoveObject( MMTPDataProviderFramework& aFramework,
 EXPORT_C void CMoveObject::ServiceL()
     {
     PRINT( _L( "MM MTP => CMoveObject::ServiceL" ) );
-    TMTPResponseCode ret = MoveObjectL();
-    PRINT1( _L( "MM MTP <> CMoveObject::ServiceL ret = 0x%x" ), ret );
-    if ( EMTPRespCodeOK != ret )
-        {
-        SendResponseL( ret );
-        }
+
+    MoveObjectL();
+
     PRINT( _L( "MM MTP <= CMoveObject::ServiceL" ) );
     }
 
 // -----------------------------------------------------------------------------
-// CMoveObject::ConstructL
-// Second phase constructor
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMoveObject::ConstructL()
-    {
-    CActiveScheduler::Add( this );
-
-    iPropertyList = CMTPTypeObjectPropList::NewL();
-    SetPSStatus();
-    }
-
-// -----------------------------------------------------------------------------
-// CMoveObject::RunL
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMoveObject::RunL()
-    {
-    PRINT( _L( "MM MTP => CMoveObject::RunL" ) );
-    if ( MoveOwnedObjectsL() )
-        {
-        // Reset iMoveObjectIndex count since move completed
-        iMoveObjectIndex = 0;
-
-        TMTPResponseCode ret = EMTPRespCodeOK;
-        // Delete the original folders in the device dp.
-        if ( iObjectInfo->Uint( CMTPObjectMetaData::EDataProviderId )
-                == iFramework.DataProviderId() )
-            {
-            ret = FinalPhaseMove();
-            }
-        PRINT1( _L("MM MTP <> CMoveObject::RunL ret = 0x%x"), ret );
-        SendResponseL( ret );
-        }
-    PRINT( _L( "MM MTP <= CMoveObject::RunL" ) );
-    }
-
-// -----------------------------------------------------------------------------
-// CMoveObject::RunError
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C TInt CMoveObject::RunError( TInt aError )
-    {
-    if ( aError != KErrNone )
-        PRINT1( _L( "MM MTP <> CMoveObject::RunError aError = %d" ), aError );
-    TRAP_IGNORE( SendResponseL( EMTPRespCodeGeneralError ) );
-    return KErrNone;
-    }
-
-// -----------------------------------------------------------------------------
-// CMoveObject::MoveFileL
-// A helper function of MoveObjectL
-// -----------------------------------------------------------------------------
-//
-void CMoveObject::MoveFileL( const TDesC& aNewFileName )
-    {
-    PRINT1( _L( "MM MTP => CMoveObject::MoveFileL aNewFileName = %S" ), &aNewFileName );
-    const TDesC& suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
-    TFileName oldFileName( suid ); // save the old file name, the suid will be modified
-    PRINT1( _L( "MM MTP <> CMoveObject::MoveFileL oldFileName = %S" ), &suid );
-
-    if ( iStorageId == iObjectInfo->Uint( CMTPObjectMetaData::EStorageId ) )
-        iSameStorage = ETrue;
-    else
-        iSameStorage = EFalse;
-    GetPreviousPropertiesL( *iObjectInfo );
-    User::LeaveIfError( iFileMan->Move( suid, aNewFileName ) ); // iDest just Folder
-    User::LeaveIfError( iFramework.Fs().SetModified( aNewFileName, iPreviousModifiedTime ) );
-
-    iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, aNewFileName );
-    iObjectInfo->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
-    iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
-    iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
-    SetPropertiesL( oldFileName, aNewFileName, *iObjectInfo );
-    PRINT( _L( "MM MTP <= CMoveObject::MoveFileL" ) );
-    }
-
-// -----------------------------------------------------------------------------
-// CMoveObject::MoveOwnedObjectsL
-// Move the objects through iterations of RunL
-// -----------------------------------------------------------------------------
-//
-TBool CMoveObject::MoveOwnedObjectsL()
-    {
-    PRINT( _L( "MM MTP => CMoveObject::MoveOwnedObjectsL" ) );
-    TBool ret = EFalse;
-
-    if ( iMoveObjectIndex < iNumberOfObjects )
-        {
-        MoveAndUpdateL( iObjectHandles[iMoveObjectIndex++] );
-
-        TRequestStatus* status = &iStatus;
-        User::RequestComplete( status, iStatus.Int() );
-        SetActive();
-        }
-    else
-        {
-        ret = ETrue;
-        }
-
-    PRINT1( _L( "MM MTP <= CMoveObject::MoveOwnedObjectsL ret = %d" ), ret );
-    return ret;
-    }
-
-// -----------------------------------------------------------------------------
-// CMoveObject::MoveFolderL
-// A helper function of MoveObjectL
-// -----------------------------------------------------------------------------
-//
-void CMoveObject::MoveFolderL()
-    {
-    PRINT( _L( "MM MTP => CMoveObject::MoveFolderL" ) );
-    RBuf oldFolderName;
-    oldFolderName.CreateL( KMaxFileName );
-    oldFolderName.CleanupClosePushL(); // + oldFileName
-    oldFolderName = iObjectInfo->DesC( CMTPObjectMetaData::ESuid );
-    PRINT1( _L( "MM MTP <> CMoveObject::MoveFolderL oldFolderName = %S" ), &oldFolderName );
-    iPathToMove = oldFolderName.AllocL();
-    CleanupStack::PopAndDestroy( &oldFolderName ); // - oldFolderName
-
-    GenerateObjectHandleListL( iObjectInfo->Uint( CMTPObjectMetaData::EHandle ) );
-
-    iNumberOfObjects = iObjectHandles.Count();
-    PRINT1( _L( "MM MTP <> CMoveObject::MoveFolderL iNumberOfObjects = %d" ), iNumberOfObjects );
-
-    TRequestStatus* status = &iStatus;
-    User::RequestComplete( status, iStatus.Int() );
-    SetActive();
-
-    PRINT( _L( "MM MTP <= CMoveObject::MoveFolderL" ) );
-    }
-
-// -----------------------------------------------------------------------------
 // CMoveObject::MoveObjectL
-// move object operations
+// Move object operation
 // -----------------------------------------------------------------------------
 //
-TMTPResponseCode CMoveObject::MoveObjectL()
+void CMoveObject::MoveObjectL()
     {
     PRINT( _L( "MM MTP => CMoveObject::MoveObjectL" ) );
     TMTPResponseCode responseCode = EMTPRespCodeOK;
@@ -276,55 +143,24 @@ TMTPResponseCode CMoveObject::MoveObjectL()
 
     const TDesC& suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
     TParsePtrC fileNameParser( suid );
-
-    // Check if the object is a folder or a file.
-    TBool isFolder = EFalse;
-    User::LeaveIfError( BaflUtils::IsFolder( iFramework.Fs(), suid, isFolder ) );
-
-    if ( !isFolder )
+    if ( ( newObjectName.Length() + fileNameParser.NameAndExt().Length() )
+        <= newObjectName.MaxLength() )
         {
-        if ( ( newObjectName.Length() + fileNameParser.NameAndExt().Length() ) <= newObjectName.MaxLength() )
-            {
-            newObjectName.Append( fileNameParser.NameAndExt() );
-            }
+        newObjectName.Append( fileNameParser.NameAndExt() );
         responseCode = CanMoveObjectL( suid, newObjectName );
-        }
-    else // It is a folder.
-        {
-        TFileName rightMostFolderName;
-        User::LeaveIfError( BaflUtils::MostSignificantPartOfFullName( suid,
-                rightMostFolderName ) );
-        if ( ( newObjectName.Length() + rightMostFolderName.Length() + 1 ) <= newObjectName.MaxLength() )
-            {
-            newObjectName.Append( rightMostFolderName );
-            // Add backslash.
-            _LIT( KBackSlash, "\\" );
-            newObjectName.Append( KBackSlash );
-            }
-        }
 
-    iNewRootFolder = newObjectName.AllocL();
-
-    if ( responseCode == EMTPRespCodeOK )
-        {
-        delete iFileMan;
-        iFileMan = NULL;
-        iFileMan = CFileMan::NewL( iFramework.Fs() );
-
-        if ( !isFolder )
-            {
+        if ( responseCode == EMTPRespCodeOK )
             MoveFileL( newObjectName );
-            SendResponseL( responseCode );
-            }
-        else
-            {
-            MoveFolderL();
-            }
         }
-    CleanupStack::PopAndDestroy( &newObjectName ); // - newObjectName.
+    else
+        // Destination is not appropriate for the full path name shouldn't be longer than 255
+        responseCode = EMTPRespCodeInvalidDataset;
+
+    SendResponseL( responseCode );
+
+    CleanupStack::PopAndDestroy( &newObjectName ); // - newObjectName
 
     PRINT1( _L( "MM MTP <= CMoveObject::MoveObjectL responseCode = 0x%x" ), responseCode );
-    return responseCode;
     }
 
 // -----------------------------------------------------------------------------
@@ -335,30 +171,33 @@ TMTPResponseCode CMoveObject::MoveObjectL()
 void CMoveObject::GetParametersL()
     {
     PRINT( _L( "MM MTP => CMoveObject::GetParametersL" ) );
+
     __ASSERT_DEBUG( iRequestChecker, Panic( EMmMTPDpRequestCheckNull ) );
 
     TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
     iStorageId = Request().Uint32( TMTPTypeRequest::ERequestParameter2 );
     iNewParentHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter3 );
-    PRINT3( _L( "MM MTP <> objectHandle = 0x%x, iStoargeId = 0x%x, iNewParentHandle = 0x%x" ),
-            objectHandle, iStorageId, iNewParentHandle );
+    PRINT3( _L( "MM MTP <> objectHandle = 0x%x, iStorageId = 0x%x, iNewParentHandle = 0x%x" ),
+        objectHandle,
+        iStorageId,
+        iNewParentHandle );
 
     // not taking owernship
     iObjectInfo = iRequestChecker->GetObjectInfo( objectHandle );
     __ASSERT_DEBUG( iObjectInfo, Panic( EMmMTPDpObjectNull ) );
 
-    if ( iNewParentHandle == 0 )
+    if ( iNewParentHandle == KMTPHandleNone )
         {
         SetDefaultParentObjectL();
         }
     else
         {
-        CMTPObjectMetaData* parentObjectInfo =
-                iRequestChecker->GetObjectInfo( iNewParentHandle );
-        __ASSERT_DEBUG( parentObjectInfo, Panic( EMmMTPDpObjectNull ) );
+        CMTPObjectMetaData* parentObject = iRequestChecker->GetObjectInfo( iNewParentHandle );
+        __ASSERT_DEBUG( parentObject, Panic( EMmMTPDpObjectNull ) );
+
         delete iDest;
         iDest = NULL;
-        iDest = parentObjectInfo->DesC( CMTPObjectMetaData::ESuid ).AllocL();
+        iDest = parentObject->DesC( CMTPObjectMetaData::ESuid ).AllocL();
         PRINT1( _L( "MM MTP <> CMoveObject::GetParametersL iDest = %S" ), iDest );
         }
     PRINT( _L( "MM MTP <= CMoveObject::GetParametersL" ) );
@@ -375,11 +214,10 @@ void CMoveObject::SetDefaultParentObjectL()
 
     delete iDest;
     iDest = NULL;
-    iDest = ( iFramework.StorageMgr().StorageL( iStorageId ).DesC(
-                CMTPStorageMetaData::EStorageSuid ) ).AllocL();
-    PRINT1( _L( "MM MTP <> CMoveObject::SetDefaultParentObjectL iDest = %S" ), iDest );
+    iDest = iFramework.StorageMgr().StorageL( iStorageId ).DesC( CMTPStorageMetaData::EStorageSuid ).AllocL();
     iNewParentHandle = KMTPHandleNoParent;
-    PRINT( _L( "MM MTP <= CMoveObject::SetDefaultParentObjectL" ) );
+
+    PRINT1( _L( "MM MTP <= CMoveObject::SetDefaultParentObjectL, iDest = %S" ), iDest );
     }
 
 // -----------------------------------------------------------------------------
@@ -388,19 +226,21 @@ void CMoveObject::SetDefaultParentObjectL()
 // -----------------------------------------------------------------------------
 //
 TMTPResponseCode CMoveObject::CanMoveObjectL( const TDesC& aOldName,
-        const TDesC& aNewName ) const
+    const TDesC& aNewName ) const
     {
-    PRINT( _L( "MM MTP => CMoveObject::CanMoveObjectL" ) );
+    PRINT2( _L( "MM MTP => CMoveObject::CanMoveObjectL aOldName = %S, aNewName = %S" ),
+        &aOldName,
+        &aNewName );
     TMTPResponseCode result = EMTPRespCodeOK;
 
     TEntry fileEntry;
     User::LeaveIfError( iFramework.Fs().Entry( aOldName, fileEntry ) );
-    TDriveNumber drive( static_cast<TDriveNumber>( iFramework.StorageMgr().DriveNumber( iStorageId ) ) );
+    TInt drive = iFramework.StorageMgr().DriveNumber( iStorageId );
     User::LeaveIfError( drive );
     TVolumeInfo volumeInfo;
     User::LeaveIfError( iFramework.Fs().Volume( volumeInfo, drive ) );
 
-    if ( volumeInfo.iFree < fileEntry.iSize )
+    if ( volumeInfo.iFree < fileEntry.FileSize() )
         {
         result = EMTPRespCodeStoreFull;
         }
@@ -435,6 +275,37 @@ TMTPResponseCode CMoveObject::CanMoveObjectL( const TDesC& aOldName,
     }
 
 // -----------------------------------------------------------------------------
+// CMoveObject::MoveFileL
+// A helper function of MoveObjectL
+// -----------------------------------------------------------------------------
+//
+void CMoveObject::MoveFileL( const TDesC& aNewFileName )
+    {
+    TFileName oldFileName = iObjectInfo->DesC( CMTPObjectMetaData::ESuid );
+    PRINT2( _L( "MM MTP => CMoveObject::MoveFileL old name = %S, aNewFileName = %S" ),
+        &oldFileName,
+        &aNewFileName );
+
+    if ( iStorageId == iObjectInfo->Uint( CMTPObjectMetaData::EStorageId ) )
+        iSameStorage = ETrue;
+    else
+        iSameStorage = EFalse;
+
+    // Move the file first no matter if it will fail in Get/SetPreviousPropertiesL
+    // Already trapped inside
+    GetPreviousPropertiesL( *iObjectInfo );
+    TRAPD( err, SetPropertiesL( aNewFileName ) );
+
+    CFileMan* fileMan = CFileMan::NewL( iFramework.Fs() );
+    err = fileMan->Move( oldFileName, aNewFileName );
+
+    if ( err != KErrNone )
+        PRINT1( _L( "MM MTP <> CMoveObject::MoveFileL err = %d" ), err );
+
+    PRINT( _L( "MM MTP <= CMoveObject::MoveFileL" ) );
+    }
+
+// -----------------------------------------------------------------------------
 // CMoveObject::GetPreviousPropertiesL
 // Save the object properties before doing the move
 // -----------------------------------------------------------------------------
@@ -445,8 +316,6 @@ void CMoveObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
 
     const TDesC& suid( aObject.DesC( CMTPObjectMetaData::ESuid ) );
 
-    User::LeaveIfError( iFramework.Fs().Modified( suid, iPreviousModifiedTime ) );
-
     // same storage, not necessary to get the properties
     if ( iSameStorage )
         return;
@@ -454,12 +323,11 @@ void CMoveObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
     TUint formatCode = aObject.Uint( CMTPObjectMetaData::EFormatCode );
     const RArray<TUint>* properties = iDpConfig.GetSupportedPropertiesL( formatCode );
     TInt count = properties->Count();
-    CMTPTypeString* textData = NULL;
     TInt err = KErrNone;
     TUint16 propCode;
-    TUint32 handle = aObject.Uint( CMTPObjectMetaData::EHandle ) ;
+    TUint32 handle = aObject.Uint( CMTPObjectMetaData::EHandle );
 
-    if ( iPropertyElement )
+    if ( iPropertyElement != NULL )
         {
         delete iPropertyElement;
         iPropertyElement = NULL;
@@ -467,8 +335,9 @@ void CMoveObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
 
     for ( TInt i = 0; i < count; i++ )
         {
-        propCode = (*properties)[i];
-        switch( propCode )
+        propCode = ( *properties )[i];
+
+        switch ( propCode )
             {
             case EMTPObjectPropCodeStorageID:
             case EMTPObjectPropCodeObjectFormat:
@@ -477,43 +346,40 @@ void CMoveObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
             case EMTPObjectPropCodeObjectFileName:
             case EMTPObjectPropCodeParentObject:
             case EMTPObjectPropCodePersistentUniqueObjectIdentifier:
-            case EMTPObjectPropCodeNonConsumable:
             case EMTPObjectPropCodeDateCreated:
             case EMTPObjectPropCodeDateModified:
                 break;
 
+            case EMTPObjectPropCodeNonConsumable:
+                iPropertyElement = &( iPropertyList->ReservePropElemL( handle, propCode ) );
+                iPropertyElement->SetUint8L( CMTPTypeObjectPropListElement::EValue,
+                    aObject.Uint( CMTPObjectMetaData::ENonConsumable ) );
+                break;
+
             case EMTPObjectPropCodeName:
             case EMTPObjectPropCodeDateAdded:
-                if ( ( propCode == EMTPObjectPropCodeName )
-                   || ( ( !MmMtpDpUtility::IsVideoL( aObject.DesC( CMTPObjectMetaData::ESuid ), iFramework ) )
-                        && ( propCode == EMTPObjectPropCodeDateAdded ) ) )
+            case EMTPObjectPropCodeAlbumArtist:
+                {
+                CMTPTypeString* textData = CMTPTypeString::NewLC(); // + textData
+
+                TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( propCode,
+                    *textData,
+                    aObject ) );
+                PRINT1( _L( "MM MTP <> CMoveObject::GetPreviousPropertiesL err = %d" ), err );
+
+                if ( err == KErrNone )
                     {
-                    textData = CMTPTypeString::NewLC(); // + textData
-
-                    TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( propCode,
-                        *textData,
-                        aObject ) );
-
-                    PRINT1( _L( "MM MTP <> CMoveObject::GetPreviousPropertiesL::ServiceSpecificObjectPropertyL err = %d" ), err );
-
-                    if ( err == KErrNone )
-                        {
-                        iPropertyElement = &(iPropertyList->ReservePropElemL(handle, propCode));
-                        iPropertyElement->SetStringL(CMTPTypeObjectPropListElement::EValue, textData->StringChars());
-//                        iPropertyElement = CMTPTypeObjectPropListElement::NewL(
-//                            handle, propCode, *textData );
-                        }
-                    else if ( err == KErrNotFound )
-                        {
-                        iPropertyElement = NULL;
-                        }
-                    else
-                       {
-                       User::Leave( err );
-                       }
-
-                    CleanupStack::PopAndDestroy( textData ); // - textData
+                    iPropertyElement = &( iPropertyList->ReservePropElemL( handle, propCode ) );
+                    iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue,
+                        textData->StringChars() );
                     }
+                else
+                    {
+                    iPropertyElement = NULL;
+                    }
+
+                CleanupStack::PopAndDestroy( textData ); // - textData
+                }
                 break;
 
             default:
@@ -523,64 +389,14 @@ void CMoveObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
                 break;
             }
 
-        if ( iPropertyElement )
+        if ( iPropertyElement != NULL )
             {
             iPropertyList->CommitPropElemL( *iPropertyElement );
-
             iPropertyElement = NULL;
             }
-
         } // end of for loop
 
     PRINT1( _L( "MM MTP <= CMoveObject::GetPreviousPropertiesL err = %d" ), err );
-    }
-
-// -----------------------------------------------------------------------------
-// CMoveObject::ServiceMetaDataToWrapper
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C TMTPResponseCode CMoveObject::ServiceMetaDataToWrapper(
-    const TUint16 aPropCode,
-    MMTPType& aNewData,
-    const CMTPObjectMetaData& aObject )
-    {
-    TMTPResponseCode resCode = EMTPRespCodeOK;
-
-    TRAPD( err, iDpConfig.GetWrapperL().SetObjectMetadataValueL( aPropCode,
-        aNewData,
-        aObject ) );
-
-    PRINT1( _L("MM MTP <> CMoveObject::ServiceMetaDataToWrapper err = %d"), err);
-
-    if ( err == KErrNone )
-        {
-        resCode = EMTPRespCodeOK;
-        }
-    else if ( err == KErrTooBig )
-        // according to the codes of S60
-        {
-        resCode = EMTPRespCodeInvalidDataset;
-        }
-    else if ( err == KErrPermissionDenied )
-        {
-        resCode = EMTPRespCodeAccessDenied;
-        }
-    else if ( err == KErrNotFound )
-        {
-        if ( MmMtpDpUtility::HasMetadata( aObject.Uint( CMTPObjectMetaData::EFormatCode ) ) )
-            resCode = EMTPRespCodeAccessDenied;
-        else
-            resCode = EMTPRespCodeOK;
-        }
-    else
-        {
-        resCode = EMTPRespCodeGeneralError;
-        }
-
-    PRINT1( _L("MM MTP <= CMoveObject::ServiceMetaDataToWrapper resCode = 0x%x"), resCode);
-
-    return resCode;
     }
 
 // -----------------------------------------------------------------------------
@@ -588,27 +404,25 @@ EXPORT_C TMTPResponseCode CMoveObject::ServiceMetaDataToWrapper(
 // Set the object properties after doing the move
 // -----------------------------------------------------------------------------
 //
-void CMoveObject::SetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
+void CMoveObject::SetPreviousPropertiesL()
     {
     PRINT( _L( "MM MTP => CMoveObject::SetPreviousPropertiesL" ) );
-    const TInt count( iPropertyList->NumberOfElements() );
-    PRINT1( _L( "MM MTP <> CMoveObject::SetPreviousPropertiesL count = %d" ), count );
+
     TMTPResponseCode respcode = EMTPRespCodeOK;
-    CMTPTypeString* stringData = NULL;
+
     iPropertyList->ResetCursor();
-    
+    const TInt count = iPropertyList->NumberOfElements();
     for ( TInt i = 0; i < count; i++ )
         {
-        CMTPTypeObjectPropListElement& element = iPropertyList->GetNextElementL( );
+        CMTPTypeObjectPropListElement& element = iPropertyList->GetNextElementL();
 
-        TUint32 handle = element.Uint32L(
-                CMTPTypeObjectPropListElement::EObjectHandle );
-        TUint16 propertyCode = element.Uint16L(
-                CMTPTypeObjectPropListElement::EPropertyCode );
-        TUint16 dataType = element.Uint16L(
-                CMTPTypeObjectPropListElement::EDatatype );
-        PRINT3( _L( "MM MTP <> CMoveObject::SetPreviousPropertiesL = 0x%x, propertyCode = 0x%x, dataType = 0x%x" ),
-          handle, propertyCode, dataType );
+        TUint32 handle = element.Uint32L( CMTPTypeObjectPropListElement::EObjectHandle );
+        TUint16 propertyCode = element.Uint16L( CMTPTypeObjectPropListElement::EPropertyCode );
+        TUint16 dataType = element.Uint16L( CMTPTypeObjectPropListElement::EDatatype );
+        PRINT3( _L( "MM MTP <> CCopyObject::SetPreviousPropertiesL = 0x%x, propertyCode = 0x%x, dataType = 0x%x" ),
+            handle,
+            propertyCode,
+            dataType );
 
         switch ( propertyCode )
             {
@@ -619,20 +433,26 @@ void CMoveObject::SetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
             case EMTPObjectPropCodeObjectFileName:
             case EMTPObjectPropCodeParentObject:
             case EMTPObjectPropCodePersistentUniqueObjectIdentifier:
-            case EMTPObjectPropCodeNonConsumable:
             case EMTPObjectPropCodeDateCreated:
             case EMTPObjectPropCodeDateModified:
             case EMTPObjectPropCodeDateAdded:
                 break;
 
-            case EMTPObjectPropCodeName:
-                {
-                stringData = CMTPTypeString::NewLC(
-                    element.StringL(CMTPTypeObjectPropListElement::EValue)); // + stringData
+            case EMTPObjectPropCodeNonConsumable:
+                iObjectInfo->SetUint( CMTPObjectMetaData::ENonConsumable,
+                    element.Uint8L( CMTPTypeObjectPropListElement::EValue ) );
+                iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
+                break;
 
-                respcode = ServiceMetaDataToWrapper( propertyCode,
+            case EMTPObjectPropCodeName:
+            case EMTPObjectPropCodeAlbumArtist:
+                {
+                CMTPTypeString *stringData = CMTPTypeString::NewLC( element.StringL( CMTPTypeObjectPropListElement::EValue ) ); // + stringData
+
+                respcode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
+                    propertyCode,
                     *stringData,
-                    aObject );
+                    *iObjectInfo );
 
                 CleanupStack::PopAndDestroy( stringData ); // - stringData
                 }
@@ -640,17 +460,19 @@ void CMoveObject::SetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
 
             default:
                 {
-                respcode = ServiceSetSpecificObjectPropertyL( propertyCode,
-                        aObject,
-                        element );
+                respcode = iDpConfig.PropSettingUtility()->SetSpecificObjectPropertyL( iDpConfig,
+                    propertyCode,
+                    *iObjectInfo,
+                    element );
                 }
                 break;
             }
         } // end of for loop
 
-    if( respcode == EMTPRespCodeOK )
+    // ignore errors
+    if ( respcode == EMTPRespCodeOK )
         {
-        // do nothing, ignore warning
+        // do nothing, just to get rid of build warning
         }
 
     PRINT1( _L( "MM MTP <= CMoveObject::SetPreviousPropertiesL respcode = 0x%x" ), respcode );
@@ -661,189 +483,43 @@ void CMoveObject::SetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
 // Set the object properties in the object property store.
 // -----------------------------------------------------------------------------
 //
-void CMoveObject::SetPropertiesL( const TDesC& aOldFileName, const TDesC& aNewFileName,
-        const CMTPObjectMetaData& aNewObject )
+void CMoveObject::SetPropertiesL( const TDesC& aNewFileName )
     {
-    PRINT2( _L( "MM MTP => CMoveObject::SetPropertiesL aOldFileName = %S, aNewFileName = %S" ),
-            &aOldFileName, &aNewFileName );
+    PRINT1( _L( "MM MTP => CMoveObject::SetPropertiesL, aNewFileName = %S" ), &aNewFileName );
 
-    TUint32 formatCode = aNewObject.Uint( CMTPObjectMetaData::EFormatCode );
-    // This is used to keep the same behavior in mass storage and device file manager.
+    TUint32 formatCode = iObjectInfo->Uint( CMTPObjectMetaData::EFormatCode );
     if ( formatCode == EMTPFormatCodeAbstractAudioVideoPlaylist )
         {
+        // This is used to keep the same behavior in mass storage and device file manager.
         PRINT( _L( "MM MTP <> CMoveObject::SetPropertiesL Playlist file do not update the MPX DB" ) );
         }
     else
+        // TODO: Need rollback mechanism for consistant with image dp in fw.
+        // Not sure if it should be trap if something wrong with MPX db.
         {
-        // if the two object in different stoarge, we should delete the old one and insert new one
         if ( iSameStorage )
-            iDpConfig.GetWrapperL().RenameObjectL( aOldFileName, aNewFileName );
-        else
             {
-            iDpConfig.GetWrapperL().DeleteObjectL( aOldFileName, formatCode );
-            iDpConfig.GetWrapperL().AddObjectL( aNewFileName );
-            SetPreviousPropertiesL( aNewObject );
+            iDpConfig.GetWrapperL().RenameObjectL( *iObjectInfo, aNewFileName );
+            }
+        else    // if the two object in different storage, we should delete the old one and insert new one
+            {
+            iDpConfig.GetWrapperL().DeleteObjectL( *iObjectInfo );
+            iDpConfig.GetWrapperL().AddObjectL( *iObjectInfo );
+
+            // Only leave when getting proplist element from data received by fw.       
+            // It should not happen after ReceiveDataL in which construction of proplist already succeed.
+            SetPreviousPropertiesL();
             }
         }
 
-      // Reference DB is used PUID
-//    if ( formatCode == EMTPFormatCodeAbstractAudioVideoPlaylist
-//            || formatCode == EMTPFormatCodeM3UPlaylist )
-//        {
-//        MMTPReferenceMgr& referenceMgr = iFramework.ReferenceMgr();
-//        CDesCArray* references = referenceMgr.ReferencesLC( aOldFileName ); // + references
-//        referenceMgr.SetReferencesL( aNewFileName, *references );
-//        CleanupStack::PopAndDestroy( references ); // - references
-//        // delete the old references
-//        referenceMgr.RemoveReferencesL( aOldFileName );
-//        }
+    iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, aNewFileName );
+    iObjectInfo->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
+    iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
+    iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
 
+    // It's not necessary to change references of playlists since Reference DB is used PUID
 
     PRINT( _L( "MM MTP <= CMoveObject::SetPropertiesL" ) );
-    }
-
-// -----------------------------------------------------------------------------
-// CMoveObject::FinalPhaseMove
-// This function will actually delete the orginal folders from the file system
-// -----------------------------------------------------------------------------
-//
-TMTPResponseCode CMoveObject::FinalPhaseMove()
-    {
-    PRINT( _L( "MM MTP => CMoveObject::FinalPhaseMove" ) );
-    TMTPResponseCode ret = EMTPRespCodeOK;
-
-    TInt rel = iFileMan->RmDir( *iPathToMove );
-    PRINT1( _L( "MM MTP <> CMoveObject::FinalPhaseMove rel = %d" ), rel );
-
-    if ( rel != KErrNone )
-        {
-        ret = EMTPRespCodeGeneralError;
-        }
-
-    PRINT1( _L( "MM MTP <= CMoveObject::FinalPhaseMove ret = 0x%x" ), ret );
-    return ret;
-    }
-
-// -----------------------------------------------------------------------------
-// CMoveObject::GenerateObjectHandleListL
-// Generate the list of handles that need to be moved to the new location
-// -----------------------------------------------------------------------------
-//
-void CMoveObject::GenerateObjectHandleListL( TUint32 aParentHandle )
-    {
-    PRINT1( _L( "MM MTP => CMoveObject::GenerateObjectHandleListL aParentHandle = 0x%x" ), aParentHandle );
-    RMTPObjectMgrQueryContext context;
-    RArray<TUint> handles;
-    TMTPObjectMgrQueryParams params( KMTPStorageAll, KMTPFormatsAll,
-            aParentHandle );
-    CleanupClosePushL( context ); // + context
-    CleanupClosePushL( handles ); // - handles
-
-    do
-        {
-        iFramework.ObjectMgr().GetObjectHandlesL( params, context, handles );
-
-        TInt numberOfObjects = handles.Count();
-        for ( TInt i = 0; i < numberOfObjects; i++ )
-            {
-            if ( iFramework.ObjectMgr().ObjectOwnerId( handles[i] ) == iFramework.DataProviderId() )
-                {
-                iObjectHandles.AppendL( handles[i] );
-                continue;
-                }
-
-            // Folder
-            if ( iFramework.ObjectMgr().ObjectOwnerId( handles[i] ) == 0 ) // We know that the device dp id is always 0, otherwise the whole MTP won't work.
-                {
-                GenerateObjectHandleListL( handles[i] );
-                }
-            }
-        }
-    while ( !context.QueryComplete() );
-
-    CleanupStack::PopAndDestroy( &handles ); // - handles
-    CleanupStack::PopAndDestroy( &context ); // - contect
-
-    PRINT( _L( "MM MTP <= CMoveObject::GenerateObjectHandleListL" ) );
-    }
-
-// -----------------------------------------------------------------------------
-// CMoveObject::MoveAndUpdateL
-// Move a single object and update the database
-// -----------------------------------------------------------------------------
-//
-void CMoveObject::MoveAndUpdateL( TUint32 aObjectHandle )
-    {
-    PRINT1( _L( "MM MTP => CMoveObject::MoveAndUpdateL aObjectHanlde = 0x%x" ), aObjectHandle );
-
-    CMTPObjectMetaData* objectInfo( CMTPObjectMetaData::NewLC() ); // + objectInfo
-
-    RBuf fileName;
-    fileName.CreateL( KMaxFileName );
-    fileName.CleanupClosePushL(); // + fileName
-
-    RBuf rightPartName;
-    rightPartName.CreateL( KMaxFileName );
-    rightPartName.CleanupClosePushL(); // + rightPartName
-
-    RBuf oldName;
-    oldName.CreateL( KMaxFileName );
-    oldName.CleanupClosePushL(); // + oldName
-
-    if ( iFramework.ObjectMgr().ObjectL( TMTPTypeUint32( aObjectHandle ), *objectInfo ) )
-        {
-        fileName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
-        oldName = fileName;
-
-        if ( objectInfo->Uint( CMTPObjectMetaData::EDataProviderId )
-                == iFramework.DataProviderId() )
-            {
-            rightPartName = fileName.Right( fileName.Length() - iPathToMove->Length() );
-
-            if ( ( iNewRootFolder->Length() + rightPartName.Length() ) > fileName.MaxLength() )
-                {
-                User::Leave( KErrCorrupt );
-                }
-
-            fileName.Zero();
-            fileName.Append( *iNewRootFolder );
-            fileName.Append( rightPartName );
-            PRINT1( _L( "MM MTP <> MoveAndUpdateL fileName = %S" ), &fileName );
-
-            if ( iStorageId == objectInfo->Uint( CMTPObjectMetaData::EStorageId ) )
-                iSameStorage = ETrue;
-            else
-                iSameStorage = EFalse;
-            GetPreviousPropertiesL( *objectInfo );
-            TInt err = iFileMan->Move( oldName, fileName );
-            PRINT1( _L( "MM MTP <> CMoveObject::MoveAndUpdateL Move error code = %d" ), err );
-            User::LeaveIfError( err );
-            User::LeaveIfError( iFramework.Fs().SetModified( fileName, iPreviousModifiedTime ) );
-
-            objectInfo->SetDesCL( CMTPObjectMetaData::ESuid, fileName );
-            objectInfo->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
-            TParsePtrC parentSuid( fileName );
-            TUint32 parentHandle = iFramework.ObjectMgr().HandleL( parentSuid.DriveAndPath() );
-            objectInfo->SetUint( CMTPObjectMetaData::EParentHandle, parentHandle );
-
-            //TUint32 parentHandle = iFramework.ObjectMgr().HandleL( parentSuid.DriveAndPath() );
-            PRINT1( _L( "MM MTP <> CMoveObject::MoveAndUpdateL parentHandle = 0x%x" ), parentHandle );
-
-            iFramework.ObjectMgr().ModifyObjectL( *objectInfo );
-
-            SetPropertiesL( oldName, fileName, *objectInfo );
-            }
-        }
-    else
-        {
-        User::Leave( KErrCorrupt );
-        }
-
-    CleanupStack::PopAndDestroy( &oldName ); // - oldName
-    CleanupStack::PopAndDestroy( &rightPartName ); // - rightPartName
-    CleanupStack::PopAndDestroy( &fileName ); // - fileName
-    CleanupStack::PopAndDestroy( objectInfo ); // - objectInfo
-    PRINT( _L( "MM MTP <= CMoveObject::MoveAndUpdateL" ) );
     }
 
 // end of file

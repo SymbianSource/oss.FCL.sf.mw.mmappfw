@@ -11,13 +11,12 @@
 *
 * Contributors:
 *
-* Description:  DP configuration information for abstract media dp on armv5 platform
+* Description:  DP configuration information for abstract media dp
 *
 */
 
 
 #include <mtp/mtpdataproviderconfig.rh>
-#include "abstractmediamtpdataprovider_config.rh"
 
 RESOURCE MTP_DATA_PROVIDER dpConfig
     {
@@ -27,14 +26,6 @@ RESOURCE MTP_DATA_PROVIDER dpConfig
     supported_modes = KMTPModeMTP;
     server_name = "";
     server_image_name = "";
-    opaque_resource = "folderConfig";
+    opaque_resource = 0;
     enumeration_phase = 12;
     }
-
-RESOURCE ABSTRACTMEDIAMTPDATAPROVIDER_CONFIG folderConfig
-    {
-    abstractmedia_drive = 4;
-    }
-
-
-

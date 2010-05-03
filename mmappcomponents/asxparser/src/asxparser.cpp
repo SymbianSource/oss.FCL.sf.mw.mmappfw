@@ -15,7 +15,7 @@
 *
 */
 
-// Version : %version: 10.1.5 %
+// Version : %version: 10.1.5.1.1 %
 
 
 
@@ -299,7 +299,8 @@ void CAsxParser::ParseAsxV3HeaderL( TPtr8 aPtr )
                         CleanupStack::PopAndDestroy(); //attributeList
                     }
 	            
-	                while( nodelist2.HasNext() )
+                    TBool urlIsSet = EFalse;
+	                while( !urlIsSet && nodelist2.HasNext() )
 	                {
 	                    element = nodelist2.Next();
 
@@ -326,6 +327,8 @@ void CAsxParser::ParseAsxV3HeaderL( TPtr8 aPtr )
 	                                    TPtrC8 attrData = attr.Value();
 	                                    asxItem->url = attrData.AllocL();
 	                                    iAsxArray.Append(asxItem);
+	                                    urlIsSet = ETrue;
+	                                    break;
 	                                }
 	                            }
 

@@ -19,16 +19,14 @@
 #ifndef MEDIAMTPDATAPROVIDERPROCESSOR_H
 #define MEDIAMTPDATAPROVIDERPROCESSOR_H
 
-#include "crequestprocessor.h"
-
 // class forward
 class MMTPConnection;
 class TMTPTypeRequest;
 class CMTPDataProviderPlugin;
-class MMTPDataProviderFramework;
 class MMTPRequestProcessor;
 class CMediaMtpDataProvider;
 class MMmMtpDpConfig;
+class MMmRequestProcessor;
 
 typedef MMmRequestProcessor* ( *TMediaMtpDataProviderRequestProcessorCreateFunc )(
     MMTPDataProviderFramework& aFramework,

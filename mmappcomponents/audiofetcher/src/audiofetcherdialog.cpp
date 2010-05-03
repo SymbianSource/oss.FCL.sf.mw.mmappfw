@@ -286,7 +286,6 @@ void CAudioFetcherDialog::PreLayoutDynInitL()
     iListBox->View()->SetListEmptyTextL( *iEmptyListText );
     
     iStatusPaneHandler->SetTitleL( iTitle );
-    iStatusPaneHandler->SetNaviPaneTitleL( KNullDesC );
     
     CEikButtonGroupContainer& dialogCba = ButtonGroupContainer(); 
     dialogCba.MakeCommandVisible(EAknSoftkeySelect, EFalse);
@@ -389,14 +388,18 @@ void CAudioFetcherDialog::SetIconsL()
             EMbmAudiofetcherQgn_prop_sml_sync_off_mask ) );
 
     // memory card icon
-    icons->AppendL( IconL( KAknsIIDQgnIndiMmcAdd, iIconFileName,
+    icons->AppendL( ColorIconL( KAknsIIDQgnIndiMmcAdd, iIconFileName,
             EMbmAudiofetcherQgn_indi_mmc_add,
-            EMbmAudiofetcherQgn_indi_mmc_add_mask ) );
+            EMbmAudiofetcherQgn_indi_mmc_add_mask,
+            KAknsIIDQsnIconColors,
+            EAknsCIQsnIconColorsCG26 ) );
 
      // mass storage icon
-    icons->AppendL( IconL( KAknsIIDQgnPropLinkEmbdSmall, iIconFileName,
+    icons->AppendL( ColorIconL( KAknsIIDQgnPropLinkEmbdSmall, iIconFileName,
             EMbmAudiofetcherQgn_indi_fmgr_ms_add,
-            EMbmAudiofetcherQgn_indi_fmgr_ms_add_mask ) );
+            EMbmAudiofetcherQgn_indi_fmgr_ms_add_mask,
+            KAknsIIDQsnIconColors,
+            EAknsCIQsnIconColorsCG26 ) );
 
     // empty icon
     icons->AppendL( IconL( KAknsIIDQgnPropEmpty, KAvkonBitmapFile,
@@ -456,6 +459,45 @@ CGulIcon* CAudioFetcherDialog::IconL(TAknsItemID aId, const TDesC& aFileName,
     return icon;    
     }
 
+// -----------------------------------------------------------------------------
+// CMediaFileDialog::ColorIconL
+// 
+// -----------------------------------------------------------------------------
+//
+CGulIcon* CAudioFetcherDialog::ColorIconL( const TAknsItemID& aId,
+                                           const TDesC& aFileName,
+                                           TInt aFilexIndex,
+                                           TInt aFileMaskIndex,
+                                           const TAknsItemID& aColorId,
+                                           TInt aColorIndex )
+    {
+    WLOG("CAudioFetcherDialog::ColorIconL");
+    
+    CFbsBitmap* bitmap( NULL );
+    CFbsBitmap* mask( NULL );
+
+    if ( aColorId == KAknsIIDNone )
+        {
+        // do not use theme color, use the default color from the file
+        AknsUtils::CreateIconLC( AknsUtils::SkinInstance(), aId,
+            bitmap, mask, aFileName, aFilexIndex, aFileMaskIndex );
+        }
+    else
+        {
+        // use theme color
+        AknsUtils::CreateColorIconLC( AknsUtils::SkinInstance(), aId, aColorId, aColorIndex,
+            bitmap, mask, aFileName, aFilexIndex, aFileMaskIndex, KRgbBlack );
+        }
+
+    CGulIcon* icon = CGulIcon::NewL( bitmap, mask );
+    icon->SetBitmapsOwnedExternally( EFalse );
+
+    // icon now owns the bitmaps, no need to keep on cleanup stack.
+    CleanupStack::Pop( 2 ); // mask, bitmap
+    
+    return icon;
+    }
+
 
 // -----------------------------------------------------------------------------
 // CMediaFileDialog::UpdateListBoxL
@@ -469,13 +511,7 @@ void CAudioFetcherDialog::UpdateListBoxL()
         {
         return;
         }
-    
-    TInt resultCount = iFileHandler->ResultCount();
-    
-    if(resultCount > 0){
-        CEikButtonGroupContainer& dialogCba = ButtonGroupContainer(); 
-        dialogCba.MakeCommandVisible(EAknSoftkeySelect, ETrue);
-    }
+
     iListBox->HandleItemAdditionL();
     iListBox->SetCurrentItemIndex( 0 );    
     DrawNow();    
@@ -564,7 +600,7 @@ void CAudioFetcherDialog::HandleListBoxEventL( CEikListBox* /*aListBox*/,
     
     switch ( aEventType )
         {
-        case EEventItemDoubleClicked: // fallthrough
+        case EEventItemSingleClicked:   // fallthrough
         case EEventEnterKeyPressed:
             {
             TBool closeDialog = HandleListSelectionL();
@@ -876,7 +912,6 @@ void CAudioFetcherDialog::HandleResourceChange(TInt aType)
         AknLayoutUtils::EMainPane, mainPaneRect );
         SetRect( mainPaneRect );
         TRAP_IGNORE( iStatusPaneHandler->SetTitleL( iTitle ) );
-        TRAP_IGNORE( iStatusPaneHandler->SetNaviPaneTitleL( KNullDesC ) );
         DrawDeferred();
         }
         

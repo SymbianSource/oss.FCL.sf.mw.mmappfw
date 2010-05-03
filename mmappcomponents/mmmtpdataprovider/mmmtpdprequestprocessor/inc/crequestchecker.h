@@ -19,11 +19,9 @@
 #ifndef CREQUESTCHECKER_H
 #define CREQUESTCHECKER_H
 
-#include <e32base.h>
-#include <mtp/mtpprotocolconstants.h>
 #include <mtp/tmtptyperequest.h>
+#include <mtp/cmtpobjectmetadata.h>
 
-class CMTPObjectMetaData;
 class MMTPDataProviderFramework;
 class MMTPConnection;
 
@@ -121,7 +119,7 @@ public:
     * @return a pointer to the created request checker object
     */
     static CRequestChecker* NewL( MMTPDataProviderFramework& aFramework,
-            MMTPConnection& aConnection );
+        MMTPConnection& aConnection );
 
     /**
     * Destructor

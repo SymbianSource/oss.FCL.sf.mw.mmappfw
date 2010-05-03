@@ -226,6 +226,42 @@ EXPORT_C void CMPXCollectionMediator::AddItemL( CMPXMedia*& aMedia )
     }
 
 // ---------------------------------------------------------------------------
+// CMPXCollectionMediator::AddItemAsyncL()
+// ---------------------------------------------------------------------------
+//
+EXPORT_C void CMPXCollectionMediator::AddItemAsyncL( CMPXMedia*& aMedia )
+    {
+    ASSERT( iColUtil );
+
+    // If this is a podcast, change the collection id
+    if( IsPodcastL( *aMedia ) )
+        {
+        UpdatePathToPodcastL( *aMedia );
+        }
+
+    // Add it to the collection
+    CMPXCommand* cmd = CMPXMedia::NewL();
+    CleanupStack::PushL( cmd );
+
+    cmd->SetTObjectValueL(KMPXCommandGeneralId, KMPXCommandIdCollectionAdd );
+    cmd->SetCObjectValueL(KMPXCommandColAddMedia, aMedia); // copied
+
+    if (aMedia->IsSupported(KMPXMediaGeneralCollectionId))
+        {
+        TUid collectionId = aMedia->ValueTObjectL<TUid>(KMPXMediaGeneralCollectionId);
+        cmd->SetTObjectValueL(KMPXCommandGeneralCollectionId, collectionId.iUid);
+        }
+    else
+        {
+        User::Leave( KErrArgument );
+        }
+
+    iColUtil->CommandL(*cmd);
+
+    CleanupStack::PopAndDestroy(cmd);
+    }
+
+// ---------------------------------------------------------------------------
 // CMPXCollectionMediator::AddItemL()
 // ---------------------------------------------------------------------------
 //

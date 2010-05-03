@@ -15,7 +15,7 @@
 *
 */
 
-// Version : %version: 7 %
+// Version : %version: 8 %
 
 #include <e32base.h>
 #include <e32cons.h>

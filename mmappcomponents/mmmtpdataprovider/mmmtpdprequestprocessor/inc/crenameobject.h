@@ -22,7 +22,6 @@
 // Forward declarations
 class MMTPDataProviderFramework;
 class CMmMtpDpMetadataAccessWrapper;
-class MMTPObjectMgr;
 class CMTPObjectMetaData;
 
 class CRenameObject: public CActive
@@ -92,6 +91,7 @@ protected:
 private:
     CActiveSchedulerWait* iRenameWaiter;
     TUint32 iParentHandle;
+
     };
 
 #endif // CRENAMEOBJECT_H

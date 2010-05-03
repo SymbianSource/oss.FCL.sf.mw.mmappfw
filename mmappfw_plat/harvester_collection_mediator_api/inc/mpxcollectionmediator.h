@@ -89,6 +89,14 @@ public: // New functions
     IMPORT_C void AddItemL( CMPXMedia*& aMediaProp );
     
     /**
+    * Add a media to the collection asynchronously.
+	* 
+    * @param aMediaProp media item.
+    * @leave KErrArgument leave if not a supported media type
+    */
+    IMPORT_C void AddItemAsyncL( CMPXMedia*& aMediaProp );
+    
+    /**
     * Add a list of files to the collection db.
 	 *  @since S60 v3.2.3
     * @param aArray list of media item.

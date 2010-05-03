@@ -131,10 +131,8 @@ void Cmpxplaybackutilitytest::ConstructL()
                           EFalse );
     
     SendTestClassVersion();
-    
-   
-    iFs.Connect();
-    iFs.ShareProtected();
+
+    CreateL();
     }
 
 // -----------------------------------------------------------------------------

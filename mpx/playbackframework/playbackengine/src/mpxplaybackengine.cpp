@@ -315,10 +315,10 @@ EXPORT_C void CMPXPlaybackEngine::InitL(
                 TMPXPlaybackMessage::EInitializeComplete,
                 0,
                 EFalse));
-
+				
         if ( iPluginHandler->PlayerFound() )
         {
-            iPluginUid = iPluginHandler->Plugin()->Uid();
+        	iPluginUid = iPluginHandler->Plugin()->Uid();
         }
 
         RArray<TMPXAttribute> dummy;
@@ -984,7 +984,8 @@ void CMPXPlaybackEngine::DoHandlePluginEventL(
                         TMPXPlaybackMessage(
                             TMPXPlaybackMessage::EStateChanged, iState, aError ));
                     if ( KErrDied == aError ||
-                         KErrAccessDenied == aError )
+                         KErrAccessDenied == aError ||
+                         KErrInUse == aError )
                         {
                         iPluginState = EPbStateNotInitialised;
                         // fixed 
@@ -1476,7 +1477,7 @@ void CMPXPlaybackEngine::HandlePluginEventInitialisedL(TMPXPlaybackState& s, TIn
 	if ( iProperties[EPbPropertyPosition] >= iProperties[EPbPropertyDuration] )
             {
             iProperties[EPbPropertyPosition] = 0;
-            }    
+            }
 
     iAutoResumeHandler->HandleOpenFileComplete();
     

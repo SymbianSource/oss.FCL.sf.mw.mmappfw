@@ -21,8 +21,6 @@
 
 #include "crequestprocessor.h"
 
-class RFs;
-class CFileMan;
 class CMTPObjectMetaData;
 class CMTPTypeObjectPropList;
 class CMTPTypeObjectPropListElement;
@@ -35,17 +33,6 @@ class CCopyObject : public CRequestProcessor
     {
 public:
     /**
-    * Two-phase construction method
-    * @param aFramework    The data provider framework
-    * @param aConnection    The connection from which the request comes
-    * @param aWrapper    medadata access interface
-    * @return a pointer to the created request processor object
-    */
-    //IMPORT_C static MMmRequestProcessor* NewL( MMTPDataProviderFramework& aFramework,
-    //        MMTPConnection& aConnection,
-    //        CMmMtpDpMetadataAccessWrapper& aWrapper );
-
-    /**
     * Destructor
     */
     IMPORT_C virtual ~CCopyObject();
@@ -55,8 +42,8 @@ protected:
     * Standard c++ constructor
     */
     IMPORT_C CCopyObject( MMTPDataProviderFramework& aFramework,
-            MMTPConnection& aConnection,
-            MMmMtpDpConfig& aDpConfig );
+        MMTPConnection& aConnection,
+        MMmMtpDpConfig& aDpConfig );
 
     /**
     * Second phase constructor
@@ -70,31 +57,9 @@ protected:
     */
     IMPORT_C void ServiceL();
 
-    /**
-    * Set MetaData to CMetadataAccessWrapper, for internal use
-    * @param aPropCode, specify property code of aMediaProp
-    * @param aNewData, object property value which will be get from
-    *    aObjectMetaData
-    * @param aObjectMetaData, owner of the property which should be
-    *    inserted or updated into database
-    * @return response code
-    */
-    IMPORT_C TMTPResponseCode ServiceMetaDataToWrapper( const TUint16 aPropCode,
-            MMTPType& aNewData,
-            const CMTPObjectMetaData& aObject );
-
     virtual void ServiceGetSpecificObjectPropertyL( TUint16 aPropCode,
         TUint32 aHandle,
         const CMTPObjectMetaData& aObjectMetaData ) = 0;
-
-    virtual TMTPResponseCode ServiceSetSpecificObjectPropertyL( TUint16 aPropCode,
-        const CMTPObjectMetaData& aObject,
-        const CMTPTypeObjectPropListElement& aElement ) = 0;
-
-    // from CActive
-    IMPORT_C void RunL();
-
-    IMPORT_C TInt RunError( TInt aError );
 
 private:
     /**
@@ -102,83 +67,64 @@ private:
     */
     void GetParametersL();
 
+    /**
+     * Set a default destination if it is not specified
+     */
     void SetDefaultParentObjectL();
 
     /**
-    * Copy object operation
+    * Copy file and metadata and send response to pc
+    * If everything was right, the handle of newly created file
+    * should be sent back
     */
-    void CopyObjectL( TUint32& aNewHandle );
+    void CopyObjectL();
 
     /**
-    * Check if we can copy the file to the new location
+    * Check if the file can be copied
+    * @param aOldName used to get file size
+    * @param aNewName the full path name of newly copied file
     */
     TMTPResponseCode CanCopyObjectL( const TDesC& aOldName,
-            const TDesC& aNewName ) const;
+        const TDesC& aNewName ) const;
 
     /**
     * Save the object properties before doing the copy
     */
-    void GetPreviousPropertiesL( const CMTPObjectMetaData& aObject );
+    void GetPreviousPropertiesL();
 
     /**
     * Set the object properties after doing the copy
     */
-    void SetPreviousPropertiesL( const CMTPObjectMetaData& aObject );
+    void SetPreviousPropertiesL();
 
     /**
     * A helper function of CopyObjectL.
     * @param aNewFileName the new full filename after copy.
-    * @return objectHandle of new copy of object.
+    * @return handle of the newly copied object.
     */
     TUint32 CopyFileL( const TDesC& aNewFileName );
 
-    /*
-    * Generate the list of handles that need to be copied to the new location.
-    */
-    void GenerateObjectHandleListL( TUint32 aParentHandle );
-
     /**
-    * A helper function of CopyObjectL.
-    * @param aNewFolderName the new full file folder name after copy.
-    * @return objecthandle of new copy of the folder.
+    * Add metadata of the newly created file into database and
+    * update related references
+    * @param aOldObjectName old reference owner
+    * @param aNewObjectName new reference owner
+    * @return handle of the newly copied object
     */
-    TUint32 CopyFolderL( const TDesC& aNewFolderName );
-
-    /**
-    * Set the object properties in the object property store.
-    */
-    void SetPropertiesL( const TDesC& aOldFileName,
-        const TDesC& aNewFileName,
-        const CMTPObjectMetaData& aObject );
-
-    /**
-    * Update object info in the database.
-    */
-    TUint32 UpdateObjectInfoL( const TDesC& aOldObjectName,
-            const TDesC& aNewObjectName);
-
-    /*
-    * A helper function of CopyObjectL
-    * Copy a single object and update the database
-    */
-    void CopyAndUpdateL( TUint32 objectHandle );
+    TUint32 AddObjectToStoreL( const TDesC& aOldObjectName,
+        const TDesC& aNewObjectName );
 
 protected:
     CMTPTypeObjectPropListElement* iPropertyElement;
     MMmMtpDpConfig& iDpConfig;
     CMTPTypeObjectPropList* iPropertyList;
+
 private:
-    CMTPObjectMetaData* iObjectInfo; // Not owned
-    RArray<TUint> iObjectHandles;
-    CFileMan* iFileMan;
+    TUint32 iStorageId;
+    CMTPObjectMetaData* iSourceObject;
+    CMTPObjectMetaData* iTargetObject;
     HBufC* iDest;
     TUint32 iNewParentHandle;
-    TUint32 iHandle;
-    TUint32 iStorageId;
-    TInt iCopyObjectIndex;
-    TInt iNumberOfObjects;
-    HBufC* iPathToCopy;
-    HBufC* iNewRootFolder;
     TTime iPreviousModifiedTime;
 
     };

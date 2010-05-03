@@ -113,7 +113,6 @@ private: // data
     */
     MMPXSystemEventObserver& iObserver;
     TInt iState;
-    TBool iMTPActive;
     
     RUsb            iUsbMan;
     TUsbDeviceState iDeviceState;

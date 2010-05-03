@@ -25,15 +25,6 @@
 #include "mmmtpenumerationcallback.h"
 #include "cmmmtpdpperflog.h"
 
-// keep here to avoid warning on urel
-_LIT( KMpxGetAllPlaylist, "MpxGetAllPlaylist" );
-_LIT( KMpxGetPlaylistName, "MpxGetPlaylistName" );
-_LIT( KMpxQueryPlaylistReference, "MpxQueryPlaylistReference" );
-_LIT( KObjectManagerObjectUid, "ObjectManagerObjectUid" );
-_LIT( KObjectManagerInsert, "ObjectManagerInsert" );
-_LIT( KObjectManagerHandle, "ObjectManagerHandle" );
-_LIT( KReferenceManagerSetReference, "ReferenceManagerSetReference" );
-
 // Forward declarations
 class MMTPDataProviderFramework;
 class MMTPObjectMgr;
@@ -83,6 +74,14 @@ protected: // from CActive
     TInt RunError( TInt aError );
 
 private:
+
+    enum TEnumState
+    {
+        EEnumPlaylist,
+        EEnumAbstractAlbum,
+        EEnumCount
+    };
+
     /**
     * Standard C++ Constructor
     * @param aFramework Reference to MMTPDataProviderFramework
@@ -99,7 +98,7 @@ private:
     void SignalCompleteL( MMTPEnumerationCallback& aCallback,
         TInt aError = KErrNone );
 
-    void ScanStorageL( TUint32 aStorageId );
+    void InitStorageL( );
 
     /**
     * Scan next storage
@@ -143,6 +142,7 @@ private:
     CMPXMediaArray* iAbstractMedias;
     TInt iCount;
     TInt iCurrentIndex;
+    TInt iEnumState;
 
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     CMmMtpDpPerfLog* iPerfLog;

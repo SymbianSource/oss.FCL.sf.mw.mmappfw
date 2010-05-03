@@ -82,6 +82,8 @@ void CMPXCollectionUiHelperImp::ConstructL(const TUid& aModeId)
     iChunkNumber = 0;
     iChunkSize = 0;
     iArrayIndex = 0;
+    iRefCount = 1;
+
     }
 
 
@@ -103,10 +105,34 @@ CMPXCollectionUiHelperImp* CMPXCollectionUiHelperImp::NewL(const TUid& aModeId)
 //
 CMPXCollectionUiHelperImp* CMPXCollectionUiHelperImp::NewLC(const TUid& aModeId)
     {
-    CMPXCollectionUiHelperImp* self = new( ELeave ) CMPXCollectionUiHelperImp();
-    CleanupStack::PushL( self );
-    self->ConstructL(aModeId);
-    return self;
+
+	CMPXCollectionUiHelperImp* self(NULL);
+
+    if ( aModeId == KMcModeDefault )
+        {
+    	self = reinterpret_cast<CMPXCollectionUiHelperImp*>(Dll::Tls());
+    	if ( !self )
+            {
+            self = new( ELeave ) CMPXCollectionUiHelperImp();
+            CleanupStack::PushL( self );
+			self->ConstructL(aModeId);
+            Dll::SetTls( self );
+            }
+        else
+            {
+            self->iRefCount++;
+            CleanupStack::PushL( self );
+            }
+
+		return self;
+        }
+    else
+		{
+		self = new( ELeave ) CMPXCollectionUiHelperImp();
+		CleanupStack::PushL( self );
+		self->ConstructL(aModeId);
+		return self;
+		}
     }
 
 // ---------------------------------------------------------------------------
@@ -1001,6 +1027,12 @@ void CMPXCollectionUiHelperImp::Cancel()
         // currently only used by incremental add
         iTaskQueue->CancelRequests();
         
+        if( iTask == ETaskIncAddMedia || iTask == ETaskIncAppendMedia )
+            {
+            // complete task from scheduler
+            iTaskQueue->CompleteTask();
+            }
+        
         // clean up iInputMedia
         if( iInputMedia )
             {
@@ -1016,7 +1048,21 @@ void CMPXCollectionUiHelperImp::Cancel()
 //
 void CMPXCollectionUiHelperImp::Close()
     {
-    delete this;
+
+    ASSERT( iRefCount > 0 );
+    if ( --iRefCount == 0 )
+        {
+        // last client released
+        CMPXCollectionUiHelperImp* s = reinterpret_cast<CMPXCollectionUiHelperImp*>( Dll::Tls() );
+        if ( s )
+            {
+            if ( s == this )
+                {
+                delete this;
+                Dll::SetTls( NULL );
+                }
+            }
+        }
     }
 
 // ---------------------------------------------------------------------------
@@ -1211,6 +1257,62 @@ void CMPXCollectionUiHelperImp::HandleOpenL(const CMPXCollectionPlaylist& /*aPla
     {
     // Not used
     ASSERT(0);
+    }
+
+// ---------------------------------------------------------------------------
+// From MMPXCollectionObserver
+// ---------------------------------------------------------------------------
+//
+void CMPXCollectionUiHelperImp::HandleCommandComplete(CMPXCommand* aCommandResult, TInt aError)
+    {
+    MPX_DEBUG3("CMPXCollectionUiHelperImp::HandleCommandComplete iTask=%d, aError=%d", 
+        iTask, aError);
+
+    if( iTask == ETaskIncAddMedia && iInputMedia )
+        {
+        if ( iChunkNumber == 0 )
+            {
+            // save playlistId in input media & use it for subsequent appending operations
+            if( aCommandResult )
+                {
+                TMPXItemId playlistId = 
+                    aCommandResult->ValueTObjectL<TMPXItemId>(KMPXCommandColAddRtnId);
+                    
+                iInputMedia->SetTObjectValueL<TMPXItemId>(KMPXMediaGeneralId, playlistId);
+                }
+            
+            iChunkNumber++;  // move on to next chunk
+            
+            CompleteTask(iTask, aError);
+            }
+        else if ( iChunkNumber == iTotalChunkNumber-1 )  // last chunk
+            {
+            CompleteTask(ETaskIncFinish, aError);  // finish inc task
+            }
+        else // intermedia chunks
+            {
+            iChunkNumber++;  // move on to next chunk
+            
+            CompleteTask(iTask, aError);
+            }
+        }
+    else if( iTask == ETaskIncAppendMedia && iInputMedia )
+        {
+        // last chunk
+        // for the case that there is only one chunk (first & last chunk at the same 
+        // time), Inc Add is not used
+        if( iChunkNumber == iTotalChunkNumber-1 )
+            {
+            // update input media as well
+            FillInPlaylistDetailsL(*iInputMedia);
+            CompleteTask(ETaskIncFinish, aError);        
+            }
+        else // intermediate chunks, including first chunk
+            {       
+            iChunkNumber++;
+            CompleteTask(iTask, aError);
+            }
+        }
     }
 
 // ----------------------------------------------------------------------------
@@ -1641,7 +1743,8 @@ void CMPXCollectionUiHelperImp::DoAddL()
 void CMPXCollectionUiHelperImp::DoIncAddMediaL()
     {
     /***** include only aSize/iChunkSize number of songs *****/
-    
+    MPX_DEBUG5("CMPXCollectionUiHelperImp::DoIncAddMediaL (%d, %d, %d, %d)", 
+        iChunkNumber, iChunkSize, iTotalChunkNumber, iRemainder);
     // copy media
     CMPXMedia* media = CMPXMedia::CopyL(*iInputMedia);
     CleanupStack::PushL(media);
@@ -1699,15 +1802,7 @@ void CMPXCollectionUiHelperImp::DoIncAddMediaL()
         
         CleanupStack::PopAndDestroy(playlistExtension); 
 
-        iMediator->AddItemL( media );  // this creates the new playlist
-        
-        // save playlistId in input media & use it for subsequent appending operations
-        TMPXItemId playlistId = media->ValueTObjectL<TMPXItemId>(KMPXMediaGeneralId);
-        iInputMedia->SetTObjectValueL<TMPXItemId>(KMPXMediaGeneralId, playlistId);
-        
-        iChunkNumber++;  // move on to next chunk
-        
-        CompleteTask(iTask, KErrNone);
+        iMediator->AddItemAsyncL( media );  // this creates the new playlist
         }
     else if ( iChunkNumber == iTotalChunkNumber-1 )  // last chunk
         {
@@ -1719,9 +1814,7 @@ void CMPXCollectionUiHelperImp::DoIncAddMediaL()
         TMPXItemId playlistId = iInputMedia->ValueTObjectL<TMPXItemId>(KMPXMediaGeneralId);
         media->SetTObjectValueL<TMPXItemId>(KMPXMediaGeneralId, playlistId);
         
-        iMediator->AddItemL( media );
-        
-        CompleteTask(ETaskIncFinish, KErrNone);  // finish inc task
+        iMediator->AddItemAsyncL( media );
         }
     else // intermedia chunks
         {
@@ -1733,11 +1826,7 @@ void CMPXCollectionUiHelperImp::DoIncAddMediaL()
         TMPXItemId playlistId = iInputMedia->ValueTObjectL<TMPXItemId>(KMPXMediaGeneralId);
         media->SetTObjectValueL<TMPXItemId>(KMPXMediaGeneralId, playlistId);
 
-        iMediator->AddItemL( media );
-        
-        iChunkNumber++;  // move on to next chunk
-        
-        CompleteTask(iTask, KErrNone);
+        iMediator->AddItemAsyncL( media );
         }
     
     CleanupStack::PopAndDestroy(cArray);
@@ -1790,23 +1879,8 @@ void CMPXCollectionUiHelperImp::DoIncAppendMediaL()
 
     // update media then append to playlist
     FillInPlaylistDetailsL(*media);
-    iMediator->AddItemL( media );
+    iMediator->AddItemAsyncL( media );
 
-    // last chunk
-    // for the case that there is only one chunk (first & last chunk at the same 
-    // time), Inc Add is not used
-    if( iChunkNumber == iTotalChunkNumber-1 )
-        {
-        // update input media as well
-        FillInPlaylistDetailsL(*iInputMedia);
-        CompleteTask(ETaskIncFinish, KErrNone);        
-        }
-    else // intermediate chunks, including first chunk
-        {       
-        iChunkNumber++;
-        CompleteTask(iTask, KErrNone);
-        }
-   
     CleanupStack::PopAndDestroy(cArray);
     CleanupStack::PopAndDestroy(media);
     }

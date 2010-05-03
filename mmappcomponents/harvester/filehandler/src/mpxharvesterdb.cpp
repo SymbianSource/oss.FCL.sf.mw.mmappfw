@@ -31,8 +31,12 @@ const TInt KAdditionalStringLength = 50;
 // ---------------------------------------------------------------------------
 //
 CMPXHarvesterDB::CMPXHarvesterDB( TDriveNumber aDrive, RFs& aFs  ) :
-                                                             iDrive( aDrive),
-                                                             iFs( aFs )
+                                  iDrive( aDrive),
+                                  iFs( aFs )
+#ifdef __RAMDISK_PERF_ENABLE
+                                  ,iRamDrive(aDrive),
+                                  iUseRamDrive(EFalse)
+#endif // __RAMDISK_PERF_ENABLE
     {
     }
 
@@ -75,7 +79,7 @@ CMPXHarvesterDB::~CMPXHarvesterDB()
 //
 TInt CMPXHarvesterDB::OpenL()
     {
-    MPX_DEBUG1("CMPXHarvesterDB::OpenL <---");
+    MPX_FUNC("CMPXHarvesterDB::OpenL");
 
     // There is no need to re-open if it was already open
     if( iDBOpen )
@@ -84,18 +88,11 @@ TInt CMPXHarvesterDB::OpenL()
         }
 
     TInt rtn( KErrNone );
-    TDriveUnit drive( iDrive );
-    TFileName fileName;
-    fileName.Append( drive.Name() );
-    fileName.Append( KHarvesterDBPath );
-
-    // Make sure Path exists
-    if (!BaflUtils::PathExists(iFs, fileName))
-        {
-        iFs.MkDirAll(fileName);
-        }
-
-    fileName.Append( KHarvesterDBName );
+    TFileName fileName = GenerateDbName();
+    TParsePtr fileParser( fileName );
+    TFileName filePath = fileParser.DriveAndPath();
+    // Make sure Path exists; allow to leave if can't create the path
+    BaflUtils::EnsurePathExistsL(iFs, filePath);
 
     // Try to open the stream
     TRAPD( err,
@@ -107,20 +104,9 @@ TInt CMPXHarvesterDB::OpenL()
     if( err )
         {
         MPX_DEBUG2("CMPXHarvesterDB::OpenL -- New database %i", err);
-
-        TRAPD( openErr,
-            iStore = CPermanentFileStore::ReplaceL(iFs, fileName ,EFileRead|EFileWrite);
-        	iStore->SetTypeL(iStore->Layout());
-            CreateDBL();
-            iDBOpen = ETrue;
-            );
-
-        if( KErrNone != openErr )
-            {
-            iDBOpen = EFalse;
-            User::Leave( openErr );
-            }
-
+        iStore = CPermanentFileStore::ReplaceL(iFs, fileName ,EFileRead|EFileWrite);
+        iStore->SetTypeL(iStore->Layout());
+        CreateDBL();
         // If the open stream error was not found, that is fine
         // because it is a new db, other errors means the stream
         // is corrupted
@@ -131,9 +117,8 @@ TInt CMPXHarvesterDB::OpenL()
         {
         MPX_DEBUG1("CMPXHarvesterDB::OpenL -- Opening database" );
         rtn = OpenDBL();
-        iDBOpen = ETrue;
         }
-
+    iDBOpen = ETrue;
 
     // Check volume Id
     //
@@ -160,7 +145,6 @@ TInt CMPXHarvesterDB::OpenL()
         rtn = OpenL();
         }
 
-    MPX_DEBUG1("CMPXHarvesterDB::OpenL --->");
     return rtn;
     }
 
@@ -196,15 +180,26 @@ void CMPXHarvesterDB::CreateDBL()
     MPX_DEBUG1("CMPXHarvesterDB::CreateDBL <---");
 
     // remove old databases before creating/replacing new database
-
-    TFileName dbFileName;
-    TDriveUnit drive( iDrive );
-    dbFileName.Append( drive.Name() );
-    dbFileName.Append( KHarvesterDBPath );
-    dbFileName.Append( KHarvesterDBPattern );
+    TFileName fileName = GenerateDbName();
+    TParsePtr fileParser( fileName );
+    TFileName filePath = fileParser.DriveAndPath();
+#ifdef __RAMDISK_PERF_ENABLE
+    if ( iUseRamDrive )
+        {
+        TDriveUnit drive( iDrive );
+        filePath.Append(drive.Name()[0]);
+        filePath.Append(KHarvesterDBPattern);
+        }
+    else
+        {
+#endif // __RAMDISK_PERF_ENABLE
+        filePath.Append( KHarvesterDBPattern );
+#ifdef __RAMDISK_PERF_ENABLE
+        }
+#endif // __RAMDISK_PERF_ENABLE
     
     CFileMan* fileManager = CFileMan::NewL(iFs);
-    TInt ret = fileManager->Delete(dbFileName);	
+    TInt ret = fileManager->Delete(filePath); 
     delete fileManager;
     fileManager = NULL;
 
@@ -474,12 +469,7 @@ void CMPXHarvesterDB::RemoveAllFilesL()
 //
 TInt CMPXHarvesterDB::DeleteDatabase()
     {
-    TDriveUnit drive( iDrive );
-    TFileName fileName;
-    fileName.Append( drive.Name() );
-    fileName.Append( KHarvesterDBPath );
-    fileName.Append( KHarvesterDBName );
-
+    TFileName fileName = GenerateDbName();
     return iFs.Delete( fileName );
     }
 
@@ -605,6 +595,129 @@ void CMPXHarvesterDB::CommitL()
 void CMPXHarvesterDB::Rollback()
     {
     iDatabase->Rollback();
+    }
+
+#ifdef __RAMDISK_PERF_ENABLE
+// ---------------------------------------------------------------------------
+// Set RAM drive info
+// ---------------------------------------------------------------------------
+//
+void CMPXHarvesterDB::SetRamDriveInfo(TDriveNumber aDrive, TBool aUseRamDrive)
+    {
+    MPX_FUNC("CMPXHarvesterDB::SetRamDriveInfo");
+    iRamDrive = aDrive;
+    iUseRamDrive = aUseRamDrive;
+    }
+
+// ---------------------------------------------------------------------------
+// Get UseRamDrive
+// ---------------------------------------------------------------------------
+//
+TBool CMPXHarvesterDB::IsUseRamDrive()
+    {
+    MPX_FUNC("CMPXHarvesterDB::IsUseRamDrive");
+    return iUseRamDrive;
+    }
+
+// ---------------------------------------------------------------------------
+// Get the state of the database.
+// ---------------------------------------------------------------------------
+//
+TDbState CMPXHarvesterDB::GetDbState()
+    {
+    MPX_FUNC("CMPXHarvesterDB::GetDbState");
+    TDbState state = EDbClose;
+    if ( InTransaction() )
+        {
+        state = EDbInTransaction;
+        }
+    else if ( iDBOpen )
+        {
+        state = EDbOpen;
+        }
+    
+    MPX_DEBUG2("CMPXHarvesterDB::GetDbState state = %d", state );
+    return state;
+    }
+
+// ---------------------------------------------------------------------------
+// Set the state of the database.
+// ---------------------------------------------------------------------------
+//
+void CMPXHarvesterDB::SetDbStateL( TDbState aState )
+    {
+    MPX_FUNC("CMPXHarvesterDB::SetDbState");
+    MPX_DEBUG2("CMPXHarvesterDB::SetDbState state = %d", aState );
+    
+    switch( aState )
+        {
+        case EDbClose:
+            {
+            if ( InTransaction() )
+                {
+                CommitL();
+                }
+            Close();
+            break;
+            }
+        case EDbOpen:
+            {
+            if ( InTransaction() )
+                {
+                CommitL();
+                }
+            OpenL();
+            break;
+            }
+        case EDbInTransaction:
+            {
+            if ( !InTransaction() )
+                {
+                OpenL();
+                BeginL();
+                }
+            break;
+            }
+        default:
+            {
+            // should never get here
+            User::Leave(KErrNotSupported);
+            }
+        }
+    }
+
+#endif // __RAMDISK_PERF_ENABLE
+
+// ---------------------------------------------------------------------------
+// Generate the database name
+// ---------------------------------------------------------------------------
+//
+TFileName CMPXHarvesterDB::GenerateDbName()
+    {
+    MPX_FUNC("CMPXHarvesterDB::GenerateDbName");
+    TFileName fileName;
+#ifdef __RAMDISK_PERF_ENABLE
+    if ( iUseRamDrive )
+        {
+        TDriveUnit ramDrive( iRamDrive );
+        fileName.Append( ramDrive.Name() );
+        fileName.Append( KHarvesterDBPath );
+        TDriveUnit drive( iDrive );
+        fileName.Append(drive.Name()[0]);
+        fileName.Append(KHarvesterDBName);
+        }
+    else
+        {
+#endif // __RAMDISK_PERF_ENABLE
+        TDriveUnit drive( iDrive );
+        fileName.Append( drive.Name() );
+        fileName.Append( KHarvesterDBPath );
+        fileName.Append( KHarvesterDBName );
+#ifdef __RAMDISK_PERF_ENABLE
+        }
+#endif // __RAMDISK_PERF_ENABLE
+    MPX_DEBUG2("CMPXHarvesterDB::GenerateDbName file name = %S", &fileName );
+    return fileName;
     }
 
 // End of file

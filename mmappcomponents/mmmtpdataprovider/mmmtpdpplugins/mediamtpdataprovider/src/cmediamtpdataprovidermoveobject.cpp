@@ -1,22 +1,21 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
-* All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
-*
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
-*
-* Contributors:
-*
-* Description:  Implement the operation: Copy Object
-*
-*/
+ * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+ * All rights reserved.
+ * This component and the accompanying materials are made available
+ * under the terms of "Eclipse Public License v1.0"
+ * which accompanies this distribution, and is available
+ * at the URL "http://www.eclipse.org/legal/epl-v10.html".
+ *
+ * Initial Contributors:
+ * Nokia Corporation - initial contribution.
+ *
+ * Contributors:
+ *
+ * Description:  Implement the operation: Move Object
+ *
+ */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/cmtptypeobjectproplist.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
@@ -65,7 +64,7 @@ void CMediaMtpDataProviderMoveObject::ConstructL()
 //
 CMediaMtpDataProviderMoveObject::~CMediaMtpDataProviderMoveObject()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -78,7 +77,7 @@ CMediaMtpDataProviderMoveObject::CMediaMtpDataProviderMoveObject( MMTPDataProvid
     MMmMtpDpConfig& aDpConfig ) :
     CMoveObject( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -90,7 +89,8 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
     TUint32 aHandle,
     const CMTPObjectMetaData& aObject )
     {
-    PRINT1( _L( "MM MTP => CMediaMtpDataProviderMoveObject::ServiceSpecificObjectPropertyL aPropCode(0x%x)" ), aPropCode );
+    PRINT1( _L( "MM MTP => CMediaMtpDataProviderMoveObject::ServiceSpecificObjectPropertyL aPropCode(0x%x)" ),
+        aPropCode );
 
     CMTPTypeString* textData = NULL;
     CMTPTypeArray* desData = NULL;
@@ -112,7 +112,7 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
         case EMTPObjectPropCodeParentalRating:
         case EMTPObjectPropCodeEncodingProfile:
             {
-            textData = CMTPTypeString::NewLC();   // + textData
+            textData = CMTPTypeString::NewLC(); // + textData
 
             TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( aPropCode,
                 *textData,
@@ -122,29 +122,21 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
 
             if ( err == KErrNone )
                 {
-                iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-                iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, textData->StringChars());
-                
-//                iPropertyElement = CMTPTypeObjectPropListElement::NewL( aHandle,
-//                    aPropCode,
-//                    *textData );
+                iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+                iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, textData->StringChars() );
                 }
-            else if ( err == KErrNotFound )
-              {
-                iPropertyElement = NULL;
-              }
             else
-              {
-                User::Leave( err );
-              }
+                {
+                iPropertyElement = NULL;
+                }
 
-            CleanupStack::PopAndDestroy( textData );  // - textData
+            CleanupStack::PopAndDestroy( textData ); // - textData
             }
             break;
 
         case EMTPObjectPropCodeDescription:
             {
-            desData = CMTPTypeArray::NewLC( EMTPTypeAUINT16 );   // + desData
+            desData = CMTPTypeArray::NewLC( EMTPTypeAUINT16 ); // + desData
 
             TRAP( err, iDpConfig.GetWrapperL().GetObjectMetadataValueL( aPropCode,
                 *desData,
@@ -154,24 +146,15 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
 
             if ( err == KErrNone )
                 {
-                
-                iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-                iPropertyElement->SetArrayL( CMTPTypeObjectPropListElement::EValue, *desData);
-                
-//                iPropertyElement = CMTPTypeObjectPropListElement::NewL( aHandle,
-//                    aPropCode,
-//                    *desData );
-                }
-            else if ( err == KErrNotFound )
-                {
-                iPropertyElement = NULL;
+                iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+                iPropertyElement->SetArrayL( CMTPTypeObjectPropListElement::EValue, *desData );
                 }
             else
                 {
-                User::Leave( err );
+                iPropertyElement = NULL;
                 }
 
-            CleanupStack::PopAndDestroy( desData );  // - desData
+            CleanupStack::PopAndDestroy( desData ); // - desData
             }
             break;
 
@@ -188,21 +171,12 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
 
             if ( err == KErrNone )
                 {
-                
-                iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-                iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EValue, uint16.Value());
-                
-//                iPropertyElement = CMTPTypeObjectPropListElement::NewL( aHandle,
-//                    aPropCode,
-//                    uint16 );
-                }
-            else if ( err == KErrNotFound )
-                {
-                iPropertyElement = NULL;
+                iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+                iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EValue, uint16.Value() );
                 }
             else
                 {
-                User::Leave( err );
+                iPropertyElement = NULL;
                 }
             }
             break;
@@ -210,7 +184,6 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
         case EMTPObjectPropCodeWidth:
         case EMTPObjectPropCodeHeight:
         case EMTPObjectPropCodeDuration:
-        case EMTPObjectPropCodeUseCount:
         case EMTPObjectPropCodeSampleRate:
         case EMTPObjectPropCodeAudioWAVECodec:
         case EMTPObjectPropCodeAudioBitRate:
@@ -227,20 +200,12 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
 
             if ( err == KErrNone )
                 {
-                iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-                iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, uint32.Value());
-                
-//                iPropertyElement = CMTPTypeObjectPropListElement::NewL( aHandle,
-//                    aPropCode,
-//                    uint32 );
-                }
-            else if ( err == KErrNotFound )
-                {
-                iPropertyElement = NULL;
+                iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+                iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, uint32.Value() );
                 }
             else
                 {
-                User::Leave( err );
+                iPropertyElement = NULL;
                 }
             }
             break;
@@ -254,14 +219,9 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
             if ( drmStatus == EMTPDrmStatusProtected )
                 result.Set( 1 );
 
-            iPropertyElement = &(iPropertyList->ReservePropElemL(aHandle, aPropCode));
-            iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EDatatype, EMTPTypeUINT8);
-            iPropertyElement->SetUint8L( CMTPTypeObjectPropListElement::EValue, result.Value());
-            
-//            iPropertyElement = CMTPTypeObjectPropListElement::NewL( aHandle,
-//                aPropCode,
-//                EMTPTypeUINT8,
-//                result );
+            iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
+            iPropertyElement->SetUint16L( CMTPTypeObjectPropListElement::EDatatype, EMTPTypeUINT8 );
+            iPropertyElement->SetUint8L( CMTPTypeObjectPropListElement::EValue, result.Value() );
             }
             break;
 
@@ -269,127 +229,10 @@ void CMediaMtpDataProviderMoveObject::ServiceGetSpecificObjectPropertyL( TUint16
             {
             User::Leave( KErrNotSupported );
             }
-          break;
+            break;
         }
 
     PRINT( _L( "MM MTP <= CMediaMtpDataProviderMoveObject::ServiceSpecificObjectPropertyL" ) );
-    }
-
-// -----------------------------------------------------------------------------
-// CMediaMtpDataProviderMoveObject::ServiceSetSpecificObjectPropertyL
-//
-// -----------------------------------------------------------------------------
-//
-TMTPResponseCode CMediaMtpDataProviderMoveObject::ServiceSetSpecificObjectPropertyL( TUint16 aPropCode, const CMTPObjectMetaData& aObject,
-    const CMTPTypeObjectPropListElement& aElement )
-    {
-    PRINT( _L( "MM MTP => CMediaMtpDataProviderMoveObject::ServiceSetSpecificObjectPropertyL" ) );
-    TMTPResponseCode responseCode( EMTPRespCodeOK );
-
-    switch ( aPropCode )
-        {
-        case EMTPObjectPropCodeArtist:
-        case EMTPObjectPropCodeGenre:
-        case EMTPObjectPropCodeComposer:
-        case EMTPObjectPropCodeOriginalReleaseDate:
-        case EMTPObjectPropCodeAlbumName:
-        case EMTPObjectPropCodeParentalRating:
-        case EMTPObjectPropCodeEncodingProfile:
-            {
-            CMTPTypeString* stringData =
-                CMTPTypeString::NewLC( aElement.StringL( CMTPTypeObjectPropListElement::EValue ) );// + stringData
-
-            responseCode = ServiceMetaDataToWrapper( aPropCode,
-                *stringData,
-                aObject );
-
-            CleanupStack::PopAndDestroy( stringData );// - stringData
-            }
-            break;
-
-        case EMTPObjectPropCodeVideoBitRate:
-            {
-            responseCode = EMTPRespCodeAccessDenied;
-            }
-            break;
-
-        case EMTPObjectPropCodeDescription:
-            {
-            CMTPTypeArray*  desData = CMTPTypeArray::NewLC( EMTPTypeAUINT16 ); // + desData
-//            aElement.GetL( CMTPTypeObjectPropListElement::EValue, *desData );
-            
-            desData->SetByDesL(aElement.ArrayL(CMTPTypeObjectPropListElement::EValue ));
-            responseCode = ServiceMetaDataToWrapper( aPropCode,
-                    *desData,
-                    aObject );
-            CleanupStack::PopAndDestroy( desData ); // - desData
-            }
-            break;
-
-        case EMTPObjectPropCodeWidth:
-        case EMTPObjectPropCodeHeight:
-        case EMTPObjectPropCodeDuration:
-        case EMTPObjectPropCodeUseCount:
-        case EMTPObjectPropCodeSampleRate:
-        case EMTPObjectPropCodeAudioWAVECodec:
-        case EMTPObjectPropCodeAudioBitRate:
-        case EMTPObjectPropCodeVideoFourCCCodec:
-        case EMTPObjectPropCodeFramesPerThousandSeconds:
-        case EMTPObjectPropCodeKeyFrameDistance:
-            {
-            TMTPTypeUint32 uint32( aElement.Uint32L( CMTPTypeObjectPropListElement::EValue ) );
-            responseCode = ServiceMetaDataToWrapper( aPropCode,
-                uint32,
-                aObject );
-            }
-            break;
-
-        case EMTPObjectPropCodeTrack:
-        case EMTPObjectPropCodeNumberOfChannels:
-        case EMTPObjectPropCodeScanType:
-        case EMTPObjectPropCodeDRMStatus:
-            {
-            TMTPTypeUint16 uint16( aElement.Uint16L( CMTPTypeObjectPropListElement::EValue ));
-            responseCode = ServiceMetaDataToWrapper( aPropCode,
-                uint16,
-                aObject );
-            }
-            break;
-
-        case EMTPExtObjectPropCodeOmaDrmStatus:
-            {
-            TInt drmStatus = MmMtpDpUtility::GetDrmStatus( aObject.DesC(
-                CMTPObjectMetaData::ESuid ) );
-
-            if ( drmStatus == EMTPDrmStatusUnknown )
-                {
-                responseCode = EMTPRespCodeAccessDenied;
-                }
-            else
-                {
-                TMTPTypeUint8 newValue( aElement.Uint8L( CMTPTypeObjectPropListElement::EValue ) );
-
-                // there's no DB field to remember the value, so return an error
-                // if there's a mismatch to CAF protection status
-                if ( ( ( drmStatus == EMTPDrmStatusProtected ) && ( newValue.Value() == 0 ) )
-                    || ( ( drmStatus == EMTPDrmStatusNotProtected ) && ( newValue.Value() == 1 ) ) )
-                    {
-                    responseCode = EMTPRespCodeAccessDenied;
-                    }
-                }
-            }
-            break;
-
-        default:
-            {
-            User::Leave( KErrNotSupported );
-            }
-            break;
-        }
-
-    PRINT( _L( "MM MTP <= CMediaMtpDataProviderMoveObject::ServiceSetSpecificObjectPropertyL" ) );
-
-    return responseCode;
     }
 
 // end of file

@@ -16,7 +16,6 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypearray.h>
 
@@ -54,7 +53,7 @@ MMmRequestProcessor* CMediaMtpDataProviderGetObjectPropValue::NewL( MMTPDataProv
 //
 void CMediaMtpDataProviderGetObjectPropValue::ConstructL()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -64,7 +63,7 @@ void CMediaMtpDataProviderGetObjectPropValue::ConstructL()
 //
 CMediaMtpDataProviderGetObjectPropValue::~CMediaMtpDataProviderGetObjectPropValue()
     {
-
+    // Do nothing
     }
 
 // -----------------------------------------------------------------------------
@@ -77,10 +76,10 @@ CMediaMtpDataProviderGetObjectPropValue::CMediaMtpDataProviderGetObjectPropValue
     MMmMtpDpConfig& aDpConfig ) :
     CGetObjectPropValue( aFramework, aConnection, aDpConfig )
     {
-
+    // Do nothing
     }
 
-void CMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL(TUint16 aPropCode)
+void CMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL( TUint16 aPropCode )
     {
     PRINT( _L( "MM MTP => CMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL" ) );
     switch ( aPropCode )
@@ -120,7 +119,6 @@ void CMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL(TUi
         case EMTPObjectPropCodeWidth: // 0xDC87
         case EMTPObjectPropCodeHeight: // 0xDC88
         case EMTPObjectPropCodeDuration: // 0xDC89
-        case EMTPObjectPropCodeUseCount: // 0xDC91
         case EMTPObjectPropCodeSampleRate: // 0xDE93
         case EMTPObjectPropCodeAudioWAVECodec: // 0xDE99
         case EMTPObjectPropCodeAudioBitRate: // 0xDE9A
@@ -151,7 +149,7 @@ void CMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPropertyL(TUi
             TInt drmStatus = MmMtpDpUtility::GetDrmStatus( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
             iMTPTypeUint8.Set( 0 );
 
-            if (drmStatus == EMTPDrmStatusProtected)
+            if ( drmStatus == EMTPDrmStatusProtected )
                 iMTPTypeUint8.Set( 1 );
 
             SendDataL( iMTPTypeUint8 );

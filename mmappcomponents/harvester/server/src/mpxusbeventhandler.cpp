@@ -41,7 +41,6 @@ CMPXUsbEventHandler::CMPXUsbEventHandler( MMPXSystemEventObserver& aObserver ) :
                                           CActive( EPriorityStandard ),
                                           iWasMtp  ( EFalse ),
                                           iObserver( aObserver ),
-                                          iMTPActive ( EFalse ),
                                           iUsbManConnected( EFalse )
     {
     CActiveScheduler::Add( this );
@@ -175,7 +174,6 @@ void CMPXUsbEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ )
             {
             MPX_DEBUG1("CMPXUsbEventHandler::DoHandlePSEvent - MTP End");
             iObserver.HandleSystemEventL( EUSBMTPEndEvent, removableDrive );
-            iMTPActive = EFalse;
             }
         MPX_DEBUG1("CMPXUsbEventHandler::DoHandlePSEvent - USB Start");
 #ifdef RD_MULTIPLE_DRIVE
@@ -199,20 +197,15 @@ void CMPXUsbEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ )
 		
         if (value == EMtpPSStatusActive)
             {
-            if( !iMTPActive )
-            	{
-                MPX_DEBUG1("CMPXUsbEventHandler::DoHandlePSEvent - MTP Start");
-                iObserver.HandleSystemEventL( EUSBMTPStartEvent, removableDrive );
-                iState = KUsbPersonalityIdMTP;
-                iMTPActive = ETrue;
-            	}
+        	MPX_DEBUG1("CMPXUsbEventHandler::DoHandlePSEvent - MTP Start");
+            iObserver.HandleSystemEventL( EUSBMTPStartEvent, removableDrive );
+            iState = KUsbPersonalityIdMTP;
             }
         else if( value != EMtpPSStatusReadyToSync )
             {
             MPX_DEBUG1("CMPXUsbEventHandler::DoHandlePSEvent - MTP Not Active");
             iObserver.HandleSystemEventL( EUSBMTPNotActiveEvent, removableDrive );
             iState = KUsbPersonalityIdMTP;
-            iMTPActive = EFalse;
             }
         }
     // Make sure MTP and MS flags are OFF
@@ -231,7 +224,6 @@ void CMPXUsbEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ )
             {
             MPX_DEBUG1("CMPXUsbEventHandler::DoHandlePSEvent - MTP End");
             iObserver.HandleSystemEventL( EUSBMTPEndEvent, removableDrive );
-            iMTPActive = EFalse;
             }
         iState = KUsbWatcherSelectedPersonalityNone;
         }

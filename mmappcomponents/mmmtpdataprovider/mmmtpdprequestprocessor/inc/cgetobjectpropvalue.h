@@ -29,7 +29,6 @@ class TMTPTypeUint64;
 class TMTPTypeUint128;
 class CMTPTypeString;
 class CMTPTypeArray;
-class TMTPObjectInfo;
 class MMmMtpDpConfig;
 
 

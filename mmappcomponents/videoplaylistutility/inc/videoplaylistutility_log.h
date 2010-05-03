@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies). 
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -15,12 +15,13 @@
 *
 */
 
-// Version : %version: 3 %
+// Version : %version: 4 %
+
+
 
 
 #ifndef VIDEOPLAYLISTUTILITY_LOG_H
 #define VIDEOPLAYLISTUTILITY_LOG_H
-
 
 // INCLUDES
 #include <e32std.h>
@@ -45,7 +46,6 @@
 class TVideoPlaylistUtilityLog : public TDes16Overflow
 {
     public:
-
         inline static void NullLog( TRefByValue<const TDesC16> /*aFmt*/, ... )
         {
         }
@@ -53,7 +53,7 @@ class TVideoPlaylistUtilityLog : public TDes16Overflow
         inline static void VideoPlaylistUtilityLog( TRefByValue<const TDesC16> aFmt, ... )
         {
             TBuf< 512 > buffer;
-
+            
             VA_LIST list;
             VA_START( list, aFmt );
             buffer.AppendFormatList( aFmt, list );
@@ -76,14 +76,14 @@ class TEnterExitLog : public TDes16Overflow
                        TRefByValue<const TDesC> aFmt, ... )
         {
             iFunctionName = HBufC::New( TDesC(aFunctionName).Length() );
-
+            
             if ( iFunctionName )
             {
                 iFunctionName->Des().Copy(aFunctionName);
             }
-
+            
             TBuf< 512 > buffer;
-
+            
             VA_LIST list;
             VA_START( list, aFmt );
             buffer.AppendFormatList( aFmt, list, this );
@@ -91,11 +91,11 @@ class TEnterExitLog : public TDes16Overflow
 
             RDebug::Print(_L("#VideoPlaylistUtility# --> %S %S"), iFunctionName, &buffer );
         }
-
+        
         TEnterExitLog( TRefByValue<const TDesC> aFunctionName )
         {
             iFunctionName = HBufC::New( TDesC(aFunctionName).Length() );
-
+            
             if ( iFunctionName )
             {
                 iFunctionName->Des().Copy(aFunctionName);
@@ -103,17 +103,16 @@ class TEnterExitLog : public TDes16Overflow
 
             RDebug::Print(_L("#VideoPlaylistUtility# --> %S"), iFunctionName );
         }
-
+        
         ~TEnterExitLog()
         {
             RDebug::Print(_L("#VideoPlaylistUtility# <-- %S"), iFunctionName );
             delete iFunctionName;
         }
-
+        
     private:
         HBufC*    iFunctionName;
 };
-
 
 _LIT(_KVPUErrorInfo, "#VideoPlaylistUtility# Error : error %d file %s line %d");
 

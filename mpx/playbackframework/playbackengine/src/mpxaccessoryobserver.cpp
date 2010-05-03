@@ -211,6 +211,9 @@ TMPXPlaybackAccessoryMode CMPXAccessoryObserver::ConvertToMpxMode(
         case EAccModeHeadphones:
             mode = EPbAccessoryHeadphones;
             break;
+        case EAccModeHDMI:
+            mode = EPbAccessoryHDMI;
+            break;
         default:
             break;
         }

@@ -55,7 +55,10 @@ void RMPXDataItem::Reset(TUint aClientHandle)
 //
 void RMPXDataItem::Copy(TUint aClientHandle,TAny* aSrc,TInt aSize)
     {
-    MPX_ASSERT(aSrc&&aClientHandle);
+    //The source could be zero-length descriptor: aSize is 0 and aSrc is NULL
+    //ASSERT if aSrc is NULL while aSize is not zero, invalid descriptor
+    MPX_ASSERT(((aSrc!=NULL)?ETrue:(aSize==0))&&aClientHandle);
+
     //
     Reset(aClientHandle);
     RMPXHeapManager& m=RMPXHeapManager::HeapManager(aClientHandle);

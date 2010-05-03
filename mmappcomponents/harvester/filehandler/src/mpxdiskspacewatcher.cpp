@@ -147,8 +147,12 @@ void CMPXDiskSpaceWatcher::DoCancel()
 void CMPXDiskSpaceWatcher::RunL()
     {
     // Callback to observer about which drive is low on disk space
-    //
-    iObs.HandleLowDiskEvent( iDriveToMonitor );
+    //Check whether the current disk is low on disk space in Mass Storage mode.
+    //    
+    if (IsLowOnDisk())
+        {
+        iObs.HandleLowDiskEvent( iDriveToMonitor );
+        }
     }
 
 // END OF FILE

@@ -11,15 +11,42 @@
 *
 * Contributors:
 *
-* Description: 
+* Description:
 *
 */
-
 
 #ifndef ABSTRACTMEDIAMTPDATAPROVIDERCONST_H
 #define ABSTRACTMEDIAMTPDATAPROVIDERCONST_H
 
 #include <mtp/mtpprotocolconstants.h>
+#include "mmmtpdp_variant.hrh"
+
+enum TMmMtpSampleSizeRange
+    {
+    EMTPMinSampleSize  = 0x00000001,  // 1 bytes
+    EMTPMaxSampleSize  = 0x00010000,  // 64 kb
+    EMTPStepSampleSize = 0x00000001   // 1 byte
+    };
+
+enum TMmMtpSampleHeightRange
+    {
+    EMTPSampleMinHeight  = 0x00000001,  // 1 pixel
+    EMTPSampleMaxHeight  = 0x00000168,  // 360 pixel
+    EMTPSampleStepHeight = 0x00000001   // 1 pixel
+    };
+
+enum TMmMtpSampleWidthRange
+    {
+    EMTPSampleMinWidth  = 0x00000001,  // 1 pixel
+    EMTPSampleMaxWidth  = 0x00000168,  // 360 pixel
+    EMTPSampleStepWidth = 0x00000001   // 1 pixel
+    };
+
+// Supported sample format
+static const TUint16 TMmMtpSupportedSampleFormat[] =
+    {
+    EMTPFormatCodeEXIFJPEG
+    };
 
 const TUint16 EMTPExtOpCodeAbstractMediaPreference = 0x9203;
 
@@ -28,6 +55,9 @@ const TUint16 EMTPExtOpCodeAbstractMediaPreference = 0x9203;
 */
 static const TUint16 KAbstractMediaMtpDataProviderSupportedFormats[] =
     {
+#ifdef MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT        
+    EMTPFormatCodeAbstractAudioAlbum,
+#endif    
     EMTPFormatCodeM3UPlaylist,
     EMTPFormatCodeAbstractAudioVideoPlaylist
     };
@@ -55,39 +85,25 @@ static const TUint16 KAbstractMediaMtpDataProviderSupportedOperations[] =
     EMTPOpCodeGetObjectPropList,
     EMTPOpCodeSetObjectPropList,
     EMTPOpCodeGetInterdependentPropDesc,
-    
+
     EMTPExtOpCodeAbstractMediaPreference, // 0x9203
-    
+
     EMTPOpCodeCopyObject,
     EMTPOpCodeMoveObject,
-    
-    EMTPOpCodeSendObjectPropList, 
+
+    EMTPOpCodeSendObjectPropList,
     EMTPOpCodeGetFormatCapabilities
     };
 
-#if 0
-/**
-* define all the object properties that are supported by the abstract media data provider
-*/
-static const TUint16 KAbstractMediaMtpDataProviderSupportedProperties[] =
+// Mandatory properties for ALB
+static const TUint16 KMmMtpDpSupportedPropMandatoryALB[] =
     {
-    // Mandatory for all objects
-    EMTPObjectPropCodeStorageID,
-    EMTPObjectPropCodeObjectFormat,
-    EMTPObjectPropCodeProtectionStatus,
-    EMTPObjectPropCodeObjectSize,
-    EMTPObjectPropCodeObjectFileName,
-    EMTPObjectPropCodeParentObject,
-    EMTPObjectPropCodePersistentUniqueObjectIdentifier,
-    EMTPObjectPropCodeName,
-    EMTPObjectPropCodeNonConsumable,
-
-    // additional for all
-    EMTPObjectPropCodeDateAdded,
-    EMTPObjectPropCodeDateCreated,
-    EMTPObjectPropCodeDateModified,
+    EMTPObjectPropCodeRepresentativeSampleFormat,
+    EMTPObjectPropCodeRepresentativeSampleSize,
+    EMTPObjectPropCodeRepresentativeSampleHeight,
+    EMTPObjectPropCodeRepresentativeSampleWidth,
+    EMTPObjectPropCodeRepresentativeSampleData,
+    EMTPObjectPropCodeAlbumArtist
     };
-#endif
-
 
 #endif // ABSTRACTMEDIAMTPDATAPROVIDERCONST_H

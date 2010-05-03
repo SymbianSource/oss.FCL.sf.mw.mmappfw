@@ -16,7 +16,6 @@
 */
 
 
-#include <mtp/mmtpdataproviderframework.h>
 #include <mtp/cmtptypeobjectinfo.h>
 #include <f32file.h>
 
@@ -26,9 +25,8 @@
 #include "tmmmtpdppanic.h"
 #include "mmmtpdplogger.h"
 #include "mmmtpdpconfig.h"
+#include "tobjectdescription.h"
 
-_LIT( KMtpDateTimeFormat, "%F%Y%M%DT%H%T%S" );
-const TInt KMtpMaxDateTimeStringLength = 15;
 
 // -----------------------------------------------------------------------------
 // Verification data for GetObjectInfo request
@@ -164,7 +162,7 @@ void CGetObjectInfo::BuildObjectInfoL()
     TUint32 width(0);
     TUint32 height(0);
     TInt err = KErrNone;
-    TRAP( err, iDpConfig.GetWrapperL().GetImageObjPropL( suid, width, height ) );
+    TRAP( err, iDpConfig.GetWrapperL().GetImageObjPropL( *object, width, height ) );
     if( err != KErrNone )
         PRINT1( _L( "MM MTP <> CGetObjectInfo::BuildObjectInfoL TRAP iWrapper.GetImageObjPropL err = %d" ), err );
 
@@ -188,11 +186,9 @@ void CGetObjectInfo::BuildObjectInfoL()
     TParsePtrC parse( suid );
     iObjectInfo->SetStringL( CMTPTypeObjectInfo::EFilename, parse.NameAndExt() );
 
-    TTime dataModified;
-    dataModified = MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(), suid );
-
     TBuf<KMtpMaxDateTimeStringLength> date;
-    dataModified.FormatL( date, KMtpDateTimeFormat );
+    MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(), suid, date );
+
     PRINT1( _L( "MM MTP <> CGetObjectInfo::BuildObjectInfo date is %S" ), &date );
 
     // Date Created

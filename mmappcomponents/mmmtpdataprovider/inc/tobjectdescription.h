@@ -23,6 +23,11 @@
 
 // vendor extended property code
 const TUint16 EMTPExtObjectPropCodeOmaDrmStatus = 0xDB01;
+const TUint32 KMTPMaxDescriptionLen = 0x00000100;  // 256
+const TInt KMtpMaxStringLength = 255;
+const TInt KMtpMaxDateTimeStringLength = 15;
+_LIT( KMtpDateTimeFormat, "%F%Y%M%DT%H%T%S" );
+
 
 struct TObjectDescription
     {
@@ -32,7 +37,8 @@ struct TObjectDescription
 
 enum TGroupCodeType
     {
-    EGroupCodeGeneral     = 0x00000001,
+    EGroupCodeGeneral    = 0x00000001,
+    EGroupCodeSample     = 0x00000100,
     EGroupCodeMediaDB    = 0x00FF0000,
     EGroupCodeNotDefined = 0xFFFFFFFF   // TODO: need to reconsider
     };
@@ -40,59 +46,70 @@ enum TGroupCodeType
 static const TGroupCodeType KSupportedGroupCode[] =
     {
     EGroupCodeGeneral,
+    EGroupCodeSample,
     EGroupCodeMediaDB
     };
 
 static const TObjectDescription KPropGroupMapTable[] =
     {
-        // First group, mandatory for all
-        { EMTPObjectPropCodeStorageID,      EGroupCodeGeneral },
-        { EMTPObjectPropCodeObjectFormat,   EGroupCodeGeneral },
+        // The first group, mandatory for all
+        { EMTPObjectPropCodeStorageID,        EGroupCodeGeneral },
+        { EMTPObjectPropCodeObjectFormat,     EGroupCodeGeneral },
         { EMTPObjectPropCodeProtectionStatus, EGroupCodeGeneral },
-        { EMTPObjectPropCodeObjectSize,     EGroupCodeGeneral },
-        { EMTPObjectPropCodeObjectFileName, EGroupCodeGeneral },
-        { EMTPObjectPropCodeParentObject,   EGroupCodeGeneral },
+        { EMTPObjectPropCodeObjectSize,       EGroupCodeGeneral },
+        { EMTPObjectPropCodeObjectFileName,   EGroupCodeGeneral },
+        { EMTPObjectPropCodeParentObject,     EGroupCodeGeneral },
         { EMTPObjectPropCodePersistentUniqueObjectIdentifier,
-                                            EGroupCodeGeneral },
-        { EMTPObjectPropCodeNonConsumable,  EGroupCodeGeneral },
+                                              EGroupCodeGeneral },
+        { EMTPObjectPropCodeNonConsumable,    EGroupCodeGeneral },
 
-        // First group, addtional for all
-        { EMTPObjectPropCodeDateCreated,    EGroupCodeGeneral },
-        { EMTPObjectPropCodeDateModified,   EGroupCodeGeneral },
+        // The first group, addtional for all
+        { EMTPObjectPropCodeName,             EGroupCodeGeneral },  // only for winlogo
+        { EMTPObjectPropCodeDateCreated,      EGroupCodeGeneral },
+        { EMTPObjectPropCodeDateModified,     EGroupCodeGeneral },
 
-        // Second group, additional for all
-        { EMTPObjectPropCodeName,           EGroupCodeMediaDB },
-        { EMTPObjectPropCodeDateAdded,      EGroupCodeMediaDB },
+        // The first group, mandatory for video
+        { EMTPObjectPropCodeWidth,            EGroupCodeGeneral },  // only for winlogo
+        { EMTPObjectPropCodeHeight,           EGroupCodeGeneral },  // only for winlogo
 
-        // Second group, mandatory for audio
-        { EMTPObjectPropCodeArtist,         EGroupCodeMediaDB },
-        { EMTPObjectPropCodeTrack,          EGroupCodeMediaDB },
-        { EMTPObjectPropCodeGenre,          EGroupCodeMediaDB },
-        { EMTPObjectPropCodeAlbumName,      EGroupCodeMediaDB },
-        { EMTPObjectPropCodeSampleRate,     EGroupCodeMediaDB },
+        // The second group, for non-embedded album art
+        { EMTPObjectPropCodeRepresentativeSampleFormat, EGroupCodeGeneral }, // changed for winlogo
+        { EMTPObjectPropCodeRepresentativeSampleSize,   EGroupCodeGeneral }, // changed for winlogo
+        { EMTPObjectPropCodeRepresentativeSampleHeight, EGroupCodeGeneral }, // changed for winlogo
+        { EMTPObjectPropCodeRepresentativeSampleWidth,  EGroupCodeGeneral }, // changed for winlogo
+        { EMTPObjectPropCodeRepresentativeSampleData,   EGroupCodeGeneral }, // changed for winlogo
+
+        // The third group, additional for all
+        { EMTPObjectPropCodeDateAdded,        EGroupCodeMediaDB },
+
+        // The third group, mandatory for audio
+        { EMTPObjectPropCodeArtist,           EGroupCodeMediaDB },
+        { EMTPObjectPropCodeTrack,            EGroupCodeMediaDB },
+        { EMTPObjectPropCodeGenre,            EGroupCodeMediaDB },
+        { EMTPObjectPropCodeAlbumName,        EGroupCodeMediaDB },
+        { EMTPObjectPropCodeSampleRate,       EGroupCodeMediaDB },
         { EMTPObjectPropCodeNumberOfChannels, EGroupCodeMediaDB },
-        { EMTPObjectPropCodeAudioWAVECodec, EGroupCodeMediaDB },
-        { EMTPObjectPropCodeAudioBitRate,   EGroupCodeMediaDB },
-        { EMTPObjectPropCodeDuration,       EGroupCodeMediaDB },
+        { EMTPObjectPropCodeAudioWAVECodec,   EGroupCodeMediaDB },
+        { EMTPObjectPropCodeAudioBitRate,     EGroupCodeMediaDB },
+        { EMTPObjectPropCodeDuration,         EGroupCodeMediaDB },
         { EMTPObjectPropCodeOriginalReleaseDate, EGroupCodeMediaDB },
-        { EMTPObjectPropCodeDescription,    EGroupCodeMediaDB },
-        { EMTPObjectPropCodeComposer,       EGroupCodeMediaDB },
+        { EMTPObjectPropCodeDescription,      EGroupCodeMediaDB },
+        { EMTPObjectPropCodeComposer,         EGroupCodeMediaDB },
+        { EMTPObjectPropCodeAlbumArtist,      EGroupCodeMediaDB },
 
-        // Second group, mandatory for video
-        { EMTPObjectPropCodeWidth,          EGroupCodeMediaDB },
-        { EMTPObjectPropCodeHeight,         EGroupCodeMediaDB },
-        { EMTPObjectPropCodeUseCount,       EGroupCodeMediaDB },
-        { EMTPObjectPropCodeScanType,       EGroupCodeMediaDB },
+        // The third group, mandatory for video
+        { EMTPObjectPropCodeScanType,         EGroupCodeMediaDB },
         { EMTPObjectPropCodeVideoFourCCCodec, EGroupCodeMediaDB },
-        { EMTPObjectPropCodeVideoBitRate,   EGroupCodeMediaDB },
+        { EMTPObjectPropCodeVideoBitRate,     EGroupCodeMediaDB },
         { EMTPObjectPropCodeFramesPerThousandSeconds, EGroupCodeMediaDB },
         { EMTPObjectPropCodeKeyFrameDistance, EGroupCodeMediaDB },
-        { EMTPObjectPropCodeEncodingProfile, EGroupCodeMediaDB },
+        { EMTPObjectPropCodeEncodingProfile,  EGroupCodeMediaDB },
 
-        // Second group, additional for video
-        { EMTPObjectPropCodeParentalRating, EGroupCodeMediaDB },
-        { EMTPObjectPropCodeDRMStatus, EGroupCodeMediaDB },
-        { EMTPExtObjectPropCodeOmaDrmStatus, EGroupCodeMediaDB }
+        // The third group, additional for video
+        { EMTPObjectPropCodeParentalRating,   EGroupCodeMediaDB },
+        { EMTPObjectPropCodeDRMStatus,        EGroupCodeMediaDB },
+        { EMTPExtObjectPropCodeOmaDrmStatus,  EGroupCodeMediaDB }
     };
 
 #endif // TOBJECTDESCRIPTION_H
+

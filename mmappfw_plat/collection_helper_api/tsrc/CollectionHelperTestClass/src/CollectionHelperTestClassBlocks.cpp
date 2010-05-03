@@ -30,6 +30,7 @@
 #include <mpxmediacontainerdefs.h>
 #include <mpxattribute.h>
 #include "debug.h"
+#include <mpxmediamtpdefs.h>
 
 // EXTERNAL DATA STRUCTURES
 //extern  ?external_data;
@@ -134,6 +135,18 @@ TInt CCollectionHelperTestClass::RunMethodL(
         ENTRY( "NewUiHelper", CCollectionHelperTestClass::NewUiHelperL ),
         ENTRY( "NewHelper", CCollectionHelperTestClass::NewHelperL ),
         ENTRY( "NewCachedHelper", CCollectionHelperTestClass::NewCachedHelperL ),
+        ENTRY( "AddSong", CCollectionHelperTestClass::AddSongL ),
+        ENTRY( "RemoveSong", CCollectionHelperTestClass::RemoveSongL ),
+        ENTRY( "AddAbstractAlbum", CCollectionHelperTestClass::AddAbstractAlbumL ),
+        ENTRY( "RemoveAbstractAlbum", CCollectionHelperTestClass::RemoveAbstractAlbumL ),
+        ENTRY( "SetAbstractAlbum", CCollectionHelperTestClass::SetAbstractAlbumL ),
+        ENTRY( "SetSongAlbumArtist", CCollectionHelperTestClass::SetSongAlbumArtistL ),
+        ENTRY( "GetSongAlbumArtist", CCollectionHelperTestClass::GetSongAlbumArtistL ),
+        ENTRY( "SetAbstractAlbumArtist", CCollectionHelperTestClass::SetAbstractAlbumArtistL ),
+        ENTRY( "GetAbstractAlbumArtist", CCollectionHelperTestClass::GetAbstractAlbumArtistL ),
+        ENTRY( "UpdateAbstractAlbumName", CCollectionHelperTestClass::UpdateAbstractAlbumNameL ),
+        ENTRY("GetAbstractAlbumAndSongs",CCollectionHelperTestClass::GetAbstractAlbumAndSongsL),
+        ENTRY( "RenameAbstractAlbum", CCollectionHelperTestClass::RenameAbstractAlbumL ),
         ENTRY( "CloseUiHelper", CCollectionHelperTestClass::CloseUiHelperL ),
         ENTRY( "CloseHelper", CCollectionHelperTestClass::CloseHelperL ),
         ENTRY( "CloseCachedHelper", CCollectionHelperTestClass::CloseCachedHelperL ),        
@@ -511,6 +524,640 @@ TInt CCollectionHelperTestClass::NewCachedHelperL(CStifItemParser& /*aItem*/)
 
 	return result;
 	}
+
+
+//Removing song from collection
+//By calling CMPXCollectionCachedHelper API RemoveL
+TInt CCollectionHelperTestClass::RemoveSongL(CStifItemParser& /*aItem*/)
+    {
+	FTRACE(FPrint(_L("CCollectionHelperTest::RemoveSongL")));
+	TRAPD(result, iCachedHelper->RemoveL(KFileWmaSong, EMPXSong));
+	iLog->Log(_L("CCollectionHelperTestClass::RemoveSong done with result=[%d]"), result);
+	return result;
+	}
+
+//Removing AbstractAlbum from collection
+//By calling CMPXCollectionCachedHelper API RemoveL
+//precondition:  e:\\data\\sounds\\digital\\1.alb  on test HW
+//output: 1.alb is delete from MPX DB
+TInt CCollectionHelperTestClass::RemoveAbstractAlbumL(CStifItemParser& /*aItem*/)
+  {
+	FTRACE(FPrint(_L("CCollectionHelperTest::RemoveAbstractAlbumL")));
+	TRAPD(result, iCachedHelper->RemoveL(KAbstractalbum1, EMPXAbstractAlbum));
+	iLog->Log(_L("CCollectionHelperTestClass::RemoveAbstractAlbumL done with result=[%d]"), result);
+	return result;
+	}
+//Adds song to the database
+//WMP to MTP step1
+//By calling CMPXCollectionCachedHelper API AddL
+//precondition:  c:\\data\\sounds\\digital\\1.wma  on test emulator
+//precondition:  e:\\data\\sounds\\digital\\1.wma  on test HW
+//output: 1.wma is added into MPX DB
+TInt CCollectionHelperTestClass::AddSongL(CStifItemParser& /*aItem*/ )
+    {
+    FTRACE(FPrint(_L("CCollectionHelperTest::AddSongL")));
+    //Does a record already exist for this abstractalbum?
+    //this is the part to check if the song already exist in db?
+    TInt result;
+    TPtrC name(KFileWmaSong);
+    TInt mediafound = FindMediaL(name, EMPXSong);
+    
+    //media already in collection DB, no need to add
+    if (mediafound == 1)
+        {
+        return 0;
+        }
+
+    else if (mediafound == 0)  //media not in collection DB, continue to add*/
+        {
+        // Create media properties for the song will added
+        iLog->Log(_L("Create media properties"));
+        RArray<TInt> contentIDs;
+        contentIDs.AppendL(KMPXMediaIdGeneral);
+        contentIDs.AppendL(KMPXMediaIdAudio);
+        contentIDs.AppendL(KMPXMediaIdMusic);
+        contentIDs.AppendL(KMPXMediaIdMTP);
+
+        CMPXMedia* media = CMPXMedia::NewL(contentIDs.Array());
+        CleanupStack::PushL(media);
+        contentIDs.Close();
+
+        // MPXMedia default types
+        media->SetTObjectValueL<TMPXGeneralType>(KMPXMediaGeneralType, EMPXItem);
+        media->SetTObjectValueL<TMPXGeneralCategory>(KMPXMediaGeneralCategory, EMPXSong);
+
+        // File Path
+        TParsePtrC parse(name);
+
+        media->SetTextValueL(KMPXMediaGeneralUri, name);
+        media->SetTextValueL(KMPXMediaGeneralDrive, parse.Drive());
+
+        // Title
+		media->SetTextValueL(KMPXMediaGeneralTitle, parse.NameAndExt());
+		// Comment
+		media->SetTextValueL(KMPXMediaGeneralComment, KNullDesC);
+		// Artist
+		media->SetTextValueL(KMPXMediaMusicArtist, KNullDesC);
+		// Album
+		media->SetTextValueL(KMPXMediaMusicAlbum, KNullDesC);
+		//AlbumArtist
+		media->SetTextValueL(KMPXMediaMusicAlbumArtist, KAlbumArtistShort);
+		// Track
+		media->SetTextValueL(KMPXMediaMusicAlbumTrack, KNullDesC);
+		// Genre
+		media->SetTextValueL(KMPXMediaMusicGenre, KNullDesC);
+		// Composer
+		media->SetTextValueL(KMPXMediaMusicComposer, KNullDesC);
+		// URL
+		media->SetTextValueL(KMPXMediaMusicURL, KNullDesC);
+		iLog->Log(_L("Default values set to Media"));
+
+        // Update MPX WMP Roundtrip Metadata of the media object
+        media->SetTObjectValueL<TBool>(KMPXMediaGeneralDeleted, EFalse);
+        media->SetTObjectValueL<TBool>(KMPXMediaGeneralModified, EFalse);
+        media->SetTObjectValueL<TBool>(KMPXMediaGeneralSynchronized, ETrue);
+
+        media->SetTObjectValueL<TUint>(KMPXMediaGeneralFlags, KMPXMediaGeneralFlagsIsInvalid|KMPXMediaGeneralFlagsIsCorrupted);
+
+        // Add new media to collection
+        TRAP(result, iCachedHelper->AddL(media));
+        FTRACE(FPrint(_L("CCollectionHelperTestClass::AddSongL, Media added into collection")));
+
+        CleanupStack::PopAndDestroy(media);
+        }
+	iLog->Log(_L("CCollectionHelperTestClass::AddSongL done with result=[%d]"), result);
+	
+	return result;
+    }
+
+//Adds abstractalbum to the database, *.alb file
+//WMP to MTP step2
+//By calling CMPXCollectionCachedHelper API AddL
+//precondition:  c:\\data\\sounds\\digital\\1.alb  on test emulator
+//precondition:  e:\\data\\sounds\\digital\\1.alb  on test HW
+//output: 1.alb is added into MPX DB
+TInt  CCollectionHelperTestClass::AddAbstractAlbumL(CStifItemParser& /*aItem*/)
+   {
+	FTRACE(FPrint(_L("CCollectionHelperTestClass::AddAbstractAlbumL")));
+    TInt result;
+	TPtrC name(KAbstractalbum1);
+    TInt mediafound = FindMediaL(name, EMPXAbstractAlbum);
+    
+    //media already in collection DB, no need to add
+    if (mediafound == 1)
+        {
+        return 0;
+        }
+
+    else if(mediafound == 0)  // media not in collection DB, continue to add*/
+        {
+        RArray<TInt> contentIDs;
+        contentIDs.AppendL(KMPXMediaIdGeneral);
+
+        CMPXMediaArray* abstractalbumArray = CMPXMediaArray::NewL();
+        CleanupStack::PushL(abstractalbumArray);
+
+        CMPXMedia* media = CMPXMedia::NewL(contentIDs.Array());
+        CleanupStack::PushL(media);
+        contentIDs.Close();
+
+        // MPXMedia default types
+        media->SetTObjectValueL<TMPXGeneralType>(KMPXMediaGeneralType, EMPXItem);
+        //EMPXAbstractAlbum is the new category added for non-embedded art
+        media->SetTObjectValueL<TMPXGeneralCategory>(KMPXMediaGeneralCategory, EMPXAbstractAlbum);
+
+        // File Path
+        media->SetTextValueL(KMPXMediaGeneralUri, name);
+        TParsePtrC parse(name);
+        media->SetTextValueL(KMPXMediaGeneralDrive, parse.Drive());
+        media->SetTextValueL(KMPXMediaGeneralTitle, parse.Name());
+
+        //AlbumArtist
+        media->SetTextValueL(KMPXMediaMusicAlbumArtist, KAlbumArtistShort);
+        media->SetTObjectValueL<TBool>(KMPXMediaGeneralSynchronized, ETrue);
+        media->SetTObjectValueL( KMPXMediaMTPSampleDataFlag, EFalse );
+        media->SetCObjectValueL(KMPXMediaArrayContents, abstractalbumArray);
+        media->SetTObjectValueL(KMPXMediaArrayCount, abstractalbumArray->Count());
+
+        // Add new media to collection
+        TRAP( result, iCachedHelper->AddL(media));
+        CleanupStack::PopAndDestroy(media);
+
+        // Clear the array
+        CleanupStack::PopAndDestroy(abstractalbumArray);
+        }
+    iLog->Log(_L("CCollectionHelperTestClass::AddAbstractAlbumL done with result=[%d]"), result);
+	return result;
+   }
+ 
+//Associate abstractalbum with songs
+//WMP to MTP step3
+//By calling CMPXCollectionCachedHelper API SetL
+//precondition on emulator:  c:\\data\\sounds\\digital\\1.wma
+//                           c:\\data\\sounds\\digital\\1.alb
+//precondition on HW      :  f:\\1.wma
+//                           f:\\1.alb
+//output: 1.wma and 1.alb is associated
+TInt CCollectionHelperTestClass::SetAbstractAlbumL(CStifItemParser& /*aItem*/)
+ {
+    FTRACE(FPrint(_L("CCollectionHelperTest::SetAbstractAlbumL")));
+
+    CMPXMediaArray* mediaArray = CMPXMediaArray::NewL();
+    CleanupStack::PushL(mediaArray);
+    //add songs to media array
+    AttachSongsL(mediaArray, KFileWmaSong());
+    iLog->Log(_L("song added to abstractalbumArray, mediaArray->Count()=%d"), mediaArray->Count() );
+    RArray<TInt> contentIDs;
+    contentIDs.AppendL(KMPXMediaIdGeneral);
+
+    CMPXMedia* abstractalbumMedia = CMPXMedia::NewL(contentIDs.Array());
+    CleanupStack::PushL(abstractalbumMedia);
+    contentIDs.Close();
+
+    abstractalbumMedia->SetTObjectValueL(KMPXMediaGeneralType, EMPXItem);
+    abstractalbumMedia->SetTObjectValueL(KMPXMediaGeneralCategory, EMPXAbstractAlbum);
+
+    abstractalbumMedia->SetTextValueL(KMPXMediaGeneralUri, KAbstractalbum1());
+
+    TParsePtrC parse(KAbstractalbum1());
+    abstractalbumMedia->SetTextValueL(KMPXMediaGeneralDrive, parse.Drive());
+    abstractalbumMedia->SetTObjectValueL<TBool>(KMPXMediaGeneralSynchronized, ETrue);
+
+    abstractalbumMedia->SetCObjectValueL(KMPXMediaArrayContents, mediaArray);
+    abstractalbumMedia->SetTObjectValueL(KMPXMediaArrayCount, mediaArray->Count());
+
+    TRAPD( result, iCachedHelper->SetL(abstractalbumMedia));
+    CleanupStack::PopAndDestroy(abstractalbumMedia);
+
+    // Clear the array
+    CleanupStack::PopAndDestroy(mediaArray);
+    iLog->Log(_L("CCollectionHelperTestClass::SetAbstractAlbumL done with result=[%d]"), result);
+	
+    return result;
+}
+
+//Update AlbumArtist field in Music table
+//By calling CMPXCollectionCachedHelper API SetL
+//precondition on emulator:  c:\\data\\sounds\\digital\\1.wma
+//precondition on HW:  f:\\1.wma
+//output: MUSIC.AlbumArtist field of song 1.wma is changed
+TInt CCollectionHelperTestClass::SetSongAlbumArtistL(CStifItemParser& /*aItem*/)
+ {
+    FTRACE(FPrint(_L("CCollectionHelperTest::SetSongAlbumArtistL")));
+
+    CMPXMedia* media = NULL;
+
+    // Creat media properties for the song
+    RArray<TInt> contentIDs;
+    contentIDs.AppendL( KMPXMediaIdGeneral );
+    contentIDs.AppendL( KMPXMediaIdAudio );
+    contentIDs.AppendL( KMPXMediaIdMusic );
+    contentIDs.AppendL( KMPXMediaIdMTP );
+
+    media = CMPXMedia::NewL( contentIDs.Array() );
+    CleanupStack::PushL( media ); // + media
+    contentIDs.Close();
+
+    media->SetTObjectValueL<TMPXGeneralCategory>(
+        KMPXMediaGeneralCategory,
+        EMPXSong );
+
+    // MPXMedia default types
+    media->SetTObjectValueL<TMPXGeneralType>( KMPXMediaGeneralType, EMPXItem );
+
+    // Get file path
+    media->SetTextValueL( KMPXMediaGeneralUri, KFileWmaSong() );   //wma test file
+
+    media->SetTextValueL( KMPXMediaGeneralDrive, KStoreRoot() );
+    media->SetTextValueL( KMPXMediaMusicAlbumArtist, KAlbumArtistShort());
+
+    TRAPD( result, iCachedHelper->SetL(media));
+
+   CleanupStack::PopAndDestroy( media ); // - media
+    iLog->Log(_L("CCollectionHelperTestClass::SetSongAlbumArtistL done with result=[%d]"), result);
+	
+   return result;
+}
+//Retrive MUSIC.AlbumArtist field
+//By calling CMPXCollectionCachedHelper GetL
+//precondition on emulator:  c:\\data\\sounds\\digital\\1.wma
+//precondition on HW:  f:\\1.wma
+//output: song 1.wma is returned and MUSIC.AlbumArtist field of song 1.wma is retrived.
+TInt CCollectionHelperTestClass::GetSongAlbumArtistL(CStifItemParser& /*aItem*/)
+{
+    FTRACE(FPrint(_L("CCollectionHelperTest::GetSongAlbumArtistL")));
+    TMPXGeneralCategory category = EMPXSong;
+   // CMPXMedia* foundMedia= NULL;
+
+   const CMPXMedia& foundMedia = iCachedHelper->GetL( KFileWmaSong(), category );
+
+    if (foundMedia.IsSupported(KMPXMediaMusicAlbumArtist))
+        {
+        const TDesC& albumartist = foundMedia.ValueText( KMPXMediaMusicAlbumArtist );
+	    }
+   iLog->Log(_L("CCollectionHelperTestClass::GetSongAlbumArtistL done "));
+
+   return 1;
+}
+
+
+
+//Update ABSTRACTALBUM.AlbumArtist
+//Update AlbumArtist field in Abstractalbum table
+//By calling CMPXCollectionCachedHelper API SetL
+//precondition on emulator:  c:\\data\\sounds\\digital\\1.alb
+//precondition on HW:  f:\\1.alb
+//output: ABSTRACTALBUM.AlbumArtist field of abstractalbum 1.alb is changed
+TInt CCollectionHelperTestClass::SetAbstractAlbumArtistL(CStifItemParser& /*aItem*/)
+ {
+    FTRACE(FPrint(_L("CCollectionHelperTest::SetAbstractAlbumArtistL")));
+
+    CMPXMedia* media = NULL;
+
+    RArray<TInt> contentIDs;
+    contentIDs.AppendL( KMPXMediaIdGeneral );
+
+    media = CMPXMedia::NewL( contentIDs.Array() );
+    CleanupStack::PushL( media ); // + media
+    contentIDs.Close();
+    media->SetTObjectValueL<TMPXGeneralCategory>( KMPXMediaGeneralCategory,
+           EMPXAbstractAlbum );
+    media->SetTObjectValueL<TMPXGeneralType>( KMPXMediaGeneralType, EMPXItem );
+
+    media->SetTextValueL( KMPXMediaGeneralUri, KAbstractalbum1() );
+    media->SetTextValueL( KMPXMediaGeneralDrive, KStoreRoot() );
+
+    media->SetTextValueL( KMPXMediaMusicAlbumArtist, KAlbumArtistShort() );
+
+    TRAPD( result, iCachedHelper->SetL(media));
+
+    CleanupStack::PopAndDestroy(media);
+    iLog->Log(_L("CCollectionHelperTestClass::SetAbstractAlbumArtistL done with result=[%d]"), result);
+
+
+    return result;
+}
+
+//Retrieve ABSTRACTALBUM.AlbumArtist
+//By calling CMPXCollectionCachedHelper API GetL
+//precondition on emulator:  c:\\data\\sounds\\digital\\1.alb
+//precondition on HW:  f:\\1.alb
+//output: abstractalbum 1.alb is returned and ABSTRACTALBUM.AlbumArtist field of 1.alb is retrived.
+TInt CCollectionHelperTestClass::GetAbstractAlbumArtistL(CStifItemParser& /*aItem*/)
+    {
+	FTRACE(FPrint(_L("CCollectionHelperTest::GetAbstractAlbumArtistL")));
+    TMPXGeneralCategory category = EMPXAbstractAlbum;
+    const CMPXMedia& foundMedia = iCachedHelper->GetL( KAbstractalbum1(), category );   //wma test file
+
+
+    //print out foundMedia attributes
+    if (foundMedia.IsSupported(KMPXMediaMusicAlbumArtist))
+        {
+		iLog->Log(_L("CCollectionHelperTestClass::GetAbstractAlbumArtistL, ABSTRACTALBUM.AlbumArtist retrived"));
+
+
+        
+
+         const TDesC& albumartist = foundMedia.ValueText( KMPXMediaMusicAlbumArtist );
+
+        }
+
+		if (foundMedia.IsSupported(KMPXMediaGeneralTitle))
+		 {
+
+		  
+			  //  HBufC* albumartist;
+			   //     albumartist = foundMedia.ValueText( KMPXMediaMusicAlbumArtist ).AllocLC(); // + data
+				 const TDesC& name = foundMedia.ValueText( KMPXMediaGeneralTitle );
+				 iLog->Log(_L("CCollectionHelperTestClass::GetAbstractAlbumArtistL, ABSTRACTALBUM.name retrived"));
+				 
+	
+
+		}
+		if (foundMedia.IsSupported(KMPXMediaGeneralUri))
+			 {
+
+			  
+				  //  HBufC* albumartist;
+				   //     albumartist = foundMedia.ValueText( KMPXMediaMusicAlbumArtist ).AllocLC(); // + data
+		     const TDesC& uri = foundMedia.ValueText( KMPXMediaGeneralUri );
+			 iLog->Log(_L("CCollectionHelperTestClass::GetAbstractAlbumArtistL, ABSTRACTALBUM.uri retrived"));
+					  
+			}
+	iLog->Log(_L("CCollectionHelperTestClass::GetAbstractAlbumArtistL done"));
+	return 1;
+	}
+
+
+//Update ABSTRACTALBUM.Name
+//Update Name field in Abstractalbum table
+//By calling CMPXCollectionCachedHelper API SetL
+//precondition on emulator:  c:\\data\\sounds\\digital\\1.alb
+//precondition on HW:  f:\\1.alb
+//output: ABSTRACTALBUM.name field of 1.alb is changed.
+TInt CCollectionHelperTestClass::UpdateAbstractAlbumNameL(CStifItemParser& /*aItem*/)
+ {
+	FTRACE(FPrint(_L("CCollectionHelperTest::UpdateAbstractAlbumNameL")));
+    CMPXMedia* media = NULL;
+
+    // Creat media properties for the song
+    RArray<TInt> contentIDs;
+    contentIDs.AppendL( KMPXMediaIdGeneral );
+
+	media = CMPXMedia::NewL( contentIDs.Array() );
+	
+	CleanupStack::PushL( media ); // + media
+	contentIDs.Close();           //- contentIDs
+
+    media->SetTObjectValueL<TMPXGeneralCategory>(
+        KMPXMediaGeneralCategory,
+        EMPXAbstractAlbum );
+
+    media->SetTObjectValueL<TMPXGeneralType>( KMPXMediaGeneralType, EMPXItem );
+
+	media->SetTextValueL( KMPXMediaGeneralUri, KAbstractalbum1() );
+	media->SetTextValueL( KMPXMediaGeneralDrive, KStoreRoot() );
+
+	//media->SetTextValueL( KMPXMediaMusicAlbumArtist, KAbstractAlbumName() );
+    media->SetTextValueL( KMPXMediaGeneralTitle, KAbstractAlbumName() );
+   // media->SetTextValueL( KMPXMediaMusicAlbumArtFileName, KNewAbstractAlbumName() );
+
+	TRAPD( result, iCachedHelper->SetL(media));
+    CleanupStack::PopAndDestroy(media);  // - media
+
+    iLog->Log(_L("CCollectionHelperTestClass::UpdateAbstractAlbumNameL, done with result[%d]"), result);
+    return result;
+}
+
+
+//Find all abstractalbums on KStoreRoot
+//Find all songs associated with the found Abstractalbums
+//By calling CMPXCollectionCachedHelper API GetL
+//precondition on emulator:  c:\\data\\sounds\\digital\\1.wma
+//                           c:\\data\\sounds\\digital\\1.alb
+//1.wma and 1.alb are associated
+//precondition on HW      :  f:\\1.wma
+//                           f:\\1.alb
+//1.wma and 1.alb are associated
+//all AbstractAlbum on drive c: (e:) is returned, all songs associated with the returned AbstractAlbum are returned.
+TInt CCollectionHelperTestClass::GetAbstractAlbumAndSongsL(CStifItemParser& /*aItem*/)
+    {
+ 	FTRACE(FPrint(_L("CCollectionHelperTest::GetAlbumAndSongsL")));
+ 	TUint32 abstractalbumId(0);
+    RArray<TInt> contentIDs;
+    contentIDs.AppendL(KMPXMediaIdGeneral);
+
+    CMPXMedia* searchMedia = CMPXMedia::NewL(contentIDs.Array());
+    CleanupStack::PushL(searchMedia);
+    contentIDs.Close();
+
+    searchMedia->SetTObjectValueL(KMPXMediaGeneralType, EMPXItem);
+    searchMedia->SetTObjectValueL(KMPXMediaGeneralCategory, EMPXAbstractAlbum);
+    searchMedia->SetTextValueL(KMPXMediaGeneralDrive, KStoreRoot());
+
+    RArray<TMPXAttribute> abstractalbumAttributes;
+    CleanupClosePushL(abstractalbumAttributes);
+    abstractalbumAttributes.AppendL(KMPXMediaGeneralId);
+    abstractalbumAttributes.AppendL(KMPXMediaGeneralTitle);
+    abstractalbumAttributes.AppendL(KMPXMediaGeneralUri);
+
+   //foundMedia will hold all .alb on KStoreRoot()
+   CMPXMedia* foundMedia = NULL;
+   TRAPD( err, foundMedia = iCachedHelper->FindAllL(
+            *searchMedia, abstractalbumAttributes.Array()));
+
+   iLog->Log(_L("CCollectionHelperTestClass::GetAlbumAndSongsL, foundMedia assigned from FindAllL"));
+
+   CleanupStack::PopAndDestroy(&abstractalbumAttributes);
+   CleanupStack::PopAndDestroy(searchMedia);
+   CleanupStack::PushL(foundMedia);  //+ foundMedia
+
+   if ( err != KErrNone )
+       {
+       iLog->Log(_L("CCollectionHelperTestClass::GetAlbumAndSongsL, err = [%d]"), err );
+       iCachedHelper->Close();
+       iCachedHelper = NULL;
+       User::Leave( KErrGeneral );
+       }
+
+   if (!foundMedia->IsSupported(KMPXMediaArrayCount))
+       {
+       User::Leave(KErrNotSupported);
+       }
+
+   TInt foundItemCount = *foundMedia->Value<TInt>(KMPXMediaArrayCount);
+   iLog->Log(_L("CCollectionHelperTestClass::GetAlbumAndSongsL, foundItemCount=%d"), foundItemCount );
+
+   CMPXMediaArray* foundArray =
+       foundMedia->Value<CMPXMediaArray>(KMPXMediaArrayContents);
+   CleanupStack::PopAndDestroy(foundMedia);
+
+   for (TInt j = 0; j < foundItemCount; ++j)
+        {
+        CMPXMedia* abstractalbumMedia = CMPXMedia::NewL(*(*foundArray)[j]);
+        CleanupStack::PushL(abstractalbumMedia);
+
+        //to print out founded media attributes
+        if (abstractalbumMedia->IsSupported(KMPXMediaGeneralTitle))
+            {
+	        const TDesC& name = abstractalbumMedia->ValueText( KMPXMediaGeneralTitle );
+            iLog->Log(_L("CCollectionHelperTestClass::GetAlbumAndSongsL, found abstractalbumName = [%s]"), name );
+	        }
+
+        if (abstractalbumMedia->IsSupported(KMPXMediaGeneralId))
+            {
+            abstractalbumId = abstractalbumMedia->ValueTObjectL<TMPXItemId>(KMPXMediaGeneralId);
+            abstractalbumMedia->ValueTObjectL<TMPXItemId>(KMPXMediaGeneralId);
+            }
+
+        // find the media object that contains a list of songs in the abstractalbum
+        RArray<TInt> contentIDs;
+        contentIDs.AppendL(KMPXMediaIdGeneral);
+
+        CMPXMedia* searchMediaSong = CMPXMedia::NewL(contentIDs.Array());
+        CleanupStack::PushL(searchMediaSong);
+        contentIDs.Close();
+
+        searchMediaSong->SetTObjectValueL(KMPXMediaGeneralType, EMPXGroup);
+
+        searchMediaSong->SetTObjectValueL(KMPXMediaGeneralCategory, EMPXSong);
+        searchMediaSong->SetTObjectValueL<TMPXItemId>(KMPXMediaGeneralId, abstractalbumId);
+
+        RArray<TMPXAttribute> songAttributes;
+        CleanupClosePushL(songAttributes);
+        songAttributes.AppendL(KMPXMediaGeneralId);
+        songAttributes.AppendL(KMPXMediaGeneralUri);
+
+        //search from MPX collection to get all songs associated with .alb
+        CMPXMedia* foundSongs = NULL;
+        TRAPD( err, foundSongs = iCachedHelper->FindAllL(
+            *searchMediaSong, songAttributes.Array()));
+
+        CleanupStack::PopAndDestroy(&songAttributes);
+        CleanupStack::PopAndDestroy(searchMediaSong);
+        CleanupStack::PopAndDestroy(abstractalbumMedia);
+
+        CleanupStack::PushL( foundSongs ); // + foundSongs
+        if ( err != KErrNone )
+            {
+            iLog->Log(_L("CCollectionHelperTestClass::GetAlbumAndSongsL, err = [%d]"), err );
+            iCachedHelper->Close();
+            iCachedHelper = NULL;
+            User::Leave( KErrGeneral );
+            }
+
+        if (!foundSongs->IsSupported(KMPXMediaArrayCount))
+            {
+            User::Leave(KErrNotSupported);
+            }
+
+        // Number of references
+        TInt numOfSongsRefs = *foundSongs->Value<TInt>(KMPXMediaArrayCount);
+        iLog->Log(_L("CCollectionHelperTestClass::GetAlbumAndSongsL, numOfSongsRefs=%d"), numOfSongsRefs );
+        CleanupStack::PopAndDestroy( foundSongs ); // - foundSong
+    }
+   return 1;
+ }
+
+
+//By calling CMPXCollectionCachedHelper API RenameL
+//precondition on emulator:  c:\\data\\sounds\\digital\\1.wma
+//                           c:\\data\\sounds\\digital\\1.alb
+//1.wma and 1.alb are associated
+//precondition on HW      :  f:\\1.wma
+//                           f:\\1.alb
+//output: 1.alb is renamed to 2.alb and all songs associated with 1.alb are updated in MUSIC table
+TInt CCollectionHelperTestClass::RenameAbstractAlbumL(CStifItemParser& /*aItem*/)
+   {
+	TRAPD( result, iCachedHelper->RenameL( KAbstractalbum1, KAbstractalbum2, EMPXAbstractAlbum ) );
+	iLog->Log(_L("CCollectionHelperTestClass::RenameAbstractAlbumL, done with result=[%d]"));
+	
+	return result;
+	}
+
+//Helper function for Finding in the MPX DB
+//By calling CMPXCollectionCachedHelper API FindAllL
+//output: all media with filename: aPath and aCategory is returned
+TInt CCollectionHelperTestClass::FindMediaL(const TDesC& aPath, TMPXGeneralCategory aCategory)
+{
+    FTRACE(FPrint(_L("CCollectionHelperTestClass::FindL")));
+	// Check does a record already exist for this aPath(URI)?
+	RArray<TInt> contentIDs;
+    contentIDs.AppendL( KMPXMediaIdGeneral );
+
+    CMPXMedia* searchMedia = CMPXMedia::NewL( contentIDs.Array() );
+    CleanupStack::PushL( searchMedia ); // + searchMedia
+    contentIDs.Close();
+    searchMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXItem );
+    searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, aCategory );
+    searchMedia->SetTextValueL( KMPXMediaGeneralUri, aPath );
+    
+//note: some of the attributes are not needed
+    RArray<TMPXAttribute> mediaAttributes;
+    CleanupClosePushL( mediaAttributes ); // + mediaAttributes
+    mediaAttributes.AppendL( KMPXMediaGeneralId );
+    mediaAttributes.AppendL( KMPXMediaGeneralTitle );
+    mediaAttributes.AppendL( KMPXMediaGeneralUri );
+
+    CMPXMedia* foundMedia = iCachedHelper->FindAllL( *searchMedia,
+        mediaAttributes.Array() );
+
+    CleanupStack::PopAndDestroy( &mediaAttributes ); // - mediaAttributes
+    CleanupStack::PopAndDestroy( searchMedia ); // - searchMedia
+    CleanupStack::PushL( foundMedia ); // + foundMedia
+
+    if ( !foundMedia->IsSupported( KMPXMediaArrayCount ) )
+        {
+        CleanupStack::PopAndDestroy( foundMedia ); // - foundMedia
+        return KErrNotSupported;
+        }
+    TInt foundItemCount = *foundMedia->Value<TInt>( KMPXMediaArrayCount );
+    CleanupStack::PopAndDestroy( foundMedia ); // - foundMedia
+    
+    iLog->Log(_L("CCollectionHelperTestClass::FindMediaL, foundItemCount=[%d]"), foundItemCount);
+    if ( foundItemCount >1) //more than 1 same item in collection
+        {
+	    iLog->Log(_L("CCollectionHelperTestClass::FindMediaL, error, find more than 1 same media in collection"));
+        return  KErrGeneral;
+	    }
+
+    else if ( foundItemCount ==0 || foundItemCount ==1 ) //no such item in collection
+        {
+        iLog->Log(_L("CCollectionHelperTestClass::FindMediaL, error, no this item in collection"));
+        return  foundItemCount;
+        }
+
+    return KErrNone;
+    }
+
+
+
+//Helper function for appending songs for SetAbstractAlbumL()
+void CCollectionHelperTestClass::AttachSongsL(CMPXMediaArray* aAbstractAlbumArray, const TDesC& aPath)
+{
+	FTRACE(FPrint(_L("CCollectionHelperTestClass::AttachSongsL")));
+    RArray<TInt> contentIDs;
+    contentIDs.AppendL(KMPXMediaIdGeneral);
+    contentIDs.AppendL(KMPXMediaIdAudio);
+    contentIDs.AppendL(KMPXMediaIdMusic);
+    contentIDs.AppendL(KMPXMediaIdMTP);
+    CMPXMedia* media = CMPXMedia::NewL(contentIDs.Array());
+    CleanupStack::PushL(media);
+    contentIDs.Close();
+
+    // MPXMedia default types
+    media->SetTObjectValueL<TMPXGeneralType>(KMPXMediaGeneralType, EMPXItem);
+    media->SetTObjectValueL<TMPXGeneralCategory>(KMPXMediaGeneralCategory, EMPXSong);
+    // File Path
+    TParsePtrC parse(aPath);
+    media->SetTextValueL(KMPXMediaGeneralUri, aPath);
+    media->SetTextValueL(KMPXMediaGeneralDrive, parse.Drive());
+
+    // Add media into array contents
+    aAbstractAlbumArray->AppendL(media);
+    CleanupStack::Pop(media);
+}
+
 // -----------------------------------------------------------------------------
 // CCollectionHelperTestClass::CloseUiHelperL()
 // Returns: Symbian OS errors.

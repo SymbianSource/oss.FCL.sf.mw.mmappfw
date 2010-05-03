@@ -23,4 +23,4 @@ PRJ_PLATFORMS
 DEFAULT
 
 PRJ_EXPORTS
-../inc/MtpPrivatePSKeys.h     MW_LAYER_PLATFORM_EXPORT_PATH(MtpPrivatePSKeys.h)
+../inc/mtpprivatepskeys.h     MW_LAYER_PLATFORM_EXPORT_PATH(mtpprivatepskeys.h)

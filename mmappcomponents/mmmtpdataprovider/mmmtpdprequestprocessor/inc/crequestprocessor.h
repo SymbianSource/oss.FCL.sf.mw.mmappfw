@@ -11,7 +11,7 @@
 *
 * Contributors:
 *
-* Description: 
+* Description:
 *
 */
 
@@ -19,22 +19,24 @@
 #ifndef CREQUESTPROCESSOR_H
 #define CREQUESTPROCESSOR_H
 
-#include <e32base.h>
+
+#include <mtp/tmtptypenull.h>
 #include <mtp/mtpdataproviderapitypes.h>
 #include <mtp/mtpprotocolconstants.h>
 #include <mtp/tmtptyperesponse.h>
-#include <mtp/tmtptypenull.h>
+
+// for derived processors
+#include <mtp/mmtpdataproviderframework.h>
 
 #include "crequestchecker.h"
 
 class MMTPConnection;
 class TMTPTypeRequest;
-class CMTPDataProviderPlugin;
 class MMTPDataProviderFramework;
 class TMTPTypeEvent;
 class CMTPObjectInfo;
 
-static const TInt KMmMtpRArrayGranularity = 2;
+const TInt KMmMtpRArrayGranularity = 2;
 
 /**
 * Defines a request processor interface
@@ -100,8 +102,8 @@ public:
 
     /*
     * Get the session id associated with current request object
-    * This interface was added to avoid the case that the data member iRequest 
-    * was sometimes invalid in session close phase, and getting session id from 
+    * This interface was added to avoid the case that the data member iRequest
+    * was sometimes invalid in session close phase, and getting session id from
     * request would cause panic
     * @return session id
     */
@@ -111,9 +113,8 @@ public:
 /**
 * Defines a processor factory function pointer
 */
-typedef MMmRequestProcessor
-    * (*TMTPRequestProcessorCreateFunc)( MMTPDataProviderFramework& aFramework,
-        MMTPConnection& aConnection );
+typedef MMmRequestProcessor* (*TMTPRequestProcessorCreateFunc)( MMTPDataProviderFramework& aFramework,
+    MMTPConnection& aConnection );
 
 /**
 * Defines an entry which maps from operation code to the request processor
@@ -237,12 +238,13 @@ protected:
 
     /*
     * Get the session id associated with current request object
-    * This interface was added to avoid the case that the data member iRequest 
-    * was sometimes invalid in session close phase, and getting session id from 
+    * This interface was added to avoid the case that the data member iRequest
+    * was sometimes invalid in session close phase, and getting session id from
     * request would cause panic
     * @return session id
     */
     IMPORT_C TUint32 SessionId();
+
 protected:
     // from CActive
     /**
@@ -261,7 +263,7 @@ protected:
     IMPORT_C TInt RunError( TInt aError );
 
 protected:
-    //new virtuals
+    // new virtuals
     /**
     * Handle the request phase of the current request
     * @return EFalse

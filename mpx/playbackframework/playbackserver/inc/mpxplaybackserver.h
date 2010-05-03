@@ -151,6 +151,15 @@ private:
     */
     void ConstructL();
 
+    /**
+    *  Process id finder.
+    *
+    *  @param aEngine pointer to active engine
+    *  @param aProcessId process id of owning process
+    */
+    void FindProcessIdForTsp(const CMPXPlaybackEngine* aEngine,
+                             TProcessId& aProcessId );
+
 private: // from base class
     /**
     *   From MMPXPlaybackActiveEngineObserver
