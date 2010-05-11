@@ -354,8 +354,6 @@ void CGetObjectPropList::GetObjectHandlesL()
     else
         {
         CMTPObjectMetaData* meta( iRequestChecker->GetObjectInfo( iHandle ) );
-        TPtrC suid( meta->DesC( CMTPObjectMetaData::ESuid ) );
-        iDpConfig.GetWrapperL().SetStorageRootL( suid );
 
         __ASSERT_DEBUG( meta, Panic( EMmMTPDpObjectNull ) );
 

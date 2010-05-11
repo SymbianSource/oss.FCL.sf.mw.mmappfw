@@ -119,7 +119,7 @@ void CMPXHarvesterServer::ConstructL()
     {
     iEngine = CMPXHarvesterEngine::NewL();
     StartL(KMPXHarvesterServerName);
-    RProcess().SetPriority(::EPriorityLow);
+    RProcess().SetPriority(::EPriorityBackground);
     }
     
 // ----------------------------------------------------------------------------

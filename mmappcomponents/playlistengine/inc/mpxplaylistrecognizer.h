@@ -29,6 +29,8 @@
 class CMPXPluginHandlerBase;
 
 /**
+*  Deprecated. replaced by playlist recognizer in mw/mmmw.
+*
 *  Concrete implementation of the recognizer API used to recognize playlist files.
 *
 *  This is used by the application framework, as well as CMPXPlaylistEngine to

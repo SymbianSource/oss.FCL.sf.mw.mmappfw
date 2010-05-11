@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extracts metadata from a file
-*  Version     : %version: da1mmcf#38.1.4.2.6.1.10 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#38.1.4.2.6.1.12 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -190,7 +190,7 @@ EXPORT_C void CMPXMetadataExtractor::CreateMediaL( const TDesC& aFile,
     while ( iArrayTasks.Count() )
         {
         // execute task at index 0
-        TRAPD( error, ExecuteTaskL() );
+        MPX_TRAPD( error, ExecuteTaskL() );
         if ( error || iCancelled )
             {
             // cleanup
@@ -264,12 +264,19 @@ void CMPXMetadataExtractor::SetMediaPropertiesL()
     mimeType8->Des().Append( mimeType );
     
     // Continue to extract metadata even if fail.
-    TRAPD( metadataerror, iMetadataUtility->OpenFileL( iFile, *mimeType8 ) );
-    MPX_DEBUG2("CMPXMetadataExtractor::CreateMediaL, error %d parsing metadata", 
-        metadataerror );
+    MPX_TRAPD( metadataerror, iMetadataUtility->OpenFileL( iFile, *mimeType8 ) );
     CleanupStack::PopAndDestroy( mimeType8 );
     
+    // Get MetadataUtility Container
     const CMetaDataFieldContainer& metaCont = iMetadataUtility->MetaDataFieldsL();
+
+    // Get DRM data
+    // Need the protected flag from metadataUtility Container
+    MPX_TRAPD( drmerror, SetDrmMediaPropertiesL( metaCont ) );
+    MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL, result=%d getting drm data", 
+            drmerror );
+        
+    // Get metadata fields
     TInt count( metaCont.Count() );
     for( TInt i=0; i<count; ++i )
         {
@@ -281,7 +288,7 @@ void CMPXMetadataExtractor::SetMediaPropertiesL()
         // get the value, except for album art
         if ( fieldType != EMetaDataJpeg )
            {
-           TRAPD( err, value = metaCont.At( i, fieldType ).AllocL() );
+            MPX_TRAPD( err, value = metaCont.At( i, fieldType ).AllocL() );
            if ( KErrNone != err )
                {
                MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL - error = %i", err);           
@@ -400,7 +407,7 @@ void CMPXMetadataExtractor::SetMediaPropertiesL()
             case EMetaDataDuration:     
                 {                  
                 const TDesC& mimeType = iMedia->ValueText( KMPXMediaGeneralMimeType );
-                MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL, mimeType = %S", &mimeType);   
+                MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL, mimeType = %S", &mimeType);   
                 
                 // Verify if WMA, get the duration
                 if( mimeType.Compare(KWmaMimeType) == 0 || mimeType.Compare(KWmaCafMimeType) == 0 )
@@ -450,68 +457,6 @@ void CMPXMetadataExtractor::SetExtMediaPropertiesL()
     {
     MPX_FUNC("CMPXMetadataExtractor::SetExtMediaPropertiesL()");
 
-    // DB Flags to set
-    //
-    TUint dbFlags(KMPXMediaGeneralFlagsSetOrUnsetBit);
-
-    // File Path
-    //
-    TParsePtrC parse( iFileName );
-    iMedia->SetTextValueL( KMPXMediaGeneralUri, iFileName );
-    iMedia->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
-
-    // DRM Rights
-    //
-    CMPXMedia* drm = NULL;
-    TRAPD( drmError, iDrmMediaUtility->InitL( iFileName );
-           drm = CMPXMedia::NewL( *iDrmMediaUtility->GetMediaL( KMPXMediaDrmProtected.iAttributeId |
-                                                                KMPXMediaDrmRightsStatus.iAttributeId ) );
-         );
-
-    TBool prot(EFalse);
-    if( drm )
-        {
-        CleanupStack::PushL( drm );
-        MPX_DEBUG1("CMPXMetadataExtractor::SetExtMediaPropertiesL -- is a drm file");
-        if( drm->IsSupported( KMPXMediaDrmProtected ) )
-            {
-            prot = drm->ValueTObjectL<TBool>( KMPXMediaDrmProtected );
-            MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL protected %i", prot);
-            }
-
-        TMPXMediaDrmRightsStatus status(EMPXDrmRightsFull);
-        if( drm->IsSupported( KMPXMediaDrmRightsStatus ) )
-            {
-            status = drm->ValueTObjectL<TMPXMediaDrmRightsStatus>(KMPXMediaDrmRightsStatus);
-            iMedia->SetTObjectValueL<TInt>(KMPXMediaDrmRightsStatus, status );
-            MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL -- status %i", status);
-            }
-
-        // Set DB flags
-        dbFlags |= KMPXMediaGeneralFlagsIsDrmProtected;
-        if( status != EMPXDrmRightsFull && status != EMPXDrmRightsRestricted && status != EMPXDrmRightsPreview )
-            {
-            dbFlags |= KMPXMediaGeneralFlagsIsDrmLicenceInvalid;
-            }
-        CleanupStack::PopAndDestroy( drm );
-        }
-
-    // Trapped PV DRM error. If -46, we know the file has no rights
-    //
-    if( drmError == KErrPermissionDenied )
-        {
-        dbFlags |= KMPXMediaGeneralFlagsIsDrmLicenceInvalid;
-        }
-    else
-        {
-        User::LeaveIfError( drmError );
-        }
-
-    iMedia->SetTObjectValueL<TBool>( KMPXMediaDrmProtected, prot );
-    iMedia->SetTObjectValueL<TUint16>( KMPXMediaMTPDrmStatus, (TUint16)prot );
-    
-    iDrmMediaUtility->Close();
-    
     //
     // File Size --- The following needs MMF support
     //
@@ -520,6 +465,8 @@ void CMPXMetadataExtractor::SetExtMediaPropertiesL()
         {
         const TDesC& mimeType = iMedia->ValueText( KMPXMediaGeneralMimeType );
         MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL, mimeType = %S", &mimeType);   
+        iFile.Size( size );
+        iMedia->SetTObjectValueL<TInt>( KMPXMediaGeneralSize, size );
         
         // Verify if WMA, skip getting info from MMF
         if( mimeType.Compare(KWmaMimeType) == 0 || mimeType.Compare(KWmaCafMimeType) == 0 )
@@ -530,14 +477,11 @@ void CMPXMetadataExtractor::SetExtMediaPropertiesL()
         else
             {
             MPX_DEBUG1("CMPXMetadataExtractor::SetExtMediaPropertiesL, get MMF controller");   
-            iFile.Size( size );
-            iMedia->SetTObjectValueL<TInt>( KMPXMediaGeneralSize, size );
-
             // Duration, bitrate, samplerate, etc
             //
             if( !iMetadataOnly )
             {
-                TRAPD(err2, iFileInfoUtil->OpenFileL(
+                MPX_TRAPD(err2, iFileInfoUtil->OpenFileL(
                           iFile, 
                           iMedia->ValueText(KMPXMediaGeneralMimeType)));
                 MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL, file info util error %i", err2);
@@ -558,14 +502,6 @@ void CMPXMetadataExtractor::SetExtMediaPropertiesL()
                 }
             }
         }
-    else if( iFileOpenError == KErrNotFound || iFileOpenError == KErrPathNotFound )
-        {
-        dbFlags |= KMPXMediaGeneralFlagsIsInvalid;
-        }
-    // Finally set the db flag
-    //
-    iMedia->SetTObjectValueL( KMPXMediaGeneralFlags,
-                            dbFlags );
     }
 
 // ---------------------------------------------------------------------------
@@ -697,15 +633,37 @@ EXPORT_C TInt CMPXMetadataExtractor::ExtractAlbumArtL( CMPXMedia* aMedia )
     TPtrC ext( parse.Ext() );
     if (ext.CompareF(KNonEmbeddedArtExt)== 0)
         {
-		#ifdef RD_MPX_TNM_INTEGRATION
+#ifdef RD_MPX_TNM_INTEGRATION
+
         //check if can send TN request, If thumbnail creation is ongoing, wait til it is done
         CheckBeforeSendRequest();
-        CThumbnailObjectSource* source = CThumbnailObjectSource::NewLC(
-           path, KImageFileType  );
-        TThumbnailRequestId tnId = iTNManager->CreateThumbnails( *source );
-        iArrayTNRequestId.Append( tnId );
-        CleanupStack::PopAndDestroy( source );
-        #endif // RD_MPX_TNM_INTEGRATION
+
+        CThumbnailObjectSource* source( NULL );
+        if (aMedia->IsSupported(KMPXMediaMTPSampleData))
+            {
+            TBuf<20> mimeType(KImageFileType);
+            TInt sampleData = aMedia->ValueTObjectL<TInt>(KMPXMediaMTPSampleData);
+            HBufC8* value8 = ((HBufC8*)sampleData)->Des().AllocLC();   // make a local copy of sampleData
+            source = CThumbnailObjectSource::NewLC(
+                value8, mimeType, path );    // give up ownership of value8
+            
+            MPX_DEBUG1("CMPXMetadataExtractor::ExtractAlbumArtL source created from buffer");
+            TThumbnailRequestId tnId = iTNManager->CreateThumbnails( *source );
+            iArrayTNRequestId.Append( tnId );
+            CleanupStack::PopAndDestroy( source );
+            CleanupStack::Pop( value8 );
+            }
+        else
+            {
+            source = CThumbnailObjectSource::NewLC(
+                path, KImageFileType  );
+            
+            MPX_DEBUG1("CMPXMetadataExtractor::ExtractAlbumArtL source created from path");
+            TThumbnailRequestId tnId = iTNManager->CreateThumbnails( *source );
+            iArrayTNRequestId.Append( tnId );
+            CleanupStack::PopAndDestroy( source );
+            }
+#endif // RD_MPX_TNM_INTEGRATION
         }
     else
         {
@@ -722,12 +680,12 @@ EXPORT_C TInt CMPXMetadataExtractor::ExtractAlbumArtL( CMPXMedia* aMedia )
         MPX_DEBUG2("CMPXMetadataExtractor::ExtractAlbumArtL MimeType:%S ", &mimeType );
         HBufC8* mimeType8 = HBufC8::NewLC( mimeType.Length() );
         mimeType8->Des().Append( mimeType );
-        TRAP( err, iMetadataUtility->OpenFileL( path, wantedFields, *mimeType8 ) );
+        MPX_TRAP( err, iMetadataUtility->OpenFileL( path, wantedFields, *mimeType8 ) );
         CleanupStack::PopAndDestroy( mimeType8 );
         }
     else
         {
-        TRAP( err, iMetadataUtility->OpenFileL( path, wantedFields ) );
+        MPX_TRAP( err, iMetadataUtility->OpenFileL( path, wantedFields ) );
         }
     CleanupStack::PopAndDestroy( &wantedFields );
     
@@ -735,7 +693,7 @@ EXPORT_C TInt CMPXMetadataExtractor::ExtractAlbumArtL( CMPXMedia* aMedia )
         {
         //check if can send TN request, If thumbnail creation is ongoing, wait til it is done
         CheckBeforeSendRequest();
-        TRAP( err, AddMediaAlbumArtL( *aMedia, path ));
+        MPX_TRAP( err, AddMediaAlbumArtL( *aMedia, path ));
         }
 
     // Reset the utility
@@ -763,7 +721,7 @@ void CMPXMetadataExtractor::AddMediaAlbumArtL( CMPXMedia& aMedia,
         MPX_DEBUG1("CMPXMetadataExtractor::GetMediaAlbumArtL(): Album art exist.");
 #ifdef RD_MPX_TNM_INTEGRATION
         HBufC8* value8 = NULL; 
-        TRAPD( err, value8 = data8.AllocL() );
+        MPX_TRAPD( err, value8 = data8.AllocL() );
         if ( KErrNone != err )
             {
             MPX_DEBUG2("CMPXMetadataExtractor::GetMediaAlbumArtL - error jpeg = %i", err);
@@ -1019,11 +977,14 @@ void CMPXMetadataExtractor::AddTasksL()
     iArrayTasks.Reset();
     if ( iFileOpenError == KErrNone )
         {
+        // to avoid resources contention (i.e. accessing sql, file system, etc)
+        // Ordering the tasks - so no multiple tasks run at the same time
+        // put the longest running task at the last (i.e. thumbnailing)
         iArrayTasks.AppendL(ETaskCreateMedia);
-        iArrayTasks.AppendL(ETaskAddMetadata);
+        iArrayTasks.AppendL(ETaskAddExtMetadata);   // Get the MMF first
+        iArrayTasks.AppendL(ETaskAddMetadata);      // Get metadata & maybe drm data
         iArrayTasks.AppendL(ETaskCheckBeforeSend);
-        iArrayTasks.AppendL(ETaskAddAlbumArt);
-        iArrayTasks.AppendL(ETaskAddExtMetadata);
+        iArrayTasks.AppendL(ETaskAddAlbumArt);      // Get album art / thumbnail last
         }
     else
         {
@@ -1055,7 +1016,7 @@ void CMPXMetadataExtractor::HandleTaskTimerExpired()
     
     iTaskTimer->Cancel();
     // execute task at index 0
-    TRAPD( error, ExecuteTaskL() );
+    MPX_TRAPD( error, ExecuteTaskL() );
     if ( error || iCancelled )
         {
         // cleanup
@@ -1102,3 +1063,106 @@ void CMPXMetadataExtractor::CleanUp()
     iFile.Close();
     }
 
+
+// ---------------------------------------------------------------------------
+// Sets DRRM media properties not returned by metadata utilities
+// ---------------------------------------------------------------------------
+//
+void CMPXMetadataExtractor::SetDrmMediaPropertiesL(const CMetaDataFieldContainer& aMetaCont)
+    {
+    MPX_FUNC("CMPXMetadataExtractor::SetDrmMediaPropertiesL()");
+
+    TBool prot(EFalse);
+    // DB Flags to set
+    TUint dbFlags(KMPXMediaGeneralFlagsSetOrUnsetBit);
+    // Validate the objects to be used
+    MPX_ASSERT(iMedia);
+    MPX_ASSERT(iDrmMediaUtility);
+    
+    // File Path
+    TParsePtrC parse( iFileName );
+    iMedia->SetTextValueL( KMPXMediaGeneralUri, iFileName );
+    iMedia->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
+    MPX_DEBUG2("CMPXMetadataExtractor::SetDrmMediaPropertiesL - Filename=%S", &iFileName);
+
+    // get the protected flag from MetadataUtility Container
+    TPtrC ptr = aMetaCont.Field( EMetaDataProtected );  
+    MPX_DEBUG2("CMPXMetadataExtractor::SetDrmMediaPropertiesL -- status=%S", &ptr);
+    _LIT( KNonProtected, "0" );
+    if ( ptr.Compare( KNonProtected ) == 0 )
+        {
+        // this is non-protected file
+        // prot = EFalse
+        MPX_DEBUG1("CMPXMetadataExtractor::SetDrmMediaPropertiesL - non protected");
+        iMedia->SetTObjectValueL<TBool>( KMPXMediaDrmProtected, prot );
+        iMedia->SetTObjectValueL<TUint16>( KMPXMediaMTPDrmStatus, (TUint16)prot );
+        }
+    else  
+        {  // DRM file
+
+        // DRM Rights
+        //
+        CMPXMedia* drm = NULL;
+        MPX_TRAPD( drmError, iDrmMediaUtility->InitL( iFileName );
+        drm = CMPXMedia::NewL( *iDrmMediaUtility->GetMediaL( KMPXMediaDrmProtected.iAttributeId |
+                                                                KMPXMediaDrmRightsStatus.iAttributeId ) );
+             );
+
+        TBool prot(EFalse);
+        if( drm )
+            {
+            CleanupStack::PushL( drm );
+            MPX_DEBUG1("CMPXMetadataExtractor::SetDrmMediaPropertiesL -- is a drm file");
+            if( drm->IsSupported( KMPXMediaDrmProtected ) )
+                {
+                prot = drm->ValueTObjectL<TBool>( KMPXMediaDrmProtected );
+                MPX_DEBUG2("CMPXMetadataExtractor::SetDrmMediaPropertiesL protected %i", prot);
+                }
+
+            TMPXMediaDrmRightsStatus status(EMPXDrmRightsFull);
+            if( drm->IsSupported( KMPXMediaDrmRightsStatus ) )
+                {
+                status = drm->ValueTObjectL<TMPXMediaDrmRightsStatus>(KMPXMediaDrmRightsStatus);
+                iMedia->SetTObjectValueL<TInt>(KMPXMediaDrmRightsStatus, status );
+                MPX_DEBUG2("CMPXMetadataExtractor::SetDrmMediaPropertiesL -- status %i", status);
+                }
+
+            // Set DB flags
+            dbFlags |= KMPXMediaGeneralFlagsIsDrmProtected;
+            if( status != EMPXDrmRightsFull && status != EMPXDrmRightsRestricted && status != EMPXDrmRightsPreview )
+                {
+                dbFlags |= KMPXMediaGeneralFlagsIsDrmLicenceInvalid;
+                }
+            CleanupStack::PopAndDestroy( drm );
+            }
+
+        // Trapped PV DRM error. If -46, we know the file has no rights
+        //
+        if( drmError == KErrPermissionDenied )
+            {
+            dbFlags |= KMPXMediaGeneralFlagsIsDrmLicenceInvalid;
+            }
+        else
+            {
+            User::LeaveIfError( drmError );
+            }
+
+        iMedia->SetTObjectValueL<TBool>( KMPXMediaDrmProtected, prot );
+        iMedia->SetTObjectValueL<TUint16>( KMPXMediaMTPDrmStatus, (TUint16)prot );
+    
+        iDrmMediaUtility->Close();
+    
+        }  // DRM file
+
+    
+    // verify the file open status
+    if( iFileOpenError == KErrNotFound || iFileOpenError == KErrPathNotFound )
+        {
+        dbFlags |= KMPXMediaGeneralFlagsIsInvalid;
+        }
+    
+    // Finally set the db flag
+    //
+    iMedia->SetTObjectValueL( KMPXMediaGeneralFlags, dbFlags );
+   
+    }

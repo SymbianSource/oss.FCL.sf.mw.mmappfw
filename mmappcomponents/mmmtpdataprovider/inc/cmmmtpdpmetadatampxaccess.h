@@ -213,6 +213,7 @@ private:
     TBuf<KStorageRootMaxLength> iStoreRoot;
 
     MMPXCollectionHelper* iCollectionHelper;
+    HBufC8* iSampleData;
 
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     CMmMtpDpPerfLog* iPerfLog;

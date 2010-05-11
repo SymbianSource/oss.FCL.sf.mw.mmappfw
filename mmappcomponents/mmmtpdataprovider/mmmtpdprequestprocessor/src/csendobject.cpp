@@ -32,6 +32,8 @@
 #include "cpropertysettingutility.h"
 #include "cmmmtpdpmetadataaccesswrapper.h"
 
+const TInt KMtpRollbackFuncCnt = 3;
+
 // Verification data for the SendObjectInfo request
 const TMTPRequestElementInfo KMTPSendObjectInfoPolicy[] =
     {
@@ -79,12 +81,8 @@ EXPORT_C MMmRequestProcessor* CSendObject::NewL( MMTPDataProviderFramework& aFra
 //
 EXPORT_C CSendObject::~CSendObject()
     {
-    if ( !iNoRollback )
-        {
-        // Not finished SendObjectInfo \ SendObject pair detected.
-        Rollback();
-        PRINT( _L( "MM MTP <> CSendObject::~CSendObject, Rollback" ) );
-        }
+    Rollback();
+    iRollbackList.Close();
 
     delete iFileReceived;
     delete iParentSuid;
@@ -107,7 +105,8 @@ CSendObject::CSendObject( MMTPDataProviderFramework& aFramework,
         CRequestProcessor( aFramework, aConnection, 0, NULL ),
         iFs( iFramework.Fs() ),
         iObjectMgr( iFramework.ObjectMgr() ),
-        iDpConfig( aDpConfig )
+        iDpConfig( aDpConfig ),
+        iRollbackList( KMtpRollbackFuncCnt )
     {
     PRINT( _L( "Operation: SendObjectInfo/SendObject/SendObjectPropList(0x100C/0x100D/0x9808)" ) );
     }
@@ -129,8 +128,6 @@ void CSendObject::ConstructL()
         iFramework.DataProviderId() );
 
     PRINT1( _L( "MM MTP <> CSendObject::ConstructL DataProviderId = 0x%x" ), iFramework.DataProviderId());
-
-    iNoRollback = EFalse;
 
     SetPSStatus();
     PRINT( _L( "MM MTP <= CSendObject::ConstructL" ) );
@@ -300,11 +297,6 @@ EXPORT_C TMTPResponseCode CSendObject::CheckRequestL()
                 {
                 responseCode = EMTPRespCodeObjectTooLarge;
                 }
-
-            if ( ( responseCode != EMTPRespCodeOK ) && !CanStoreFileL( iStorageId, iObjectSize ) )
-                {
-                responseCode = EMTPRespCodeStoreFull;
-                }
             }
         }
 
@@ -392,22 +384,7 @@ void CSendObject::ServicePropListL()
 void CSendObject::ServiceObjectL()
     {
     PRINT( _L( "MM MTP => CSendObject::ServiceObjectL" ) );
-
-    delete iFileReceived;
-    iFileReceived = NULL;
-
-    PRINT2( _L( "MM MTP <> CSendObject::ServiceObjectL, iFullPath is %S, iObjectSize: %Lu" ), &iFullPath, iObjectSize );
-    TRAPD( err, iFileReceived = CMTPTypeFile::NewL( iFs,
-        iFullPath,
-        EFileWrite ) );
-
-    PRINT1( _L("MM MTP <> CSendObject::ServiceObjectL, Leave Code is: %d"), err );
-    User::LeaveIfError( err );
-
-    iFileReceived->SetSizeL( iObjectSize );
-
     ReceiveDataL( *iFileReceived );
-
     iProgress = ESendObjectInProgress;
 
     PRINT( _L( "MM MTP <= CSendObject::ServiceObjectL" ) );
@@ -479,12 +456,7 @@ TBool CSendObject::DoHandleResponsePhaseInfoL()
     if ( IsTooLarge( iObjectSize ) )
         {
         SendResponseL( EMTPRespCodeObjectTooLarge );
-        result = EFalse;
-        }
-
-    if ( result && !CanStoreFileL( iStorageId, iObjectSize ) )
-        {
-        SendResponseL( EMTPRespCodeStoreFull );
+        Rollback();
         result = EFalse;
         }
 
@@ -496,6 +468,7 @@ TBool CSendObject::DoHandleResponsePhaseInfoL()
             && iProtectionStatus != EMTPProtectionReadOnly )
             {
             SendResponseL( EMTPRespCodeParameterNotSupported );
+            Rollback();
             result = EFalse;
             }
         }
@@ -507,6 +480,7 @@ TBool CSendObject::DoHandleResponsePhaseInfoL()
             {
             // File and/or parent pathname invalid.
             SendResponseL( EMTPRespCodeInvalidDataset );
+            Rollback();
             }
         }
 
@@ -514,16 +488,19 @@ TBool CSendObject::DoHandleResponsePhaseInfoL()
         {
         if ( ExistsL( iFullPath ) )
             {
-            // Object with the same name already exists.
-            iNoRollback = ETrue;
             SendResponseL( EMTPRespCodeAccessDenied );
+            Rollback();
             result = EFalse;
             }
         }
 
     if ( result )
-        ReserveObjectL();
-
+        {
+        if ( KErrNone != ReserveObjectL() )
+            {
+            result = EFalse;
+            }
+        }
     PRINT1( _L( "MM MTP <= CSendObject::DoHandleResponsePhaseInfoL result = %d" ), result );
 
     return result;
@@ -542,6 +519,7 @@ TBool CSendObject::DoHandleResponsePhasePropListL()
 
     TInt invalidParameterIndex = KErrNotFound;
     responseCode = VerifyObjectPropListL( invalidParameterIndex );
+    TInt err = KErrNone;
 
     if ( responseCode != EMTPRespCodeOK )
         {
@@ -551,18 +529,18 @@ TBool CSendObject::DoHandleResponsePhasePropListL()
         parameters[2] = 0;
         parameters[3] = invalidParameterIndex;
         SendResponseL( responseCode, 4, parameters );
+        Rollback();
         }
     else if ( ExistsL( iFullPath ) )
         {
-        // Object with the same name already exists.
-        iNoRollback = ETrue;
         SendResponseL( EMTPRespCodeAccessDenied );
+        Rollback();
         }
     else
-        ReserveObjectL();
+        err = ReserveObjectL();
 
     PRINT( _L( "MM MTP <= CSendObject::DoHandleResponsePhasePropListL" ) );
-    return ( responseCode == EMTPRespCodeOK );
+    return ( responseCode == EMTPRespCodeOK && err == KErrNone);
     }
 
 // -----------------------------------------------------------------------------
@@ -576,60 +554,56 @@ TBool CSendObject::DoHandleResponsePhaseObjectL()
 
     TBool result = ETrue;
 
-    // SendObject is cancelled or connection is dropped.
-    if ( iCancelled )
+    TEntry fileEntry;
+    User::LeaveIfError( iFs.Entry( iFullPath, fileEntry ) );
+    if ( fileEntry.FileSize() != iObjectSize )
         {
-        // In SendObject response phase, unregister is not necessary.
-        // But there's no harm, still keep it here.
+        iFs.Delete( iFullPath );
+        iObjectMgr.UnreserveObjectHandleL( *iReceivedObjectInfo );
+        TMTPResponseCode responseCode = EMTPRespCodeObjectTooLarge;
+        if ( fileEntry.FileSize() < iObjectSize )
+            {
+            responseCode = EMTPRespCodeIncompleteTransfer;
+            }
+        SendResponseL( responseCode );
+        Rollback();
+        result = EFalse;
+        }
+
+    // SendObject is cancelled or connection is dropped.
+    if ( result && iCancelled )
+        {
+        iFramework.RouteRequestUnregisterL( iExpectedSendObjectRequest,
+            iConnection );
+        SendResponseL( EMTPRespCodeTransactionCancelled );
+        Rollback();
+        }
+    else if ( result && !iCancelled )
+        {
+        if ( iObjectSize > 0 ) // media file
+            {
+            TRAPD( err, AddMediaToStoreL() );
+            PRINT1( _L( "MM MTP <= CSendObject::DoHandleResponsePhaseObjectL err = %d" ), err );
+
+            if ( ( iPreviousOperation == EMTPOpCodeSendObjectPropList )
+                && ( err == KErrNone ) )
+                {
+                // Only leave when getting proplist element from data received by fw.
+                // It should not happen after ReceiveDataL in which construction of proplist already succeed.
+                SetObjectPropListL();
+                }
+
+            // Commits into MTP data object enumeration store the object handle and
+            // storage space previously reserved for the specified object.
+            iFramework.ObjectMgr().CommitReservedObjectHandleL( *iReceivedObjectInfo );
+            iRollbackList.Append( RemoveObjectFromDbL );
+            }
+
+        // Commit object to MTP data store
         iFramework.RouteRequestUnregisterL( iExpectedSendObjectRequest,
             iConnection );
 
-        Rollback();
-        SendResponseL( EMTPRespCodeTransactionCancelled );
-        }
-    else
-        {
-        TEntry fileEntry;
-        User::LeaveIfError( iFs.Entry( iFullPath, fileEntry ) );
-
-        if ( fileEntry.FileSize() != iObjectSize )
-            {
-            Rollback();
-            TMTPResponseCode responseCode = EMTPRespCodeObjectTooLarge;
-            if ( fileEntry.FileSize() < iObjectSize )
-                {
-                responseCode = EMTPRespCodeIncompleteTransfer;
-                }
-            SendResponseL( responseCode );
-            result = EFalse;
-            }
-        else
-            {
-            if ( iObjectSize > 0 ) // media file
-                {
-                TRAPD( err, AddMediaToStoreL() );
-                PRINT1( _L( "MM MTP <> CSendObject::DoHandleResponsePhaseObjectL err = %d" ), err );
-
-                if ( ( iPreviousOperation == EMTPOpCodeSendObjectPropList )
-                    && ( err == KErrNone ) )
-                    {
-                    // Only leave when getting proplist element from data received by fw.
-                    // It should not happen after ReceiveDataL in which construction of proplist already succeed.
-                    SetObjectPropListL();
-                    }
-
-                // Commits into MTP data object enumeration store the object handle and
-                // storage space previously reserved for the specified object.
-                iFramework.ObjectMgr().CommitReservedObjectHandleL( *iReceivedObjectInfo );
-                }
-
-            // In SendObject response phase, unregister is not necessary.
-            // But there's no harm, still keep it here.
-            iFramework.RouteRequestUnregisterL( iExpectedSendObjectRequest,
-                iConnection );
-
-            SendResponseL( EMTPRespCodeOK );
-            }
+        SendResponseL( EMTPRespCodeOK );
         }
 
     PRINT1( _L( "MM MTP <= CSendObject::DoHandleResponsePhaseObjectL result = %d" ), result );
@@ -660,6 +634,9 @@ EXPORT_C TBool CSendObject::DoHandleCompletingPhaseL()
         iProgress = EObjectInfoSucceed;
         result = EFalse;
         }
+
+    if ( result )
+        iRollbackList.Reset();
 
     PRINT2( _L( "MM MTP <= CSendObject::DoHandleCompletingPhaseL iProgress= %d, result = %d" ),
         iProgress,
@@ -1042,31 +1019,6 @@ TBool CSendObject::IsTooLarge( TUint64 aObjectSize ) const
     return ret;
     }
 
-// -----------------------------------------------------------------------------
-// CSendObject::CanStoreFileL
-// Check if we can store the file on the storage
-// @return ETrue if yes, otherwise EFalse
-// -----------------------------------------------------------------------------
-//
-TBool CSendObject::CanStoreFileL( TUint32 aStorageId,
-    TInt64 aObjectSize ) const
-    {
-    PRINT( _L( "MM MTP => CSendObject::CanStoreFileL" ) );
-
-    TBool result = ETrue;
-    TVolumeInfo volumeInfo;
-    TInt driveNo = iFramework.StorageMgr().DriveNumber( aStorageId );
-    User::LeaveIfError( iFs.Volume( volumeInfo, driveNo ) );
-
-    if ( volumeInfo.iFree < aObjectSize )
-        {
-        result = EFalse;
-        }
-
-    PRINT1( _L( "MM MTP <= CSendObject::CanStoreFileL , result = %d" ), result );
-
-    return result;
-    }
 
 // -----------------------------------------------------------------------------
 // CSendObject::GetFullPathNameL
@@ -1171,7 +1123,7 @@ TBool CSendObject::ExistsL( const TDesC& aName ) const
 // CSendObject::ReserveObjectL
 // -----------------------------------------------------------------------------
 //
-void CSendObject::ReserveObjectL()
+TInt CSendObject::ReserveObjectL()
     {
     PRINT( _L( "MM MTP => CSendObject::ReserveObjectL" ) );
     TInt err = KErrNone;
@@ -1187,15 +1139,42 @@ void CSendObject::ReserveObjectL()
     // by the specified object information record.
     TRAP( err, iObjectMgr.ReserveObjectHandleL( *iReceivedObjectInfo,
         iObjectSize ) );
+    iRollbackList.Append( UnreserveObjectL );
 
     PRINT2( _L( "MM MTP => CSendObject::ReserveObjectL iObjectsize = %Lu, Operation: 0x%x" ), iObjectSize, iOperationCode );
     if ( err != KErrNone )
-        PRINT1( _L( "MM MTP <> CSendObject::ReserveObjectL err = %d" ), err );
-    if ( iObjectSize == 0 )
+        {
+        PRINT1( _L( "MM MTP <> ReserveObjectHandleL err = %d" ), err );
+        }
+
+    if ( err == KErrNone )
+        {
+        delete iFileReceived;
+        iFileReceived = NULL;
+        PRINT2( _L( "MM MTP <> CSendObject::ServiceObjectL, iFullPath is %S, iObjectSize: %Lu" ), &iFullPath, iObjectSize );
+        iRollbackList.Append( RemoveObjectFromFs );
+        TRAP( err, iFileReceived = CMTPTypeFile::NewL( iFs, iFullPath, EFileWrite ) );
+
+        PRINT1( _L("MM MTP <> CMTPTypeFile::NewL Leave Code is: %d"), err );
+        }
+
+    if ( err == KErrNone )
+        {
+        TRAP( err, iFileReceived->SetSizeL( iObjectSize ) );
+        PRINT1( _L( "MM MTP <> SetSizeL leave code:%d" ), err );
+        if ( err == KErrDiskFull )
+            {
+            SendResponseL( EMTPRespCodeStoreFull );
+            Rollback();
+            return err;
+            }
+        }
+
+    if ( err == KErrNone && iObjectSize == 0 )
         {
         // Already trapped inside SaveEmptyFileL.
         SaveEmptyFileL();
-        if( iOperationCode == EMTPOpCodeSendObjectPropList )
+        if ( iOperationCode == EMTPOpCodeSendObjectPropList )
             {
             // Only leave when getting proplist element from data received by fw.
             // It should not happen after ReceiveDataL in which construction of proplist already succeed.
@@ -1203,19 +1182,28 @@ void CSendObject::ReserveObjectL()
             }
 
         iObjectMgr.CommitReservedObjectHandleL( *iReceivedObjectInfo );
+        iRollbackList.Reset();
         }
 
-    iExpectedSendObjectRequest.SetUint32( TMTPTypeRequest::ERequestSessionID,
-        iSessionId );
-    iFramework.RouteRequestRegisterL( iExpectedSendObjectRequest, iConnection );
+    if ( err == KErrNone )
+        {
+        iExpectedSendObjectRequest.SetUint32( TMTPTypeRequest::ERequestSessionID, iSessionId );
+        iFramework.RouteRequestRegisterL( iExpectedSendObjectRequest, iConnection );
 
-    TUint32 parameters[3];
-    parameters[0] = iStorageId;
-    parameters[1] = iParentHandle;
-    parameters[2] = iReceivedObjectInfo->Uint( CMTPObjectMetaData::EHandle );
-    SendResponseL( EMTPRespCodeOK, 3, parameters );
+        TUint32 parameters[3];
+        parameters[0] = iStorageId;
+        parameters[1] = iParentHandle;
+        parameters[2] = iReceivedObjectInfo->Uint( CMTPObjectMetaData::EHandle );
+        SendResponseL( EMTPRespCodeOK, 3, parameters );
+        }
+    else
+        {
+        SendResponseL( EMTPRespCodeGeneralError );
+        Rollback();
+        }
 
     PRINT( _L( "MM MTP <= CSendObject::ReserveObjectL" ) );
+    return err;
     }
 
 // -----------------------------------------------------------------------------
@@ -1248,8 +1236,13 @@ void CSendObject::SetProtectionStatus()
             }
         // Close the file after SetProtectionStatus to make sure other process won't open
         // the file successfully right at the time calling RFile::SetAtt.
-        delete iFileReceived;
-        iFileReceived = NULL;
+        if ( iObjectSize > 0 )
+            {
+            delete iFileReceived;
+            iFileReceived = NULL;
+            }
+        else
+            iFileReceived->File().Close();
         }
 
     PRINT( _L( "MM MTP <= CSendObject::SetProtectionStatus" ) );
@@ -1263,30 +1256,24 @@ void CSendObject::SaveEmptyFileL()
     {
     PRINT( _L( "MM MTP => CSendObject::SaveEmptyFileL" ) );
 
-    RFile file;
-    User::LeaveIfError( file.Create( iFs, iFullPath, EFileWrite ) );
-    CleanupClosePushL( file );  // + file
-
     if ( EMTPFormatCodeAbstractAudioVideoPlaylist == iObjectFormat )
         {
-        TInt err = KErrNone;
-        err = file.SetAtt( KEntryAttSystem | KEntryAttHidden,
+        TInt err = iFileReceived->File().SetAtt( KEntryAttSystem | KEntryAttHidden,
             KEntryAttReadOnly | KEntryAttNormal );
         if ( err != KErrNone )
             PRINT1( _L( "MM MTP <> CSendObject::SaveEmptyFileL err = %d" ), err );
         iDpConfig.GetWrapperL().AddDummyFileL( iFullPath );
         }
-    CleanupStack::PopAndDestroy( &file );   // - file
 
     // add playlist to MPX DB
     TRAPD( err, AddMediaToStoreL() );
 
     if ( err != KErrNone )
-        {
-        // Ignore err even add into MPX get failed.
-        }
+        iRollbackList.Append( RemoveObjectFromDbL );
+    else
+        iRollbackList.Reset();
 
-    PRINT1( _L( "MM MTP <= CSendObject::SaveEmptyFileLerr = %d" ), err );
+    PRINT1( _L( "MM MTP <= CSendObject::SaveEmptyFileL err = %d" ), err );
     }
 
 // -----------------------------------------------------------------------------
@@ -1303,7 +1290,6 @@ void CSendObject::AddMediaToStoreL()
     // Might need to set dateadded and datemodify for further extension.
     SetProtectionStatus();
 
-    iDpConfig.GetWrapperL().SetStorageRootL( iFullPath );
     PRINT1( _L( "MM MTP <> CSendObject::AddMediaToStoreL iFullPath = %S" ), &iFullPath );
     iDpConfig.GetWrapperL().AddObjectL( *iReceivedObjectInfo );
 
@@ -1331,20 +1317,49 @@ EXPORT_C void CSendObject::UsbDisconnect()
 //
 void CSendObject::Rollback()
     {
-    // Delete this object from file system.
-    if ( iProgress == ESendObjectInProgress )
-            // || iProgress == EObjectInfoSucceed   // this line is to be commented out until SetSize is done in SendObjectInfo/SendObjectPropList
-            //||iProgress == EObjectInfoFail )
-        {
-        PRINT1( _L( "MM MTP <> CSendObject::Rollback ROLLBACK_FILE %S" ), &iFullPath );
-        // Close the interrupted transfer file by delete iFileReceived object
-        delete iFileReceived;
-        iFileReceived = NULL;
+    PRINT( _L("MM MTP => CSendObject::Rollback") );
 
-        iFramework.Fs().Delete( iFullPath );
-        TRAP_IGNORE( iFramework.ObjectMgr().UnreserveObjectHandleL( *iReceivedObjectInfo ) );
-        iProgress = EObjectNone;
+    TInt count = iRollbackList.Count();
+    PRINT1( _L("MM MTP => CSendObject::Rollback, iRollbackList.Count() = %d"), iRollbackList.Count() );
+
+    for ( TInt i = 0; i < count; i++ )
+        {
+        TMmMtpRollbackAction tmp = iRollbackList[i];
+        ( this->*((TMmMtpRollbackAction)(iRollbackList[i])))();
         }
+    iRollbackList.Reset();
+
+    PRINT( _L("MM MTP <= CSendObject::Rollback") );
+    }
+
+void CSendObject::UnreserveObjectL()
+    {
+    PRINT( _L("MM MTP => CSendObject::UnreserveObjectL") );
+    iFramework.ObjectMgr().UnreserveObjectHandleL( *iReceivedObjectInfo );
+    PRINT( _L("MM MTP <= CSendObject::UnreserveObjectL") );
+    }
+
+void CSendObject::RemoveObjectFromDbL()
+    {
+    PRINT( _L("MM MTP => CSendObject::RemoveObjectFromDbL") );
+    iFramework.ObjectMgr().RemoveObjectL( iReceivedObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
+    iDpConfig.GetWrapperL().DeleteObjectL( *iReceivedObjectInfo );
+    PRINT( _L("MM MTP <= CSendObject::RemoveObjectFromDbL") );
+    }
+
+void CSendObject::RemoveObjectFromFs()
+    {
+    PRINT( _L("MM MTP => CSendObject::RemoveObjectFromFs") );
+
+    delete iFileReceived;
+    iFileReceived = NULL;
+
+    TInt err = iFramework.Fs().Delete( iFullPath );
+    if ( err != KErrNone )
+        {
+        PRINT1( _L("MM MTP <> CSendObject::RemoveObjectFromFs err = %d"), err );
+        }
+    PRINT( _L("MM MTP <= CSendObject::RemoveObjectFromFs") );
     }
 
 // end of file

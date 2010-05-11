@@ -515,7 +515,6 @@ void CMoveObject::SetPropertiesL( const TDesC& aNewFileName )
         iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
         iFramework.ObjectMgr().ModifyObjectL(*iObjectInfo);
 
-        iDpConfig.GetWrapperL().SetStorageRootL( aNewFileName );
         iDpConfig.GetWrapperL().AddObjectL( *iObjectInfo );
 
         if ( formatCode == EMTPFormatCodeAbstractAudioVideoPlaylist

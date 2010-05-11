@@ -224,8 +224,6 @@ void CDeleteObject::DeleteObjectL( const CMTPObjectMetaData& aObjectInfo )
     TFileName fileName( aObjectInfo.DesC( CMTPObjectMetaData::ESuid ) );
     PRINT1( _L( "MM MTP <> CDeleteObject::DeleteObjectL fileName = %S" ), &fileName );
 
-    iDpConfig.GetWrapperL().SetStorageRootL( fileName );
-
     // To capture special situation: After copy, move, rename playlist folder name,
     // record in MPX is not inlined with framework db, playlist should not be deleted
     // until next session.
@@ -315,9 +313,13 @@ void CDeleteObject::ProcessFinalPhaseL()
         {
         SendResponseL( EMTPRespCodePartialDeletion );
         }
-    else if( !iIsMultiDelete && iDeleteError == KErrAccessDenied )
+    else if ( !iIsMultiDelete && iDeleteError == KErrAccessDenied )
         {
         SendResponseL( EMTPRespCodeObjectWriteProtected );
+        }
+    else if ( iDeleteError == KErrInUse )
+        {
+        SendResponseL( EMTPRespCodeDeviceBusy );
         }
     else
         {

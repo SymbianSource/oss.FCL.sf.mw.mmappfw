@@ -100,7 +100,8 @@ EXPORT_C TMTPFormatCode MmMtpDpUtility::FormatFromFilename( const TDesC& aFullFi
 #endif // __WINDOWS_MEDIA
             else if ( file.Ext().CompareF( KTxtExtensionODF ) == 0 )
                 {
-                HBufC8* mime = MmMtpDpUtility::OdfMimeTypeL( file.FullName() );
+                HBufC8* mime(NULL);
+                TRAP_IGNORE( mime = MmMtpDpUtility::OdfMimeTypeL( file.FullName() ) );
                 if ( mime != NULL )
                     {
                     // 3GP

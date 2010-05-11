@@ -46,10 +46,11 @@ enum TMmMtpSampleRateValue
 // WAVECodec value
 enum TMmMtpWAVECodecValue
     {
-    EMTPAudioWAVECodecMP3 = 0x00000055,
-    EMTPAudioWAVECodecWMA = 0x00000161,
-    EMTPAudioWAVECodecAAC = 0x0000A106,
-    EMTPAudioWAVECodecPCM = 0x00000001
+    EMTPAudioWAVECodecMP3       = 0x00000055,
+    EMTPAudioWAVECodecWMA       = 0x00000161,
+    EMTPAudioWAVECodecWMAPro    = 0x00000162,
+    EMTPAudioWAVECodecAAC       = 0x0000A106,
+    EMTPAudioWAVECodecPCM       = 0x00000001
     };
 
 // Bitrate value scope
@@ -58,7 +59,9 @@ enum TMmMtpBitrateValue
     EMTPMP3MinBitrate = 0x00001F40,         //8 kbps
     EMTPMP3MaxBitrate = 0x0004E200,         //320 kbps
     EMTPWMAMinBitrate = 0x00001388,         //5 kbps
-    EMTPWMAMaxBitrate = 0x0004E200,         //320 kbps
+    EMTPWMAMaxBitrate = 0x0005DC00,         //384 kbps
+    EMTPWMAProMinBitrate = 0x00001388,      //5 kbps
+    EMTPWMAProMaxBitrate = 0x000BB800,      //768 kbps
     EMTPAACMinBitrate = 0x00001F40,         //8 kbps
     EMTPAACMaxBitrate = 0x0004E200,         //320 kbps
     EMTPPCMMinBitrate = 0x00003E80,         //16 kbps

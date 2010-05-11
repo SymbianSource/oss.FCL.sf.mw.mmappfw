@@ -59,7 +59,6 @@
 #include "mpxplaylistenginedefs.hrh"
 #include "mpxplaylistplugin.h"
 #include "mpxplaylistengine.h"
-#include "mpxplaylistrecognizer.h"
 
 // ============================ CONSTANTS =====================================
 const TInt KMPXBufExpandSize = 0x40;

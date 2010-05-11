@@ -291,21 +291,6 @@ EXPORT_C void CMmMtpDpMetadataAccessWrapper::DeleteObjectL( const CMTPObjectMeta
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::DeleteObjectL" ) );
     }
 
-// ---------------------------------------------------------------------------
-// CMmMtpDpMetadataAccessWrapper::SetStorageRootL
-// Sets current Drive info
-// ---------------------------------------------------------------------------
-//
-void CMmMtpDpMetadataAccessWrapper::SetStorageRootL( const TDesC& aStorageRoot )
-    {
-    PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::SetStorageRootL" ) );
-
-    iMmMtpDpMetadataVideoAccess->SetStorageRootL( aStorageRoot );
-    iMmMtpDpMetadataMpxAccess->SetStorageRootL( aStorageRoot );
-
-    PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::SetStorageRootL" ) );
-    }
-
 // -----------------------------------------------------------------------------
 // CMmMtpDpMetadataMpxAccess::SetImageObjPropL
 // set image specific properties specific to videos
@@ -583,8 +568,6 @@ EXPORT_C void CMmMtpDpMetadataAccessWrapper::CleanupDatabaseL()
 //
 TBool CMmMtpDpMetadataAccessWrapper::IsExistL( const TDesC& aSuid )
     {
-    TParsePtrC parse( aSuid );
-    iMmMtpDpMetadataMpxAccess->SetStorageRootL( parse.Drive() );
     return iMmMtpDpMetadataMpxAccess->IsExistL( aSuid );
     }
 
@@ -627,26 +610,22 @@ EXPORT_C void CMmMtpDpMetadataAccessWrapper::CreateDummyFile( const TDesC& aPlay
     {
     PRINT1( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::CreateDummyFile, filename = %S" ), &aPlaylistName );
 
-    if ( MmMtpDpUtility::FormatFromFilename( aPlaylistName ) ==
-        EMTPFormatCodeAbstractAudioVideoPlaylist )
-        {
-        RFile newfile;
-        TInt err = newfile.Replace( iFs, aPlaylistName, EFileWrite );
+    RFile newfile;
+    TInt err = newfile.Replace( iFs, aPlaylistName, EFileWrite );
 
+    if ( err != KErrNone )
+        {
+        newfile.Close();
+        PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::CreateDummyFile err =  %d" ), err );
+        }
+    else // File created OK
+        {
+        err = newfile.Flush();
+        newfile.Close();
+        err = iFs.SetAtt( aPlaylistName, KEntryAttSystem | KEntryAttHidden,
+            KEntryAttReadOnly | KEntryAttNormal );
         if ( err != KErrNone )
-            {
-            newfile.Close();
-            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::CreateDummyFile err =  %d" ), err );
-            }
-        else // File created OK
-            {
-            err = newfile.Flush();
-            newfile.Close();
-            err = iFs.SetAtt( aPlaylistName, KEntryAttSystem | KEntryAttHidden,
-                KEntryAttReadOnly | KEntryAttNormal );
-            if ( err != KErrNone )
-                PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::CreateDummyFile Dummy Playlist file created. err = %d" ), err );
-            }
+            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::CreateDummyFile Dummy Playlist file created. err = %d" ), err );
         }
     }
 
@@ -685,18 +664,13 @@ void CMmMtpDpMetadataAccessWrapper::RemoveDummyFiles()
             PRINT3( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::RemoveDummyFile filename = %S, err %d, entry.iSize = %d" ),
                 &fileName, err, entry.iSize );
             }
-        else if ( format != EMTPFormatCodeM3UPlaylist )
+        else
             {
             TInt err = iFs.Delete( fileName );
 
             PRINT2( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::RemoveDummyFile filename = %S, err %d" ),
                 &fileName,
                 err );
-            }
-        else
-            {
-            // leave the Imported playlist in the file system
-            PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::RemoveDummyFile, Don't delete m3u file [%S]" ), &fileName );
             }
         }
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::RemoveDummyFiles" ) );
@@ -707,8 +681,9 @@ void CMmMtpDpMetadataAccessWrapper::RemoveDummyFiles()
 // Update Music collection
 // ---------------------------------------------------------------------------
 //
-EXPORT_C void CMmMtpDpMetadataAccessWrapper::UpdateMusicCollectionL()
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::UpdateMusicCollectionL( const TDesC& aStorageRoot )
     {
+    iMmMtpDpMetadataMpxAccess->SetStorageRootL( aStorageRoot );
     iMmMtpDpMetadataMpxAccess->UpdateMusicCollectionL( );
     }
 

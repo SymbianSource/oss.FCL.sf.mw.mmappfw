@@ -165,9 +165,10 @@ public:
 
     /**
     * Updated Music DB
+    * @param aStorageRoot, the root path of storage
     * @return void
     */
-    IMPORT_C void UpdateMusicCollectionL();
+    IMPORT_C void UpdateMusicCollectionL( const TDesC& aStorageRoot );
 
     /*
     * Called when the MTP session is initialised
@@ -229,7 +230,7 @@ private:
     MMTPDataProviderFramework& iFramework;
     RFs& iFs;    // should not remove this member data!!!
 
-    TInt iOpenCount;	// introduce to fix CollectionHelper Flush problem
+    TInt iOpenCount;    // introduce to fix CollectionHelper Flush problem
 
     CDesCArray* iAbstractMediaArray;
 

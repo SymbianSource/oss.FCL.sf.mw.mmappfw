@@ -211,6 +211,7 @@ void CMPXHarvesterDatabaseManager::OpenDatabaseL( TDriveNumber aDrive )
     TInt index = FindDatabaseIndex ( aDrive );
     if ( index == KErrNotFound )
         {
+        index = iDatabases.Count();
         db = CMPXHarvesterDB::NewL( aDrive, iFs );
         CleanupStack::PushL( db );
         iDatabases.AppendL( db );
@@ -407,8 +408,7 @@ CMPXHarvesterDB& CMPXHarvesterDatabaseManager::GetDatabaseL( TInt aDb )
 void CMPXHarvesterDatabaseManager::RecreateDatabases()
     {
     MPX_DEBUG1("CMPXHarvesterDatabaseManager::RecreateDatabases <--");
-    TInt count( iDatabases.Count() );
-    for( TInt i=0; i<count; )
+    for( TInt i=0; i < iDatabases.Count(); )
         {
         // Close db, delete and recreate
         //

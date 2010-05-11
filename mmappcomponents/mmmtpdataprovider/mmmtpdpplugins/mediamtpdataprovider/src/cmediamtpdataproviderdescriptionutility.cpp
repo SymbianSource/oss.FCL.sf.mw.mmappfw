@@ -84,25 +84,122 @@ CMTPTypeInterdependentPropDesc* CMediaMtpDataProviderDescriptionUtility::NewInte
         }
 
     CMTPTypeInterdependentPropDesc* interdependentPropDesc = CMTPTypeInterdependentPropDesc::NewL();
+    CleanupStack::PushL( interdependentPropDesc );  // + interdependentPropDesc
 
     if ( audioWaveCodecSupported && audioBitRateSupported )
         {
-        CMTPTypeInterdependentProperties* properties = CMTPTypeInterdependentProperties::NewL();
-        properties->AppendL( NewAudioWaveCodecPropDescL( aFormatCode ) );
-        properties->AppendL( NewAudioBitratePropDescL( aFormatCode ) );
-        interdependentPropDesc->AppendL( properties );
+        if ( ( aFormatCode == EMTPFormatCodeWMA )
+            || ( aFormatCode == EMTPFormatCodeWMV )
+            || ( aFormatCode == EMTPFormatCodeASF ) )
+            {
+            AppendWMAudioInterdepentPropDescL( interdependentPropDesc );
+            }
+        else
+            {
+            CMTPTypeInterdependentProperties* properties = CMTPTypeInterdependentProperties::NewL();
+            CleanupStack::PushL( properties );
+
+            CMTPTypeObjectPropDesc* propertyDesc1 = NewAudioWaveCodecPropDescL( aFormatCode );
+            CleanupStack::PushL( propertyDesc1 );   // + propertyDesc1
+            properties->AppendL( propertyDesc1 );
+            CleanupStack::Pop( propertyDesc1 ); // - propertyDesc1
+
+            CMTPTypeObjectPropDesc* propertyDesc2 = NewAudioBitratePropDescL( aFormatCode );
+            CleanupStack::PushL( propertyDesc2 );   // + propertyDesc2
+            properties->AppendL( propertyDesc2 );
+            CleanupStack::Pop( propertyDesc2 ); // - propertyDesc2
+
+            interdependentPropDesc->AppendL( properties );
+            CleanupStack::Pop( properties );
+            }
         }
 
     if ( videoFourCcCodecSupported && videoBitRateSupported )
         {
         CMTPTypeInterdependentProperties* properties = CMTPTypeInterdependentProperties::NewL();
-        properties->AppendL( NewVideoFourCCCodecPropDescL( aFormatCode ) );
-        properties->AppendL( NewVideoBitratePropDescL( aFormatCode ) );
+        CleanupStack::PushL( properties );  // + properties
+
+        CMTPTypeObjectPropDesc* propertyDesc1 = NewVideoFourCCCodecPropDescL( aFormatCode );
+        CleanupStack::PushL( propertyDesc1 );   // + propertyDesc1
+        properties->AppendL( propertyDesc1 );
+        CleanupStack::Pop( propertyDesc1 ); // - propertyDesc1
+
+        CMTPTypeObjectPropDesc* propertyDesc2 = NewVideoBitratePropDescL( aFormatCode );
+        CleanupStack::PushL( propertyDesc2 );   // + propertyDesc2
+        properties->AppendL( propertyDesc2 );
+        CleanupStack::Pop( propertyDesc2 ); // - propertyDesc2
+
         interdependentPropDesc->AppendL( properties );
+        CleanupStack::Pop( properties );    // - properties
         }
 
     PRINT( _L( "MM MTP <= CMediaMtpDataProviderDescriptionUtility::NewInterdepentPropDescL" ) );
+    CleanupStack::Pop( interdependentPropDesc );  // - interdependentPropDesc
     return interdependentPropDesc;
+    }
+
+// -----------------------------------------------------------------------------
+// CMediaMtpDataProviderDescriptionUtility::NewWMAudioInterdepentPropDescL
+// Append WM Audio specific to interdpendent property description.
+// -----------------------------------------------------------------------------
+//
+void CMediaMtpDataProviderDescriptionUtility::AppendWMAudioInterdepentPropDescL(CMTPTypeInterdependentPropDesc* aInterdependentPropDesc)
+    {
+    PRINT( _L( "MM MTP => CMediaMtpDataProviderDescriptionUtility::AppendWMAudioInterdepentPropDescL" ) );
+
+    CMTPTypeInterdependentProperties* properties1 = CMTPTypeInterdependentProperties::NewL();
+    CleanupStack::PushL( properties1 ); // + properties1
+
+    CMTPTypeObjectPropDescEnumerationForm* form = CMTPTypeObjectPropDescEnumerationForm::NewL( EMTPTypeUINT32 );
+    CleanupStack::PushL( form ); // + form
+    form->AppendSupportedValueL( TMTPTypeUint32( EMTPAudioWAVECodecWMA ) );
+
+    CMTPTypeObjectPropDesc* propertyDesc1 = CMTPTypeObjectPropDesc::NewL( EMTPObjectPropCodeAudioWAVECodec, *form );
+
+    CleanupStack::PopAndDestroy( form ); // - form
+    CleanupStack::PushL( propertyDesc1 ); // + propertyDesc1
+    properties1->AppendL( propertyDesc1 );
+    CleanupStack::Pop( propertyDesc1 ); // - propertyDesc1
+
+    CMTPTypeObjectPropDesc* propertyDesc2 = NewRangeFormDescriptionL( EMTPObjectPropCodeAudioBitRate,
+                                                        EMTPWMAMinBitrate,
+                                                        EMTPWMAMaxBitrate,
+                                                        EMTPAudioBitrateStep );
+
+    CleanupStack::PushL( propertyDesc2 ); // + propertyDesc2
+    properties1->AppendL( propertyDesc2 );
+    CleanupStack::Pop( propertyDesc2 ); // - propertyDesc2
+
+    aInterdependentPropDesc->AppendL( properties1 );
+    CleanupStack::Pop( properties1 ); // - properties1
+
+    CMTPTypeInterdependentProperties* properties2 = CMTPTypeInterdependentProperties::NewL();
+    CleanupStack::PushL( properties2 ); // + properties2
+
+    form = CMTPTypeObjectPropDescEnumerationForm::NewL( EMTPTypeUINT32 );
+    CleanupStack::PushL( form ); // + form
+    form->AppendSupportedValueL( TMTPTypeUint32( EMTPAudioWAVECodecWMAPro ) );
+
+    CMTPTypeObjectPropDesc* propertyDesc3 = CMTPTypeObjectPropDesc::NewL( EMTPObjectPropCodeAudioWAVECodec, *form );
+
+    CleanupStack::PopAndDestroy( form ); // - form
+    CleanupStack::PushL( propertyDesc3 ); // + propertyDesc3
+    properties2->AppendL( propertyDesc3 );
+    CleanupStack::Pop( propertyDesc3 ); // - propertyDesc3
+
+    CMTPTypeObjectPropDesc* propertyDesc4 = NewRangeFormDescriptionL( EMTPObjectPropCodeAudioBitRate,
+                                                        EMTPWMAProMinBitrate,
+                                                        EMTPWMAProMaxBitrate,
+                                                        EMTPAudioBitrateStep );
+
+    CleanupStack::PushL( propertyDesc4 ); // + propertyDesc4
+    properties2->AppendL( propertyDesc4 );
+    CleanupStack::Pop( propertyDesc4 ); // - propertyDesc4
+
+    aInterdependentPropDesc->AppendL( properties2 );
+    CleanupStack::Pop( properties2 ); // - properties2
+
+    PRINT( _L( "MM MTP <= CMediaMtpDataProviderDescriptionUtility::AppendWMAudioInterdepentPropDescL" ) );
     }
 
 // -----------------------------------------------------------------------------
@@ -236,6 +333,7 @@ CMTPTypeObjectPropDesc* CMediaMtpDataProviderDescriptionUtility::NewAudioWaveCod
         case EMTPFormatCodeWMV:
         case EMTPFormatCodeASF:
             form->AppendSupportedValueL( TMTPTypeUint32( EMTPAudioWAVECodecWMA ) );
+            form->AppendSupportedValueL( TMTPTypeUint32( EMTPAudioWAVECodecWMAPro ) );
             break;
 
         case EMTPFormatCodeMP3:
@@ -281,7 +379,7 @@ CMTPTypeObjectPropDesc* CMediaMtpDataProviderDescriptionUtility::NewAudioBitrate
         case EMTPFormatCodeASF:
             propertyDesc = NewRangeFormDescriptionL( EMTPObjectPropCodeAudioBitRate,
                 EMTPWMAMinBitrate,
-                EMTPWMAMaxBitrate,
+                EMTPWMAProMaxBitrate,
                 EMTPAudioBitrateStep );
             break;
 
@@ -383,7 +481,7 @@ CMTPTypeObjectPropDesc* CMediaMtpDataProviderDescriptionUtility::NewVideoBitrate
             ETrue );
         }
 
-    PRINT( _L( "MM MTP <= MmMtpDpDescriptionUtiliNewviceVideoBitratePropDescL" ) );
+    PRINT( _L( "MM MTP <= CMediaMtpDataProviderDescriptionUtility::NewVideoBitratePropDescL" ) );
 
     return propertyDesc;
     }

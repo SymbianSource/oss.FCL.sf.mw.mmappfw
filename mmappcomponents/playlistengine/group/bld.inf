@@ -23,9 +23,12 @@ DEFAULT
 
 PRJ_EXPORTS
 ../rom/mpxplaylistengine.iby            CORE_MW_LAYER_IBY_EXPORT_PATH(mpxplaylistengine.iby)
-../rom/mpxplaylistrecognizerplugin.iby  CORE_MW_LAYER_IBY_EXPORT_PATH(mpxplaylistrecognizerplugin.iby)
+
+//MMMW has a generic recognizer that takes care of m3u files
+//../rom/mpxplaylistrecognizerplugin.iby  CORE_MW_LAYER_IBY_EXPORT_PATH(mpxplaylistrecognizerplugin.iby)
 
 PRJ_MMPFILES
-mpxplaylistrecognizer.mmp
+//MMMW has a generic recognizer that takes care of m3u files
+//mpxplaylistrecognizer.mmp
 mpxplaylistengine.mmp
 

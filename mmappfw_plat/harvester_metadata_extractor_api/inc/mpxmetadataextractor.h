@@ -19,14 +19,17 @@
 #ifndef CMPXMETADATAEXTRACTOR_H
 #define CMPXMETADATAEXTRACTOR_H
 
+#include <thumbnailmanager.h>
+#include <thumbnailmanagerobserver.h>
+
+// FORWARD DECLARATION
 class CMPXMedia;
 class CMPXCollectionPath;
-class CMetaDataUtility;
 class CMPXFileInfoUtility;
 class CMPXDrmMediaUtility;
 class MMPXMetadataExtractorObserver;
-#include <thumbnailmanager.h>
-#include <thumbnailmanagerobserver.h>
+class CMetaDataUtility;
+class CMetaDataFieldContainer;
 
 /**
  *  Extracts metadata from a file.
@@ -230,6 +233,13 @@ private: // New Functions:
      * @since 9.2 
      */
     void CleanUp();
+        
+    /**
+     * Sets drm media properties
+     * @since 9.2 
+     */
+    void SetDrmMediaPropertiesL(const CMetaDataFieldContainer& aMetaCont);
+
     
 private:
 
