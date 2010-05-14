@@ -118,7 +118,7 @@ CAbstractMediaMtpDataProvider::~CAbstractMediaMtpDataProvider()
     iSupportedPropPlaylist.Close();
     iSupportedPropAll.Close();
 
-    PRINT( _L( "MM MTP => CAbstractMediaMtpDataProvider::~CAbstractMediaMtpDataProvider" ) );
+    PRINT( _L( "MM MTP <= CAbstractMediaMtpDataProvider::~CAbstractMediaMtpDataProvider" ) );
     }
 
 void CAbstractMediaMtpDataProvider::Cancel()

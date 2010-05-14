@@ -274,6 +274,13 @@ private: // New Functions
     * for a list of folders to automatically scan
     */
     void ParseAutoScanL();
+    
+    /**
+     * Refreshes scan drives so that non-existing 
+     * drives are not scanned.
+	 * Used add back drives that were take out because of dismount
+     */
+    void RefreshScanDrivesL();
 
     /***
     * Resets the current scan directory and frees memory
@@ -350,13 +357,6 @@ private: // New Functions
      */
     RPointerArray<CMPXHarvesterDbItem>* GetDrmFilesL();
 
-    /**
-     * Verifies if aDrive is ready.
-     * @param aDrive, certain drive name, such as EDRIVEE
-     * @return TBool ETrue if aDrive is ready,otherwise EFalse
-     */
-    TBool IsDriveReady( TDriveNumber aDrive );
-
 public:
 
     /**
@@ -392,13 +392,12 @@ private: // data
     RPointerArray<CMPXFolderMonitor>  iFolderMonitors;  // Multiple drives
     RPointerArray<CMPXCollectionType> iSupportedTypes;
     CDesCArray*                       iContainerTypes;
+    RArray<TPath>                     iConfiguredDrivesToScan;
     RArray<TPath>                     iDrivesToScan;
     RArray<TPath>                     iFilteredDrivesToScan;
     RArray<TPath>                     iPathsToBlock;
     TBool                             iOutOfDisk;
-#ifdef RD_MULTIPLE_DRIVE
-    TInt                              iRemovedDrive;
-#endif // RD_MULTIPLE_DRIVE
+    TBool                             iFilteredOutOfDisk;
 
     // Metadata related
     CMPXMetadataScanner*              iMetadataScanner;

@@ -245,6 +245,10 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL( const CMTPTypeObjectPro
                         object->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
                         iFramework.ObjectMgr().ModifyObjectL( *object );
                         }
+                    else if ( KErrInUse == err ) // object file is being used by other program
+                        {
+                        responseCode = EMTPRespCodeDeviceBusy;
+                        }
                     else
                         {
                         responseCode = EMTPRespCodeGeneralError;

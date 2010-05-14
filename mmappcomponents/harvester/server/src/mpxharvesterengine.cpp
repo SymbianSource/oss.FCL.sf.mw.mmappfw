@@ -17,9 +17,7 @@
 
 
 #include <e32std.h>
-#ifdef RD_MULTIPLE_DRIVE
 #include <driveinfo.h>
-#endif //RD_MULTIPLE_DRIVE
 #include <mpxlog.h>
 #include <mpxmedia.h>
 #include <mpxcollectionutility.h>
@@ -38,7 +36,6 @@
 #include "mpxfsformatmonitor.h"
 #include "mpxmediaremovalmonitor.h"
 #include "mpxusbeventhandler.h"
-#include "mpxmmcejectmonitor.h"
 #include "mpxharvesterfilehandler.h"
 #include "mpxharvesterengineobserver.h"
 #include "mpxhvsmsg.h"
@@ -64,7 +61,6 @@ CMPXHarvesterEngine::~CMPXHarvesterEngine()
     delete iFormatMonitor;
     delete iMediaRemovalMonitor;
     delete iUSBMonitor;
-    delete iMMCMonitor;
 
     delete iFileHandler;
     iFsSession.Close();
@@ -99,19 +95,15 @@ void CMPXHarvesterEngine::ConstructL()
 
     // MMC Removal monitor for Removable Drive
     TInt removableDrive( EDriveE );
-#ifdef RD_MULTIPLE_DRIVE
     User::LeaveIfError( DriveInfo::GetDefaultDrive(
         DriveInfo::EDefaultRemovableMassStorage,
         removableDrive ) );
-#endif // RD_MULTIPLE_DRIVE
     iMediaRemovalMonitor = CMPXMediaRemovalMonitor::NewL(
         removableDrive, iFsSession, *this );
 
     // USB Event monitor
     iUSBMonitor = CMPXUsbEventHandler::NewL( *this );
 
-    // MMC Event handling
-    iMMCMonitor = CMPXMMCEjectMonitor::NewL( *this );
 
     // File handler to handle file related events
     iFileHandler = CMPXHarvesterFileHandler::NewL( iFsSession );
@@ -445,6 +437,26 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
                                               TInt aData )
     {
     MPX_DEBUG2("CMPXHarvesterEngine::HandleSystemEventL %i <---", aEvent);
+    
+    if( !iTempCollectionUtil )
+        {
+        iTempCollectionUtil = MMPXCollectionUtility::NewL( NULL, KMcModeDefault );
+        }
+        
+    // Must close collections ASAP in case drives may dismount soon       
+    TRAP_IGNORE( 
+        if (aEvent == EUSBMassStorageStartEvent)
+            {
+            DoStopPlaybackL();
+            iTempCollectionUtil->Collection().CommandL ( EMcCloseCollection, -1 ); 
+            iFileHandler->HandleSystemEventL ( EDiskDismountEvent, -1 );
+            }
+        else if ( aEvent == EDiskDismountEvent )
+            {
+            DoStopPlaybackL();
+            iTempCollectionUtil->Collection().CommandL ( EMcCloseCollection, aData );
+            }
+        );
 
     // The engine is a delegator, it sends the events to
     // different classes to do the actual work
@@ -455,14 +467,17 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
     TBool notify(ETrue);
     switch( aEvent )
         {
-        case EPowerKeyEjectEvent:
+        case EDiskDismountEvent:
             {
             notify=EFalse;
-            TRAP_IGNORE( DoStopPlaybackL() );
             break;
             }
+        case EUSBMassStorageStartEvent:
+            {
+            iDiskOpActive = ETrue;
+            }
+            break;
         case EFormatStartEvent:
-        case EUSBMassStorageStartEvent:   // deliberate fall through
         case EUSBMTPStartEvent:           // deliberate fall through
         case EDiskInsertedEvent:          // deliberate fall through
         case EDiskRemovedEvent:           // deliberate fall through
@@ -470,11 +485,6 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
             iDiskOpActive = ETrue;
             TRAP_IGNORE( DoStopPlaybackL() );
             }
-        default: //lint !e616 !e825
-            if( !iTempCollectionUtil )
-                {
-                iTempCollectionUtil = MMPXCollectionUtility::NewL( NULL, KMcModeDefault );
-                }
             break;
         }
 
@@ -513,6 +523,15 @@ void CMPXHarvesterEngine::HandleSystemEventL( TSystemEvent aEvent,
                 iTempCollectionUtil->Close();
                 iTempCollectionUtil = NULL;
                 }
+        }
+        
+    if ( aEvent == EUSBMassStorageEndEvent )
+        {
+        // In some cases visit to USB Mass Storage mode can be so brief
+        // that drives are actually not dismounted at all even though we
+        // get a NotifyDismount event. In such cases we need to re-issue
+        // the NotifyDismount requests.
+        iMediaRemovalMonitor->CheckDriveStatus();
         }
     }
 

@@ -244,9 +244,9 @@ TBool CMPXFolderScanner::SetupNextDriveToScanL()
             TInt err(KErrNone);
             do
                 {
-                MPX_DEBUG1("CMPXFolderScanner::SetupNextDriveToScanL iDirScan->NexL()");
+                MPX_DEBUG1("CMPXFolderScanner::SetupNextDriveToScanL iDirScan->NextL()");
                 TRAP(err, iDirScan->NextL(iDir));
-                MPX_DEBUG1("CMPXFolderScanner::SetupNextDriveToScanL path blocked?");
+                MPX_DEBUG2("CMPXFolderScanner::SetupNextDriveToScanL path %S", &iDirScan->FullPath());
                 blocked = iObserver.IsPathBlockedL( iDirScan->FullPath() );
                 MPX_DEBUG2("CMPXFolderScanner::SetupNextDriveToScanL path blocked %i", blocked);
                 if( blocked )

@@ -18,6 +18,7 @@
 
 #include <e32base.h>
 #include <f32file.h>
+#include <driveinfo.h>
 #include <mpxlog.h>
 #include "mpxmediaremovalmonitor.h"
 
@@ -27,14 +28,12 @@
 //
 CMPXMediaRemovalMonitor::CMPXMediaRemovalMonitor
                   ( TInt aDrive, RFs& aFs, MMPXSystemEventObserver& aObserver ) 
-                                                       : CActive(EPriorityHigh),
-                                                         iDrive( aDrive ),
+                                                       : iDrive( aDrive ),
                                                          iFs( aFs ),
                                                          iDiskRemoved( EFalse ),
                                                          iObserver( aObserver )
                                                          
     {
-    CActiveScheduler::Add(this);
     }
 
 
@@ -44,19 +43,11 @@ CMPXMediaRemovalMonitor::CMPXMediaRemovalMonitor
 //
 void CMPXMediaRemovalMonitor::ConstructL()
     {
-    MPX_DEBUG1(_L("CMPXMediaRemovalMonitor::ConstructL <---"));
+    MPX_FUNC("CMPXMediaRemovalMonitor::ConstructL");    	
+    iDiskNotifyHandler = CDiskNotifyHandler::NewL(*this, iFs);
+    CheckDriveStatus();
     
-    // Initial state
-    TDriveInfo drive;
-	User::LeaveIfError(iFs.Drive(drive, TInt(iDrive)));
-   	iDiskRemoved = (drive.iType == EMediaNotPresent);
-
-    // Start listening
-    TNotifyType notType(ENotifyDisk);
-    iFs.NotifyChange( notType, iStatus );
-    SetActive();
-    
-    MPX_DEBUG1(_L("CMPXMediaRemovalMonitor::ConstructL --->"));
+    iDiskNotifyHandler->NotifyDisk();
     }
 
 
@@ -99,74 +90,95 @@ CMPXMediaRemovalMonitor* CMPXMediaRemovalMonitor::NewLC
 //
 CMPXMediaRemovalMonitor::~CMPXMediaRemovalMonitor()
     {
-    Cancel();
+    delete iDiskNotifyHandler;
+    }
+    
+void CMPXMediaRemovalMonitor::CheckDriveStatus()
+    {
+    TDriveList driveList;
+    TInt driveCount(0);
+    TInt error = DriveInfo::GetUserVisibleDrives( iFs, driveList, driveCount );
+    if ( error != KErrNone )
+        {
+        MPX_DEBUG2("CMPXMediaRemovalMonitor::CheckDriveStatus GetUserVisibleDrives failed, error %d", error);
+        return;
+        }
+    for( TInt driveNum = EDriveA; driveNum < EDriveZ; driveNum++ )
+        {
+        if ( driveNum != EDriveC && driveList[driveNum] )
+            {
+            TDriveInfo driveInfo;
+            if (iFs.Drive(driveInfo, driveNum) == KErrNone)
+               {
+               if ( (driveInfo.iType != EMediaNotPresent) && ! (driveInfo.iDriveAtt & KDriveAttRemote) )
+                   {
+                   TInt error = iDiskNotifyHandler->NotifyDismount( driveNum );
+                   MPX_DEBUG3("CMPXMediaRemovalMonitor::CheckDriveStatus monitoring drive %d for dismounts, error %d", driveNum, error);
+                   }
+                }
+            if ( driveNum == iDrive )
+                {
+                iDiskRemoved = driveInfo.iType == EMediaNotPresent;
+                }
+            }
+        }
     }
 
-    
 // ---------------------------------------------------------------------------
-// Service the request
+// Callback when disk state has changed
 // ---------------------------------------------------------------------------
 //
-void CMPXMediaRemovalMonitor::RunL()
+void CMPXMediaRemovalMonitor::HandleNotifyDisk( TInt aError, const TDiskEvent& aEvent )
     {
-    MPX_DEBUG1(_L("CMPXMediaRemovalMonitor::RunL <---"));
-    
-    // Re-subscribe to event.
-    TNotifyType notType(ENotifyDisk);
-    iFs.NotifyChange( notType, iStatus );
-    SetActive();
-    
-    // Check state
-    TDriveInfo drive;
-	User::LeaveIfError(iFs.Drive(drive, TInt(iDrive)));
-	
-	// Notify Observer
-    switch(drive.iType)
-        {
-        case EMediaNotPresent:
-            {
-            if (!iDiskRemoved)
+    MPX_DEBUG4("-->CMPXMediaRemovalMonitor::HandleNotifyDisk aError=%d event=%d drive=%d", aError, aEvent.iType, aEvent.iDrive);
+	  if ( aError == KErrNone )
+	      {
+	      if ( aEvent.iType == EDiskRemoved
+             || aEvent.iType == EDiskStatusChanged && aEvent.iInfo.iType == EMediaNotPresent )
+	          {
+	          if ( aEvent.iDrive == iDrive && !iDiskRemoved )
                 {
                 iObserver.HandleSystemEventL( EDiskRemovedEvent, iDrive );
+                iDiskRemoved = ETrue;
                 }
-            iDiskRemoved = ETrue;
-            break;
-            }
-        default:
-            {
-            if ( iDiskRemoved &&
-        		 ( drive.iMediaAtt & ( KMediaAttLockable|KMediaAttLocked|KMediaAttHasPassword ) ) != 
- 				 ( KMediaAttLockable|KMediaAttLocked|KMediaAttHasPassword ) ) 
+        
+	          }
+	      else if ( ( aEvent.iType == EDiskAdded || aEvent.iType == EDiskStatusChanged ) 
+                  && aEvent.iInfo.iType != EMediaNotPresent )
+	          {
+            if ( aEvent.iDrive == iDrive 
+            	   && iDiskRemoved 
+                 && ( aEvent.iInfo.iMediaAtt & ( KMediaAttLockable|KMediaAttLocked|KMediaAttHasPassword ) ) 
+                    != ( KMediaAttLockable|KMediaAttLocked|KMediaAttHasPassword ) )
                 {
                 iObserver.HandleSystemEventL( EDiskInsertedEvent, iDrive );
                 iDiskRemoved = EFalse;
                 }
-            break;
-            }
+                
+            if ( !( aEvent.iInfo.iDriveAtt & KDriveAttRemote ) ) 
+                {
+                TInt error = iDiskNotifyHandler->NotifyDismount( aEvent.iDrive );
+                MPX_DEBUG3("CMPXMediaRemovalMonitor::HandleNotifyDisk monitoring drive %d for dismounts, error %d", aEvent.iDrive, error);
+                }
+	          }
         }
-    
+            
+    MPX_DEBUG1("<--CMPXMediaRemovalMonitor::HandleNotifyDisk");
+    }   
 
-    MPX_DEBUG1(_L("CMPXMediaRemovalMonitor::RunL --->"));
-    }
     
 // ---------------------------------------------------------------------------
-// Cancel NotifyChange request from file system
+// Callback when disk is about to be dismounted
 // ---------------------------------------------------------------------------
 //
-void CMPXMediaRemovalMonitor::DoCancel()
+void CMPXMediaRemovalMonitor::HandleNotifyDismount( TInt aError, const TDismountEvent& aEvent )
     {
-    iFs.NotifyChangeCancel();
+    MPX_DEBUG3("-->CMPXMediaRemovalMonitor::HandleNotifyDismount aError=%d drive=%d", aError, aEvent.iDrive);
+    if (aError == KErrNone)
+        {
+        TRAP_IGNORE( iObserver.HandleSystemEventL( EDiskDismountEvent, aEvent.iDrive ) );
+        TInt error = iDiskNotifyHandler->AllowDismount( aEvent.iDrive );
+        MPX_DEBUG3("CMPXMediaRemovalMonitor::HandleNotifyDismount allowed dismount of drive %d, error %d", aEvent.iDrive, error);
+        }
+    MPX_DEBUG1("<--CMPXMediaRemovalMonitor::HandleNotifyDismount");
     }
-    
-// ----------------------------------------------------------------------------
-// Handles a leave occurring in the request completion event handler RunL()
-// Don't care if client has a User::Leave() in RunL(), keep monitoring for events
-// ----------------------------------------------------------------------------
-//
-TInt CMPXMediaRemovalMonitor::RunError(TInt aError)
-    {
-    MPX_DEBUG2("CMPXMediaRemovalMonitor::RunError(%d)", aError );
-    (void) aError;  // avoid compile warning in urel
-    
-    return KErrNone;
-    }           

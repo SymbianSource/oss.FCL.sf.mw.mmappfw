@@ -269,7 +269,7 @@ void CAbstractMediaMtpDataProviderEnumerator::InitStorageL()
 //
 void CAbstractMediaMtpDataProviderEnumerator::ScanNextL()
     {
-    while (iStorages.Count() > 0)
+    while ( iStorages.Count() > 0 )
         {
         while ( iEnumState < EEnumCount )
             {
@@ -284,14 +284,15 @@ void CAbstractMediaMtpDataProviderEnumerator::ScanNextL()
                 return;
                 }
             ++iEnumState;
-            if (iEnumState == EEnumCount)
+            if ( iEnumState == EEnumCount )
                 {
                 break;
                 }
             InitStorageL();
             }
+
         iStorages.Remove( 0 );
-        if (iStorages.Count() == 0)
+        if ( iStorages.Count() == 0 )
             {
             break;
             }
@@ -313,8 +314,6 @@ void CAbstractMediaMtpDataProviderEnumerator::ScanNextL()
 //
 void CAbstractMediaMtpDataProviderEnumerator::RunL()
     {
-    PRINT( _L( "MM MTP => CAbstractMediaMtpDataProviderEnumerator::RunL" ) );
-
     // insert all abstract medias into handle db of framework
     CMPXMedia* media = ( *iAbstractMedias )[iCurrentIndex];
     
@@ -411,21 +410,39 @@ void CAbstractMediaMtpDataProviderEnumerator::AddEntryL( const TDesC& aSuid )
     TUint32 parentHandle = iFramework.ObjectMgr().HandleL( parser.DriveAndPath() );
     PERFLOGSTOP( KObjectManagerObjectUid );
 
-    object->SetUint( CMTPObjectMetaData::EParentHandle, parentHandle );
-
-    PERFLOGSTART( KObjectManagerInsert );
-    iObjectMgr.InsertObjectL( *object );
-    PERFLOGSTOP( KObjectManagerInsert );
-
-    CleanupStack::PopAndDestroy( object );// - object
-
-    //Only remember the playlist file for clean up
-    if( iEnumState == EEnumPlaylist )
+    // MTP FW returns KMTPHandleNone for parentHandle in two situations:
+    // 1. The path doesn't exist
+    // 2. The object is under root directory
+    if ( parentHandle == KMTPHandleNone )
         {
-        iDataProvider.GetWrapperL().CreateDummyFile( aSuid );
+        if ( BaflUtils::PathExists( iFramework.Fs(), parser.DriveAndPath() ) )
+            {
+            parentHandle = KMTPHandleNoParent;
+            }
+        else
+            {
+            iDataProvider.GetWrapperL().DeleteObjectL( *object );
+            }
+        }
 
-        // remember the abstract media file for clean up
-        iDataProvider.GetWrapperL().AddDummyFileL( aSuid );
+    if ( parentHandle != KMTPHandleNone )
+        {
+        object->SetUint( CMTPObjectMetaData::EParentHandle, parentHandle );
+
+        PERFLOGSTART( KObjectManagerInsert );
+        iObjectMgr.InsertObjectL( *object );
+        PERFLOGSTOP( KObjectManagerInsert );
+
+        CleanupStack::PopAndDestroy( object );// - object
+
+        //Only remember the playlist file for clean up
+        if( iEnumState == EEnumPlaylist )
+            {
+            iDataProvider.GetWrapperL().CreateDummyFile( aSuid );
+
+            // remember the abstract media file for clean up
+            iDataProvider.GetWrapperL().AddDummyFileL( aSuid );
+            }
         }
 
     PRINT( _L( "MM MTP <= CAbstractMediaMtpDataProviderEnumerator::AddEntryL" ) );

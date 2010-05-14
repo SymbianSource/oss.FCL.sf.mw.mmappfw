@@ -18,17 +18,11 @@
 
 #include <e32base.h>
 #include <f32file.h>
-#ifdef RD_MULTIPLE_DRIVE
 #include <driveinfo.h>
-#endif //RD_MULTIPLE_DRIVE
 #include <mpxlog.h>
 #include "mpxfsformatmonitor.h"
 
-#ifdef RD_MULTIPLE_DRIVE
-    static const TInt KDriveCount = 2;
-#else
-    static const TInt KDriveCount = 1;
-#endif
+static const TInt KDriveCount = 2;
 
 // ======== MEMBER FUNCTIONS ========
 
@@ -142,6 +136,12 @@ void CMPXFsFormatMonitor::HandleBackupOperationEventL(
         }
     else  // TOperationType::EEnd or TOperationType::EAbort
         {
+        //Ignore if formatting is ongoing
+        TBool formatting = iBackupSession->IsBackupOperationRunning();
+        if ( formatting )
+        	{
+            return;
+        	}
         for(TInt i=0; i<KDriveCount; ++i)
             {
             iObserver.HandleSystemEventL(EFormatEndEvent, iBackupDrives[i]);

@@ -49,7 +49,11 @@ USERINCLUDE     ../inc
 LIBRARY         euser.lib
 LIBRARY         bafl.lib estor.lib ecom.lib stiftestinterface.lib
 LIBRARY         stiftestengine.lib 
-LIBRARY   		mpxcollectionmediator.lib mpxcollectionutility.lib mpxcollectionengine.lib mpxcollectionhelper.lib mpxcommon.lib 
+LIBRARY         mpxcollectionmediator.lib
+LIBRARY         mpxcollectionutility.lib
+LIBRARY         mpxcollectionengine.lib
+LIBRARY         mpxcollectionhelper.lib
+LIBRARY         mpxcommon.lib 
 
 LANG            SC
 

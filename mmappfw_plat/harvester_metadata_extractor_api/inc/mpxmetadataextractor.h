@@ -24,6 +24,7 @@ class CMPXCollectionPath;
 class CMetaDataUtility;
 class CMPXFileInfoUtility;
 class CMPXDrmMediaUtility;
+class MMPXMetadataExtractorObserver;
 #include <thumbnailmanager.h>
 #include <thumbnailmanagerobserver.h>
 
@@ -33,7 +34,7 @@ class CMPXDrmMediaUtility;
  *  @lib mpxfilehandler.lib
  */
 class CMPXMetadataExtractor : public CBase,
-                            public MThumbnailManagerObserver
+                              public MThumbnailManagerObserver
     {
     
 public:
@@ -72,6 +73,27 @@ public: // New Functions
      */
     IMPORT_C TInt ExtractAlbumArtL( CMPXMedia* aMedia );
     
+    /*
+    * Create a media object for a file. This is a asynchronous function.
+    * This function will leave with KErrAbort if still processing last request.
+    * Callback function is HandleCreateMediaComplete()
+    * @since 9.2
+    * @param aFile a fullpath to the file.
+    * @param aObs Metadata Extractor Observer
+    * @param aMetadataOnly extract metadata only or not. Default EFalse
+    */
+    IMPORT_C void CreateMediaAsyncL( const TDesC& aFile,
+                                     MMPXMetadataExtractorObserver* aObs,
+                                     TBool aMetadataOnly = EFalse );
+
+    /**
+     * Cancel request.  This will empty the task array and stop the wait loop. This
+     *                  will cause the CreateMediaL() to finish more quickly. Also,
+     *                  all outstanding thumbnail requests are cancelled.
+     * @since 9.2
+     */
+    IMPORT_C void CancelRequest();
+    
 private: // New Functions:
     
     /**
@@ -84,26 +106,14 @@ private: // New Functions:
     /**
     * Function to go through the metadata entries.
     * @since 3.2.3
-    * @param aProp Media Properties to update.
-    * @param aFile File name
     */
-    void SetMediaPropertiesL( CMPXMedia& aProp, 
-                              const TDesC& aFile );
+    void SetMediaPropertiesL();
     
     /**
     * Sets other media properties not found from metadata util.
     * @since 3.2.3
-    * @param aProp Media Properties to update.
-    * @param aFile file name.
-    * @param aMetadataOnly extract metadata only or not Default EFalse.
-    * @param aFileHandle file handle to the file. 
-    * @param aFileErr file handle error if file could not be opened
     */
-    void SetExtMediaPropertiesL( CMPXMedia& aProp, 
-                                 const TDesC& aFile,
-                                 TBool aMetadataOnly,
-                                 RFile& aFileHandle,
-                                 TInt aFileErr  );   
+    void SetExtMediaPropertiesL();   
                                 
     /**
     * Checks to see if a container type is supported.
@@ -151,22 +161,12 @@ private: // New Functions:
     static TInt TimeoutTimerCallback(TAny* aPtr);
 
     /**
-     * Get album art metadata.
-     * @since 5.0
-     * @param aMedia
-     * @return error ID 
-     */
-    TInt GetMediaAlbumArtL( CMPXMedia& aMedia,
-                            const TDesC& aFile );
-    
-    /**
      * Add album art to media object.
      * @since 5.0
      * @param aMedia
      */
     void AddMediaAlbumArtL( CMPXMedia& aMedia,
-                            const TDesC& aFile,
-                            TDesC8& aValue);
+                            const TDesC& aFile );
     
     /**
      * Check if can send request to TNM or not.
@@ -174,6 +174,62 @@ private: // New Functions:
      * 
      */                     
     void CheckBeforeSendRequest();
+    
+    /**
+     * Cancel all outstanding thumbnail requests
+     * @since 9.2
+     * 
+     */                     
+    void CancelAllThumbnailRequests();
+    
+    /**
+     * Create media and set default data.
+     * @since 9.2
+     * 
+     */                     
+    void DoCreateMediaL();
+    
+    /**
+     * Execute task at index 0.
+     * @since 9.2
+     * 
+     */                     
+    void ExecuteTaskL();
+    
+    /**
+     * Cancel task timer. 
+     */
+    void CancelTaskTimer();
+    
+    /**
+    * Callback when the task timer expires.
+    */
+    static TInt TaskTimerCallback(TAny* aPtr);
+
+    /**
+     * Populate task array
+     * @since 9.2
+     */
+    void AddTasksL();
+    
+    /**
+     * Opens the file
+     * @since 9.2
+     * @return system error
+     */
+    TInt OpenFile();
+    
+    /**
+     * Handle task timer expired
+     * @since 9.2 
+     */
+    void HandleTaskTimerExpired();
+    
+    /**
+     * Clean up
+     * @since 9.2 
+     */
+    void CleanUp();
     
 private:
 
@@ -190,6 +246,15 @@ private:
     void ConstructL();
 
 private: // data
+    enum EMetadataExtractorTasks
+        {
+        ETaskCreateMedia,
+        ETaskAddMetadata,
+        ETaskAddExtMetadata,
+        ETaskAddAlbumArt,
+        ETaskCheckBeforeSend
+        };
+    
     CMetaDataUtility*    iMetadataUtility;  // extract metadata from file
     CMPXDrmMediaUtility* iDrmMediaUtility;  // extra drm data from file
     CMPXFileInfoUtility* iFileInfoUtil;     // extract duration/bitrate etc from file
@@ -200,8 +265,16 @@ private: // data
     CThumbnailManager*    iTNManager;
     CActiveSchedulerWait* iTNSyncWait;  // wait loop use to sync thumbnail
     CPeriodic*            iTimer; // backup timer to stop wait loop
-    TInt                  iOutstandingThumbnailRequest;
-    TInt                  iTNMBlockCount;
+    RArray<TThumbnailRequestId>     iArrayTNRequestId;
+    RArray<EMetadataExtractorTasks> iArrayTasks;
+    TBool                           iCancelled;
+    CPeriodic*                      iTaskTimer; // timer for task execution
+    MMPXMetadataExtractorObserver*  iObs; // metadata extractor obserer
+    TFileName                       iFileName;
+    RFile                           iFile;
+    CMPXMedia*                      iMedia;  // ownership transferred
+    TBool                           iMetadataOnly;
+    TInt                            iFileOpenError;
     };
 
 #endif // CMPXMETADATAEXTRACTOR_H

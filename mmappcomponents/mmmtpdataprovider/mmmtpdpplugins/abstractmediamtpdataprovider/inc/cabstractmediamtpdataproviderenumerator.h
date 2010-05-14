@@ -99,10 +99,6 @@ private:
         TInt aError = KErrNone );
 
     void InitStorageL( );
-
-    /**
-    * Scan next storage
-    */
     void ScanNextL();
 
     /**

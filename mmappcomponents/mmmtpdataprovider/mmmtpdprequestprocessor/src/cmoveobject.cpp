@@ -22,6 +22,7 @@
 #include <mtp/cmtptypearray.h>
 #include <mtp/cmtptypestring.h>
 #include <mtp/cmtptypeobjectproplist.h>
+#include <mtp/mmtpreferencemgr.h>
 
 #include "cmoveobject.h"
 #include "mmmtpdplogger.h"
@@ -141,7 +142,7 @@ void CMoveObject::MoveObjectL()
     newObjectName.CleanupClosePushL(); // + newObjectName
     newObjectName = *iDest;
 
-    const TDesC& suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
+    TPtrC suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
     TParsePtrC fileNameParser( suid );
     if ( ( newObjectName.Length() + fileNameParser.NameAndExt().Length() )
         <= newObjectName.MaxLength() )
@@ -419,7 +420,7 @@ void CMoveObject::SetPreviousPropertiesL()
         TUint32 handle = element.Uint32L( CMTPTypeObjectPropListElement::EObjectHandle );
         TUint16 propertyCode = element.Uint16L( CMTPTypeObjectPropListElement::EPropertyCode );
         TUint16 dataType = element.Uint16L( CMTPTypeObjectPropListElement::EDatatype );
-        PRINT3( _L( "MM MTP <> CCopyObject::SetPreviousPropertiesL = 0x%x, propertyCode = 0x%x, dataType = 0x%x" ),
+        PRINT3( _L( "MM MTP <> CMoveObject::SetPreviousPropertiesL = 0x%x, propertyCode = 0x%x, dataType = 0x%x" ),
             handle,
             propertyCode,
             dataType );
@@ -492,32 +493,45 @@ void CMoveObject::SetPropertiesL( const TDesC& aNewFileName )
         {
         // This is used to keep the same behavior in mass storage and device file manager.
         PRINT( _L( "MM MTP <> CMoveObject::SetPropertiesL Playlist file do not update the MPX DB" ) );
+        iDpConfig.GetWrapperL().DeleteDummyFile( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
+        iDpConfig.GetWrapperL().AddDummyFileL( aNewFileName );
         }
-    else
-        // TODO: Need rollback mechanism for consistant with image dp in fw.
-        // Not sure if it should be trap if something wrong with MPX db.
+
+    if (iSameStorage)
         {
-        if ( iSameStorage )
-            {
-            iDpConfig.GetWrapperL().RenameObjectL( *iObjectInfo, aNewFileName );
-            }
-        else    // if the two object in different storage, we should delete the old one and insert new one
-            {
-            iDpConfig.GetWrapperL().DeleteObjectL( *iObjectInfo );
-            iDpConfig.GetWrapperL().AddObjectL( *iObjectInfo );
-
-            // Only leave when getting proplist element from data received by fw.       
-            // It should not happen after ReceiveDataL in which construction of proplist already succeed.
-            SetPreviousPropertiesL();
-            }
+        iDpConfig.GetWrapperL().RenameObjectL( *iObjectInfo, aNewFileName );
+        iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, aNewFileName );
+        iObjectInfo->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
+        iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
+        iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
         }
+    else // if the two object in different storage, we should delete the old one and insert new one
+        {
+        iDpConfig.GetWrapperL().DeleteObjectL( *iObjectInfo );
 
-    iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, aNewFileName );
-    iObjectInfo->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
-    iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
-    iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
+        HBufC* oldFileName = iObjectInfo->DesC(CMTPObjectMetaData::ESuid).AllocLC(); // + oldFileName
+        iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, aNewFileName );
+        iObjectInfo->SetUint( CMTPObjectMetaData::EStorageId, iStorageId );
+        iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
+        iFramework.ObjectMgr().ModifyObjectL(*iObjectInfo);
 
-    // It's not necessary to change references of playlists since Reference DB is used PUID
+        iDpConfig.GetWrapperL().SetStorageRootL( aNewFileName );
+        iDpConfig.GetWrapperL().AddObjectL( *iObjectInfo );
+
+        if ( formatCode == EMTPFormatCodeAbstractAudioVideoPlaylist
+            || formatCode == EMTPFormatCodeAbstractAudioAlbum )
+            {
+            MMTPReferenceMgr& referenceMgr = iFramework.ReferenceMgr();
+            CDesCArray* references = referenceMgr.ReferencesLC( aNewFileName ); // + references
+            iDpConfig.GetWrapperL().SetReferenceL( *iObjectInfo, *references );
+            CleanupStack::PopAndDestroy( references ); // - references
+            }
+        CleanupStack::PopAndDestroy( oldFileName );     // - oldFileName
+
+        // Only leave when getting proplist element from data received by fw.
+        // It should not happen after ReceiveDataL in which construction of proplist already succeed.
+        SetPreviousPropertiesL();
+        }
 
     PRINT( _L( "MM MTP <= CMoveObject::SetPropertiesL" ) );
     }

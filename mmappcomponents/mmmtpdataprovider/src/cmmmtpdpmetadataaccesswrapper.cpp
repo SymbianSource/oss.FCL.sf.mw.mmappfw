@@ -46,7 +46,8 @@ CMmMtpDpMetadataAccessWrapper* CMmMtpDpMetadataAccessWrapper::NewL( MMTPDataProv
 
 CMmMtpDpMetadataAccessWrapper::CMmMtpDpMetadataAccessWrapper( MMTPDataProviderFramework& aFramework ) :
     iFramework( aFramework ),
-    iFs( aFramework.Fs() )
+    iFs( aFramework.Fs() ),
+    iOpenCount( 0 )
     {
     // Do nothing
     }
@@ -259,7 +260,7 @@ EXPORT_C void CMmMtpDpMetadataAccessWrapper::RenameObjectL( const CMTPObjectMeta
 // Deletes metadata information associated with the object
 // ---------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataAccessWrapper::DeleteObjectL( const CMTPObjectMetaData& aObject )
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::DeleteObjectL( const CMTPObjectMetaData& aObject )
     {
     TPtrC fileName( aObject.DesC( CMTPObjectMetaData::ESuid ) );
     PRINT1( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::DeleteObjectL name = %S" ), &fileName );
@@ -350,7 +351,7 @@ void CMmMtpDpMetadataAccessWrapper::GetImageObjPropL( const CMTPObjectMetaData& 
 //
 void CMmMtpDpMetadataAccessWrapper::OpenSessionL()
     {
-    iOpenSession = ETrue;
+    iOpenCount++;
     }
 
 // -----------------------------------------------------------------------------
@@ -360,15 +361,22 @@ void CMmMtpDpMetadataAccessWrapper::OpenSessionL()
 //
 void CMmMtpDpMetadataAccessWrapper::CloseSessionL()
     {
-    if ( iOpenSession )
+    PRINT1( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::CloseSessionL count = %d" ), iOpenCount );
+
+    if ( iOpenCount >= 1 )
         {
-        PRINT( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::CloseSessionL close" ) );
-        iMmMtpDpMetadataVideoAccess->CloseSessionL();
-        iOpenSession = EFalse;
+        iOpenCount--;
+
+        if ( iOpenCount == 0 )
+            {
+            PRINT( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::CloseSessionL close" ) );
+            iMmMtpDpMetadataMpxAccess->CloseSession();
+            iMmMtpDpMetadataVideoAccess->CloseSessionL();
+            }
         }
     else
         {
-        PRINT( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::CloseSessionL alreay close" ) );
+        PRINT( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::CloseSessionL already close" ) );
         }
     }
 
@@ -390,13 +398,13 @@ TMPXGeneralCategory CMmMtpDpMetadataAccessWrapper::Category( const CMTPObjectMet
             TUint aSubFormatCode = aObject.Uint( CMTPObjectMetaData::EFormatSubCode );
             if ( aSubFormatCode == EMTPSubFormatCodeUnknown )
                 {
-                category = ContainerCategory( aObject.DesC( CMTPObjectMetaData::ESuid ) );
+                TRAP_IGNORE( category = ContainerCategoryL( aObject.DesC( CMTPObjectMetaData::ESuid ) ) );
                 if ( category == EMPXSong )
                     aSubFormatCode = EMTPSubFormatCodeAudio;
                 else if ( category == EMPXVideo )
                     aSubFormatCode = EMTPSubFormatCodeVideo;
                 else
-                    aSubFormatCode = EMTPSubFormatCodeUndefine;
+                    aSubFormatCode = EMTPSubFormatCodeUndefined;
                 const_cast<CMTPObjectMetaData&>(aObject).SetUint( CMTPObjectMetaData::EFormatSubCode, aSubFormatCode );
                 // If object doesn't exist, do nothing
                 TRAP_IGNORE( iFramework.ObjectMgr().ModifyObjectL( aObject ) );
@@ -405,7 +413,7 @@ TMPXGeneralCategory CMmMtpDpMetadataAccessWrapper::Category( const CMTPObjectMet
                 category = EMPXSong;
             else if ( aSubFormatCode == EMTPSubFormatCodeVideo )
                 category = EMPXVideo;
-            else if( aSubFormatCode == EMTPSubFormatCodeUndefine )
+            else if( aSubFormatCode == EMTPSubFormatCodeUndefined )
                 category = EMPXOther;
             }
             break;
@@ -445,9 +453,9 @@ TMPXGeneralCategory CMmMtpDpMetadataAccessWrapper::Category( const CMTPObjectMet
     return category;
     }
 
-TMPXGeneralCategory CMmMtpDpMetadataAccessWrapper::ContainerCategory( const TDesC& aFullFileName )
+TMPXGeneralCategory CMmMtpDpMetadataAccessWrapper::ContainerCategoryL( const TDesC& aFullFileName )
     {
-    PRINT1( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::ContainerCategory aFullFileName = %S" ), &aFullFileName );
+    PRINT1( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::ContainerCategoryL aFullFileName = %S" ), &aFullFileName );
 
     TMPXGeneralCategory category = EMPXNoCategory;
     TParsePtrC pathParser( aFullFileName );
@@ -455,17 +463,27 @@ TMPXGeneralCategory CMmMtpDpMetadataAccessWrapper::ContainerCategory( const TDes
 
     if ( ext.Length() <= 0 )
         category = EMPXOther;
-
-    if ( ext.CompareF( KTxtExtensionMP4 ) == 0
-        || ext.CompareF( KTxtExtension3GP ) == 0
-        || ext.CompareF( KTxtExtension3G2 ) == 0
-        || ext.CompareF( KTxtExtensionODF ) == 0
-        || ext.CompareF( KTxtExtensionASF ) == 0 )
+    else if ( ext.CompareF( KTxtExtensionO4A ) == 0
+        || ext.CompareF( KTxtExtensionM4A ) == 0 )
+        category = EMPXSong;
+    else if ( ext.CompareF( KTxtExtensionO4V ) == 0 )
+        category = EMPXVideo;
+    else
         {
-        HBufC8* mimetype = MmMtpDpUtility::ContainerMimeType( aFullFileName );
+        HBufC8* mimetype = NULL;
+
+        if ( ext.CompareF( KTxtExtensionMP4 ) == 0
+            || ext.CompareF( KTxtExtension3GP ) == 0
+            || ext.CompareF( KTxtExtension3G2 ) == 0 )
+            mimetype = MmMtpDpUtility::Mp4MimeTypeL( aFullFileName );
+        else if ( ext.CompareF( KTxtExtensionODF ) == 0 )
+            mimetype = MmMtpDpUtility::OdfMimeTypeL( aFullFileName );
+        else if ( ext.CompareF( KTxtExtensionASF ) == 0 )
+            mimetype = MmMtpDpUtility::AsfMimeTypeL( aFullFileName );
         if ( mimetype != NULL )
             {
-            TMmMtpSubFormatCode subFormatCode = MmMtpDpUtility::SubFormatCodeFromMime( *mimetype );
+            TMmMtpSubFormatCode subFormatCode =
+                MmMtpDpUtility::SubFormatCodeFromMime( *mimetype );
 
             if ( subFormatCode == EMTPSubFormatCodeVideo )
                 category = EMPXVideo;
@@ -475,12 +493,8 @@ TMPXGeneralCategory CMmMtpDpMetadataAccessWrapper::ContainerCategory( const TDes
                 category = EMPXOther;
             }
         }
-    else if ( ext.CompareF( KTxtExtensionO4V ) == 0 )
-        category = EMPXVideo;
-    else
-        category = EMPXOther;
 
-    PRINT1( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::ContainerCategory, category = %d" ), category );
+    PRINT1( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::ContainerCategoryL, category = %d" ), category );
     return category;
     }
 
@@ -518,7 +532,7 @@ EXPORT_C HBufC* CMmMtpDpMetadataAccessWrapper::GetAbstractMediaNameL( CMPXMedia*
 // Add object (music, video, playlist and abstract media) info to DB
 // -----------------------------------------------------------------------------
 //
-void CMmMtpDpMetadataAccessWrapper::AddObjectL( const CMTPObjectMetaData& aObject )
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::AddObjectL( const CMTPObjectMetaData& aObject )
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::AddObjectL" ) );
     TMPXGeneralCategory category = Category( aObject );
@@ -531,7 +545,7 @@ void CMmMtpDpMetadataAccessWrapper::AddObjectL( const CMTPObjectMetaData& aObjec
         }
     else if ( category == EMPXPlaylist || category == EMPXAbstractAlbum )
         {
-        PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::AddObjectL AddPlaylist" ) );
+        PRINT( _L( "MM MTP => CMmMtpDpMetadataAccessWrapper::AddObjectL AddPlaylist/AbstractAlbum" ) );
         iMmMtpDpMetadataMpxAccess->AddAbstractMediaL( fullFileName,
             category );
         }

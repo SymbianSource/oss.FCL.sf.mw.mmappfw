@@ -10,6 +10,7 @@
 			<module name="mmappfw">
 				<unit unitID="mmappfw" mrp="" bldFile="&layer_real_source_path;/group" name="mmappfw" />
 				<unit unitID="mpxviewframeworkqt" name="mpxviewframeworkqt" bldFile="&layer_real_source_path;/mpx/mpxviewframeworkqt" proFile="mpxviewframeworkqt.pro" qmakeArgs="-r -config rom" mrp=""/>
+				<unit unitID="qtms" name="qtms" bldFile="&layer_real_source_path;/qtms" proFile="qtmsapi.pro" qmakeArgs="-r -config rom" mrp=""/>
 			</module>
     </layer>   
     
@@ -29,6 +30,7 @@
 			<module name="mmappfw_group">
 				<unit unitID="mmappfw_group" mrp="" bldFile="&layer_real_source_path;/group" name="mmappfw_group" />
         <unit unitID="mpxviewframeworkqt_group" name="mpxviewframeworkqt_group" bldFile="&layer_real_source_path;/mpx/mpxviewframeworkqt" proFile="mpxviewframeworkqt.pro" qmakeArgs="-r -config rom" mrp=""/>
+        <unit unitID="qtms_group" name="qtms_group" bldFile="&layer_real_source_path;/qtms" proFile="qtmsapi.pro" qmakeArgs="-r -config rom" mrp=""/>
 			</module>
     </layer>
 

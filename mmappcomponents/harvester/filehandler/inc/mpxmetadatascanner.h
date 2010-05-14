@@ -20,6 +20,7 @@
 #define CMPXMETADATASCANNER_H
 
 #include <e32base.h>
+#include <mpxmetadataextractorobserver.h>
 
 class CMPXMedia;
 class CMPXMediaArray;
@@ -33,7 +34,8 @@ enum TExtractType
     ENewFiles = 0,
     EModFiles = 1,
     EMaxFile  = 2
-    };   
+    };
+
 /**
  *  CMPXMetadataScanner
  *
@@ -42,7 +44,8 @@ enum TExtractType
  *  @lib mpxfilehandler.lib
  *  @since S60 3.0
  */
-NONSHARABLE_CLASS( CMPXMetadataScanner ): public CActive
+NONSHARABLE_CLASS( CMPXMetadataScanner ): public CActive,
+                                          public MMPXMetadataExtractorObserver
     {
 public:
 
@@ -128,15 +131,43 @@ protected: // From base class
     * From CActive
     */
     void RunL();
+    
+    /**
+     * From MMPXMetadataExtractorObserver
+     */
+    void HandleCreateMediaComplete( CMPXMedia* aMedia, TInt aError );
 
 private: // New Functions
     
     /**
     * Extract metadata from a few files
-    * @return ETrue if there are no more files to extract
-    *         EFalse otherwise
     */
-    TBool DoExtractL(); 
+    void DoExtractL();
+    
+    /**
+     * Get source array
+     */
+    RPointerArray<HBufC>* GetSource();
+    
+    /**
+     * Is metadata scanner done
+     */
+    TBool IsDone();
+    
+    /**
+     * Run again
+     */
+    void RunAgain();
+    
+    /**
+     * Add metadata to collection
+     */
+    void AddToCollectionL();
+    
+    /**
+     * Complete metadata scanner
+     */
+    void MetadataScannerComplete( TInt aError );
         
 private:
 
@@ -160,8 +191,7 @@ private: // data
     RPointerArray<HBufC>  iNewFiles;
     RPointerArray<HBufC>  iModifiedFiles;
  
-    CMPXMediaArray* iNewFileProps;
-    CMPXMediaArray* iModifiedFileProps;
+    CMPXMediaArray* iTargetProps;
     
     TBool iExtracting;          // Are we extracting
     TInt  iExtractType; // What are we extracting
@@ -170,7 +200,7 @@ private: // data
     CMPXMetadataExtractor* iExtractor;  // Metadata Utilities wrapper
     
     MMPXMetadataScanObserver& iObserver;
-    MMPXFileScanStateObserver& iStateObserver;   
+    MMPXFileScanStateObserver& iStateObserver;
     };
 
 #endif // CMPXMETADATASCANNER_H

@@ -25,3 +25,4 @@ DEFAULT
 PRJ_EXPORTS          
           
 ../inc/mpxmetadataextractor.h                    MW_LAYER_PLATFORM_EXPORT_PATH(mpxmetadataextractor.h)                            
+../inc/mpxmetadataextractorobserver.h            MW_LAYER_PLATFORM_EXPORT_PATH(mpxmetadataextractorobserver.h)                            

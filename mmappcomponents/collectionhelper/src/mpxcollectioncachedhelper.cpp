@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extended collection helper with an internal caching array
-*  Version     : %version: da1mmcf#27.1.12.3.1 % 
+*  Version     : %version: da1mmcf#27.1.12.3.2 % 
 *
 */
 

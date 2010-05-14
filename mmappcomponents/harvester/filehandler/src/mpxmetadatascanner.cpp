@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Active object to extract metadata 
-*  Version     : %version: da1mmcf#16.2.3.1.5 % 
+*  Version     : %version: da1mmcf#16.2.3.1.5.2.1 % 
 *
 */
 
@@ -44,8 +44,9 @@ const TInt KLoopCount = 10;
 CMPXMetadataScanner::CMPXMetadataScanner( MMPXMetadataScanObserver& aObs,
                                           MMPXFileScanStateObserver& aStateObs )
                                       : CActive( EPriorityNull ),
+                                        iExtractType( EMaxFile ),
                                         iObserver( aObs ),
-                                        iStateObserver( aStateObs ) 
+                                        iStateObserver( aStateObs )
     {
     CActiveScheduler::Add( this );
     }
@@ -60,8 +61,7 @@ void CMPXMetadataScanner::ConstructL( RFs& aFs,
                                       RPointerArray<CMPXCollectionType>& aTypesAry )
     {
     iExtractor = CMPXMetadataExtractor::NewL( aFs, aAppArc, aTypesAry );
-    iNewFileProps = CMPXMediaArray::NewL();
-    iModifiedFileProps = CMPXMediaArray::NewL();
+    iTargetProps = CMPXMediaArray::NewL();
     }
 
 
@@ -114,8 +114,7 @@ CMPXMetadataScanner::~CMPXMetadataScanner()
     iNewFiles.Close();
     iModifiedFiles.Close();
     
-    delete iNewFileProps;
-    delete iModifiedFileProps;
+    delete iTargetProps;
    
     delete iExtractor;
     }
@@ -128,14 +127,7 @@ void CMPXMetadataScanner::Reset()
     {
     iNewFiles.ResetAndDestroy();
     iModifiedFiles.ResetAndDestroy();
-    if(iNewFileProps)
-        {
-    iNewFileProps->Reset();
-        }
-    if(iModifiedFileProps)
-        {
-    iModifiedFileProps->Reset();
-        }
+    iTargetProps->Reset();
     }
 
 // ---------------------------------------------------------------------------
@@ -144,20 +136,20 @@ void CMPXMetadataScanner::Reset()
 //    
 void CMPXMetadataScanner::Start()
     {
-    MPX_DEBUG1("MPXMetadataScanner::StartL <---");
+    MPX_FUNC("MPXMetadataScanner::StartL()");
     if( !IsActive() )
         {
         // Setup
         iAryPos = 0;
         iExtractType = ENewFiles;
         iExtracting = ETrue;        
-        
+        iTargetProps->Reset();
+                
         // Set Active
         iStatus = KRequestPending;
         SetActive();
         TRequestStatus* status = &iStatus;
         User::RequestComplete( status, KErrNone );    
-        MPX_DEBUG1("MPXMetadataScanner::StartL --->");
         }
     }
 // ---------------------------------------------------------------------------
@@ -166,9 +158,8 @@ void CMPXMetadataScanner::Start()
 //
 void CMPXMetadataScanner::Stop()
     {
-    MPX_DEBUG1("MPXMetadataScanner::Stop <---");
+    MPX_FUNC("MPXMetadataScanner::Stop()");
     DoCancel();
-    MPX_DEBUG1("MPXMetadataScanner::Stop --->");
     }
 
 // ---------------------------------------------------------------------------
@@ -177,6 +168,7 @@ void CMPXMetadataScanner::Stop()
 //  
 void CMPXMetadataScanner::AddNewFileToScanL( const TDesC& aFile )
     {
+    MPX_FUNC("MPXMetadataScanner::AddNewFileToScanL()");
     HBufC* file = aFile.AllocLC();
     iNewFiles.AppendL( file );
     CleanupStack::Pop( file );
@@ -188,6 +180,7 @@ void CMPXMetadataScanner::AddNewFileToScanL( const TDesC& aFile )
 //      
 void CMPXMetadataScanner::AddModifiedFileToScanL( const TDesC& aFile )
     {
+    MPX_FUNC("MPXMetadataScanner::AddModifiedFileToScanL()");
     HBufC* file = aFile.AllocLC();
     iModifiedFiles.AppendL( file );
     CleanupStack::Pop( file );
@@ -199,6 +192,7 @@ void CMPXMetadataScanner::AddModifiedFileToScanL( const TDesC& aFile )
 //
 CMPXMedia* CMPXMetadataScanner::ExtractFileL( const TDesC& aFile )
     {
+    MPX_FUNC("MPXMetadataScanner::ExtractFileL()");
     CMPXMedia* media;
     iExtractor->CreateMediaL( aFile, media );
     return media;
@@ -210,10 +204,12 @@ CMPXMedia* CMPXMetadataScanner::ExtractFileL( const TDesC& aFile )
 //   
 void CMPXMetadataScanner::DoCancel()
     {
+    MPX_FUNC("MPXMetadataScanner::DoCancel()");
     if( iExtracting )
         {
-        // Callback to observer 
+        iExtractor->CancelRequest();
         Reset();
+        // Callback to observer
         TRAP_IGNORE( iStateObserver.HandleScanStateCompleteL( MMPXFileScanStateObserver::EScanMetadata,
                                                               KErrCancel ) );
         iExtracting = EFalse;
@@ -226,29 +222,13 @@ void CMPXMetadataScanner::DoCancel()
 //   
 void CMPXMetadataScanner::RunL()
     {
+    MPX_FUNC("CMPXMetadataScanner::RunL()");
     if ( iExtracting )
         {
-        TBool done(EFalse);
-        TRAPD( err, done = DoExtractL() );
-        if ( !iExtracting )
+        TRAPD( err, DoExtractL() );
+        if ( err )
             {
-            // If DoCancel() was called during DoExtractL(), do nothing.
-            MPX_DEBUG1("CMPXMetadataScanner::RunL - Cancel during RunL");
-            }
-        else if( KErrNone != err || done )
-            {
-            // Callback to observer 
-            TRAP_IGNORE( iStateObserver.HandleScanStateCompleteL( MMPXFileScanStateObserver::EScanMetadata,
-                                                              err ) );
-            iExtracting = EFalse;
-            }
-        else
-            {
-            MPX_DEBUG1("CMPXMetadataScanner::RunL -- Run again");
-            iStatus = KRequestPending;
-            SetActive();
-            TRequestStatus* status = &iStatus;
-            User::RequestComplete( status, KErrNone );    
+            MetadataScannerComplete( err );
             }
         }
     }
@@ -257,98 +237,185 @@ void CMPXMetadataScanner::RunL()
 // Extract metadata
 // ---------------------------------------------------------------------------
 //   
-TBool CMPXMetadataScanner::DoExtractL()
+void CMPXMetadataScanner::DoExtractL()
     {
-    MPX_DEBUG1("CMPXMetadataScanner::DoExtractL <---");
-    TBool done(EFalse);
-    TExtractType curType = (TExtractType) iExtractType;
+    MPX_FUNC("CMPXMetadataScanner::DoExtractL()");
     
-    // Pointer re-direction to generalize extraction
-    RPointerArray<HBufC>* source;
-    CMPXMediaArray* mptarget;
+    RPointerArray<HBufC>* source = GetSource();
+    if ( source->Count() )
+        {
+        // Call asynchronous CreateMedia to get metadata.
+        iExtractor->CreateMediaAsyncL( *(*source)[iAryPos], this );
+        }
+    else
+        {
+        // Source array is empty, go to next array.
+        MPX_DEBUG2("CMPXMetadataScanner::DoExtractL Source array is empty ExtractType = %d.", iExtractType);
+        iAryPos = 0;
+        iExtractType++;
+        RunAgain();
+        }
+    }
+
+// ---------------------------------------------------------------------------
+// Callback for CreateMediaAsyncL
+// ---------------------------------------------------------------------------
+//   
+void CMPXMetadataScanner::HandleCreateMediaComplete( CMPXMedia* aMedia, TInt aError )
+    {
+    MPX_FUNC("CMPXMetadataScanner::HandleCreateMediaComplete()");
+    MPX_DEBUG2("CMPXMetadataScanner::HandleCreateMediaComplete error = %d", aError);
+    TInt err = KErrNone;
+    
+    // Scanning cancelled
+    if ( !iExtracting )
+        {
+        delete aMedia;
+        return;
+        }
+    
+    // Add media to target array.
+    if ( ( aError == KErrNone ) && 
+         ( aMedia != NULL ) )
+        {
+        TRAP( err, iTargetProps->AppendL( aMedia ) );
+        if ( err )
+            {
+            delete aMedia;
+            }
+        }
+    
+    iAryPos++;
+    if( iAryPos >= GetSource()->Count() )
+        {
+        // Finished with this array, go to the next array.
+        iAryPos = 0;
+        TRAP( err, AddToCollectionL() );
+        if ( err )
+            {
+            MetadataScannerComplete( err );
+            }
+        iExtractType++;
+        }
+    else
+        {
+        // Batch update collection DBs.
+        if ( iTargetProps->Count() >= KLoopCount )
+            {
+            TRAP( err, AddToCollectionL() );
+            if ( err )
+                {
+                MetadataScannerComplete( err );
+                }
+            }
+        }
+    
+    RunAgain();
+    }    
+
+// ---------------------------------------------------------------------------
+// Get source array
+// ---------------------------------------------------------------------------
+//   
+RPointerArray<HBufC>* CMPXMetadataScanner::GetSource()
+    {
+    MPX_FUNC("CMPXMetadataScanner::GetSource()");
+    TExtractType curType = (TExtractType) iExtractType;
+
     if( curType == ENewFiles )
         {
-        source = &iNewFiles;
-        mptarget = iNewFileProps;
+        return &iNewFiles;
         }
     else if( curType == EModFiles )
         {
-        source = &iModifiedFiles;
-        mptarget = iModifiedFileProps;
+        return &iModifiedFiles;
         }
-    else // All done!
+    else
+        return NULL;
+    }
+
+// ---------------------------------------------------------------------------
+// Is metadata scanner done
+// ---------------------------------------------------------------------------
+//   
+TBool CMPXMetadataScanner::IsDone()
+    {
+    MPX_FUNC("CMPXMetadataScanner::IsDone()");
+    TExtractType curType = (TExtractType) iExtractType;
+
+    TBool done = EFalse;
+    if ( curType >= EMaxFile )
         {
-        return ETrue;    
+        done = ETrue;
         }
+    return done;
+    }
+
+// ---------------------------------------------------------------------------
+// Run Active Object again
+// ---------------------------------------------------------------------------
+//   
+void CMPXMetadataScanner::RunAgain()
+    {
+    MPX_FUNC("CMPXMetadataScanner::RunAgain()");
+    if ( IsDone() )
+        {
+        MetadataScannerComplete( KErrNone );
+        }
+    else
+        {
+        MPX_DEBUG1("CMPXMetadataScanner::RunAgain -- Run again");
+        iStatus = KRequestPending;
+        SetActive();
+        TRequestStatus* status = &iStatus;
+        User::RequestComplete( status, KErrNone );    
+        }
+    }
+
+// ---------------------------------------------------------------------------
+// Add metadata to collection
+// ---------------------------------------------------------------------------
+//   
+void CMPXMetadataScanner::AddToCollectionL()
+    {
+    MPX_FUNC("CMPXMetadataScanner::AddToCollectionL()");
+    TExtractType curType = (TExtractType) iExtractType;
     
-    // Process at most KLoopCount number of files 
-    //
-    mptarget->Reset();
-    if( source->Count() != 0 )
-        {
-        for( TInt i=0; i<KLoopCount; ++i )
-            {
-            CMPXMedia* media(NULL);
-            
-            // TRAP to keep scanning if 1 file fails 
-            TRAPD( err, iExtractor->CreateMediaL( *(*source)[iAryPos], media ) );
-            if ( !iExtracting )
-                {
-                // In case DoCancel() was called while processing iExtractor->CreateMediaL
-                MPX_DEBUG1("CMPXMetadataScanner::DoExtractL - Cancel during CreateMediaL");
-                delete media;
-                return ETrue;
-                }
-            
-            if( err == KErrNone )
-                {
-                CleanupStack::PushL( media );
-                mptarget->AppendL( media );
-                CleanupStack::Pop( media );
-                }
-            
-            iAryPos++;
-            if( iAryPos == source->Count() )
-                {
-                iAryPos = 0;
-                iExtractType++;
-                break;
-                }
-            }    
-        }
-    else // No item in the array
-        {
-        iAryPos = 0;
-        iExtractType++;    
-        }
-    
-    // After extraction, get observer to add files to the collection
-    //
     switch( curType )
         {
         case ENewFiles:
             {
-            if( iNewFileProps->Count() )
+            if( iTargetProps->Count() )
                 {
-                iObserver.AddFilesToCollectionL( *iNewFileProps );
+                iObserver.AddFilesToCollectionL( *iTargetProps );
                 }
             break;
             }
         case EModFiles:
             {
-            if( iModifiedFileProps->Count() )
+            if( iTargetProps->Count() )
                 {
-                iObserver.UpdatesFilesInCollectionL( *iModifiedFileProps );
+                iObserver.UpdatesFilesInCollectionL( *iTargetProps );
                 }
             break;
             }
-        case EMaxFile:  // All done.
-            done = ETrue;
-            break;
         default:
             ASSERT(0); 
         }
-        
-    MPX_DEBUG1("CMPXMetadataScanner::DoExtractL --->");    
-    return done; 
+    iTargetProps->Reset();
+    }
+
+// ---------------------------------------------------------------------------
+// Complete metadata scanner
+// ---------------------------------------------------------------------------
+//   
+void CMPXMetadataScanner::MetadataScannerComplete( TInt aError )
+    {
+    MPX_FUNC("CMPXMetadataScanner::MetadataScannerCompleteL()");
+    MPX_DEBUG2("CMPXMetadataScanner::MetadataScannerCompleteL error = %d", aError);    
+
+    // Callback to observer 
+    TRAP_IGNORE( iStateObserver.HandleScanStateCompleteL( MMPXFileScanStateObserver::EScanMetadata, aError ) );
+    iExtracting = EFalse;
+    Reset();
     }

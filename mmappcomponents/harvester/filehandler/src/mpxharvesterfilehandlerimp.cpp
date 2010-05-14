@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Handles all file related activities
-*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.5.1 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.5.2 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -20,10 +20,8 @@
 #include <e32base.h>
 #include <f32file.h>
 #include <centralrepository.h>
-#ifdef RD_MULTIPLE_DRIVE
 #include <pathinfo.h>
 #include <driveinfo.h>
-#endif //RD_MULTIPLE_DRIVE
 
 #include <mpxlog.h>
 #include <mpxharvestercommon.h>
@@ -124,7 +122,6 @@ void CMPXHarvesterFileHandlerImp::ConstructL()
     
     // List of watchers for different drives
     //
-#ifdef RD_MULTIPLE_DRIVE
     TDriveList driveList;
     TInt driveCount(0);
     User::LeaveIfError( DriveInfo::GetUserVisibleDrives(
@@ -141,17 +138,6 @@ void CMPXHarvesterFileHandlerImp::ConstructL()
             CleanupStack::Pop( dw );
             }
         }
-#else
-    CMPXDiskSpaceWatcher* dw_e = CMPXDiskSpaceWatcher::NewL( iFs, EDriveE, *this );
-    CleanupStack::PushL( dw_e );
-    iDiskMonitors.AppendL( dw_e );
-    CleanupStack::Pop( dw_e );
-    CMPXDiskSpaceWatcher* dw_c = CMPXDiskSpaceWatcher::NewL( iFs, EDriveC, *this );
-    CleanupStack::PushL( dw_c );
-    iDiskMonitors.AppendL( dw_c );
-    CleanupStack::Pop( dw_c );
-#endif // RD_MULTIPLE_DRIVE
-   
 
     TInt openerr = iDBManager->OpenAllDatabasesL();
     
@@ -187,6 +173,7 @@ void CMPXHarvesterFileHandlerImp::ConstructL()
     // Get the scan drives from cenrep.
     //
     ParseScanPathL();
+    RefreshScanDrivesL();
 
     // Get the list of container types
     iContainerTypes = new(ELeave) CDesCArrayFlat(2);  // granularity
@@ -213,13 +200,6 @@ void CMPXHarvesterFileHandlerImp::ConstructL()
     // Create the database synchronizer
     iDbSynchronizer = CMPXDbSynchronizer::NewL(*this,*iDBManager,iMusicCollectionId,
                                                iPodcastCollectionId,iFs, iDisablePodcasting);
-
-#ifdef RD_MULTIPLE_DRIVE
-    // Use default MMC drive as the Removable drive
-    User::LeaveIfError( DriveInfo::GetDefaultDrive(
-        DriveInfo::EDefaultRemovableMassStorage,
-        iRemovedDrive ) );
-#endif
 
     // Create DRM Notifier and register for AddRemove event
     iDrmNotifier = CDRMNotifier::NewL();
@@ -270,11 +250,9 @@ CMPXHarvesterFileHandlerImp::~CMPXHarvesterFileHandlerImp()
         }
     delete iContainerTypes;
 
-    iFilteredDrivesToScan.Reset();
     iFilteredDrivesToScan.Close();
-    iDrivesToScan.Reset();
     iDrivesToScan.Close();
-    iPathsToBlock.Reset();
+    iConfiguredDrivesToScan.Close();
     iPathsToBlock.Close();
 
     // Cleans up the scanning tables and arrays
@@ -337,14 +315,12 @@ void CMPXHarvesterFileHandlerImp::ScanL()
    
     iCollectionUtil->Collection().NotifyL( EMcMsgRefreshStart, KErrNone );
 
-    // Reopen databases
-    iDBManager->OpenAllDatabasesL();
-
     // Begin transaction on databases
     iDBManager->BeginL();
     
     //Remove out of disk space drives from scanned drives list
     iFilteredDrivesToScan.Reset();
+    iFilteredOutOfDisk = EFalse;
     CopyArrayL(iDrivesToScan.Array(),iFilteredDrivesToScan);
 
     iOutOfDisk = EFalse;
@@ -371,6 +347,7 @@ void CMPXHarvesterFileHandlerImp::ScanL()
                 if (currentDriveNumber == driveNumber)
                     {
                     iFilteredDrivesToScan.Remove(index);
+                    iFilteredOutOfDisk = ETrue;
                     count--;
                     }
                 else
@@ -378,7 +355,7 @@ void CMPXHarvesterFileHandlerImp::ScanL()
                     index++;
                     }
                 }
-            TRAP_IGNORE(iDBManager->RemoveDatabaseL(static_cast<TDriveNumber>(currentDriveNumber)));
+            iDBManager->CloseDatabase(static_cast<TDriveNumber>(currentDriveNumber));
             }
         }
 
@@ -438,8 +415,8 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
     // 4: USB end we re-open all db and scan for new files
     // 5: MTP start we stop monitoring for new files (no dismount)
     // 6: MTP end we re-open all db, files added already, restart monitor
+    // 7: Disk dismount: stop scanning, close the dismounting DB
     //
-#ifdef RD_MULTIPLE_DRIVE
     // Get all visible drives
     TDriveList driveList;
     TInt driveCount(0);
@@ -472,127 +449,64 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
                 (driveStatus&DriveInfo::EDriveFormatted)?&driveFormatted:&driveNotFormatted);
             }
         }
-#endif //RD_MULTIPLE_DRIVE
+
     switch( aEvent )
         {
         case EFormatStartEvent:
             {
-            MPX_DEBUG1("Disk Format start event");
+            MPX_DEBUG2("Disk Format start event, drive %d", aData);
+            iIdle->Cancel();
             CancelScan();
             iDBManager->CloseDatabase( (TDriveNumber) aData );
+            RefreshScanDrivesL();
             break;
             }
         case EDiskRemovedEvent:
             {
-            MPX_DEBUG1("Disk Removed event");
+            MPX_DEBUG2("Disk Removed event, drive %d", aData);
             iIdle->Cancel();
             CancelScan();
-#ifdef RD_MULTIPLE_DRIVE
-            TBool dbClosed( EFalse );
-            for( TInt driveNum = EDriveA; driveNum <= EDriveZ; driveNum++ )
-                {
-                if (driveList[driveNum] && (!iDBManager->IsRemoteDrive(static_cast<TDriveNumber>(driveNum))))
-                    {
-                    TUint driveStatus(0);
-                    User::LeaveIfError( DriveInfo::GetDriveStatus(
-                        iFs, driveNum, driveStatus ) );
-                    if (!(driveStatus & DriveInfo::EDrivePresent ))
-                        {
-                        // Close database for non-present drive
-                        iDBManager->CloseDatabase( (TDriveNumber) driveNum );
-                        // Save the drive
-                        iRemovedDrive = driveNum;
-                        dbClosed = ETrue;
-                        break;
-                        }
-                    }
-                }
-            
-            if( !dbClosed )
-                {
-                // GetUserVisibleDrives / RFs::DriveList does not return drive at all
-                // if it is dismounted using file server methods. This occurs at least
-                // when removing card using power menu eject. 
-                // If the drive reported as removed is not ready, close db on that drive.
-                TUint driveStatus(0);
-                TInt err( DriveInfo::GetDriveStatus( iFs, aData, driveStatus ) );
-                MPX_DEBUG4("Drive %d status 0x%x, err %d", aData, driveStatus, err);
-                if( err == KErrNotReady )
-                    {
-                    iDBManager->CloseDatabase( (TDriveNumber) aData );
-                    iRemovedDrive = aData;
-                    }
-                }
-#else
-            iDBManager->CloseDatabase( (TDriveNumber) aData );
-#endif // RD_MULTIPLE_DRIVE
+            iDBManager->DropDatabase ( TDriveNumber( aData ) );
+            RefreshScanDrivesL();
             break;
             }
         case EFormatEndEvent:
             {
-            MPX_DEBUG1("Disk Format end event");
+            MPX_DEBUG2("Disk Format end event, drive %d", aData);
             CancelScan();
             iDBManager->OpenDatabaseL( (TDriveNumber) aData );
+            RefreshScanDrivesL();
             break;
             }
         case EDiskInsertedEvent:
             {
-            MPX_DEBUG1("Disk Insert event");
+            MPX_DEBUG2("Disk Insert event %d", aData);
             CancelScan();
-#ifdef RD_MULTIPLE_DRIVE
-            iDBManager->OpenDatabaseL( (TDriveNumber) iRemovedDrive );
-#else
             iDBManager->OpenDatabaseL( (TDriveNumber) aData );
-#endif // RD_MULTIPLE_DRIVE
+            RefreshScanDrivesL();
             break;
             }
         case EUSBMassStorageStartEvent:
             {
             if (iCurUSBEvent == EUSBMassStorageStartEvent)
-            	{
-            	break;
-            	}            
-            iIdle->Cancel();
-            CancelScan();
-#ifdef RD_MULTIPLE_DRIVE
-            // Close all databases other than the phone memory database
-            for( TInt driveNum = EDriveA; driveNum <= EDriveZ; driveNum++ )
                 {
-                if (driveList[driveNum]  && (!iDBManager->IsRemoteDrive(static_cast<TDriveNumber>(driveNum))))
-                    {
-                    if ( driveNum != EDriveC )
-                        {
-                        iDBManager->CloseDatabase( (TDriveNumber) driveNum );
-                        }
-                    }
-                }
-#else
-            iDBManager->CloseDatabase( (TDriveNumber) aData );
-#endif // RD_MULTIPLE_DRIVE
+                break;
+                }            
+            iIdle->Cancel();
+            iDBManager->CloseMassStorageDatabases();
+            RefreshScanDrivesL();
+            CancelScan();
             iCurUSBEvent = EUSBMassStorageStartEvent;
             break;
             }
         case EUSBMassStorageEndEvent:
             {
-#ifdef RD_MULTIPLE_DRIVE
-            // Open all databases other than the phone memory
-            for( TInt driveNum = EDriveA; driveNum <= EDriveZ; driveNum++ )
-                {
-                if (driveList[driveNum] && (!iDBManager->IsRemoteDrive(static_cast<TDriveNumber>(driveNum))))
-                    {
-                    if ( driveNum != EDriveC )
-                        {
-                        iDBManager->OpenDatabaseL( (TDriveNumber) driveNum );
-                        }
-                    }
-                }
-#else
-            iDBManager->OpenDatabaseL( (TDriveNumber) aData );
-#endif // RD_MULTIPLE_DRIVE
+            iDBManager->OpenAllDatabasesL();
+            RefreshScanDrivesL();
             iCurUSBEvent = EUSBMassStorageEndEvent;
             break;
             }
-        case EUSBMTPNotActiveEvent: // deliberate fall through
+        case EUSBMTPNotActiveEvent:
             {
             if (iCurUSBEvent == EUSBMTPNotActiveEvent)
             	{
@@ -611,29 +525,33 @@ void CMPXHarvesterFileHandlerImp::HandleSystemEventL( TSystemEvent aEvent,
             {
             CancelScan();
             iCurUSBEvent = EUSBMTPStartEvent;
-            // nothing to do, db is needed for MTP
 #ifdef __RAMDISK_PERF_ENABLE
-            // if statement needed because of fall through above.
-            if ( aEvent == EUSBMTPStartEvent )
-                {
-                // copy dbs to ram drive
-                iDBManager->CopyDBsToRamL(ETrue);
-                }
+            iDBManager->CopyDBsToRamL(ETrue);
 #endif //__RAMDISK_PERF_ENABLE
             break;
             }
         case EUSBMTPEndEvent:
             {
             iCurUSBEvent = EUSBMTPEndEvent;
-            // nothing to do, db is updated by MTP
 #ifdef __RAMDISK_PERF_ENABLE
             // copy dbs from ram drive
             iDBManager->CopyDBsFromRamL();
 #endif //__RAMDISK_PERF_ENABLE
             break;
             }
-        case EPowerKeyEjectEvent:
+        case EDiskDismountEvent:
             {
+            MPX_DEBUG2("Disk dismount notification, drive %d", aData);
+            iIdle->Cancel();
+            if ( aData < 0 )
+                {
+                iDBManager->CloseMassStorageDatabases();
+                }
+            else
+                {
+                iDBManager->CloseDatabase( (TDriveNumber) aData );
+                }
+            RefreshScanDrivesL();
             CancelScan();
             break;
             }
@@ -927,9 +845,10 @@ TInt CMPXHarvesterFileHandlerImp::FindCollectionIdL( const TDesC& aFile )
 //
 void CMPXHarvesterFileHandlerImp::RecreateDatabases()
     {
-    MPX_DEBUG1("CMPXHarvesterFileHandlerImp::RecreateDatabasesL <--");
+    MPX_DEBUG1("CMPXHarvesterFileHandlerImp::RecreateDatabases <--");
     iDBManager->RecreateDatabases();
-    MPX_DEBUG1("CMPXHarvesterFileHandlerImp::RecreateDatabasesL -->");
+    TRAP_IGNORE(RefreshScanDrivesL());
+    MPX_DEBUG1("CMPXHarvesterFileHandlerImp::RecreateDatabases -->");
     }
 
 // ---------------------------------------------------------------------------
@@ -1256,18 +1175,24 @@ void CMPXHarvesterFileHandlerImp::HandleFileAdditionL( const TDesC& aFileName,
 //
 void CMPXHarvesterFileHandlerImp::HandleDirectoryChangedL( const TDesC& aPath )
     {
+    MPX_DEBUG2("--->CMPXHarvesterFileHandlerImp::HandleDirectoryChangedL path=%S", &aPath);
     // Delay the scanning for a few seconds so the files are finished
     // copying. If already active, means we just append onto the list
-    //
-    iAutoScanPaths.AppendL( aPath );
-    if( !iIdle->IsActive() )
+    // But don't scan if there is no DB == drive does not exist any more
+    TParsePtrC parse( aPath );
+    TDriveUnit drive ( parse.Drive() );
+    if ( iDBManager->DatabaseIsOpen ((TDriveNumber) (TInt) drive) )
         {
-        TCallBack cb( Callback, this );
-        iIdle->Start( TTimeIntervalMicroSeconds32( KAutoScanDelay ),
-                      TTimeIntervalMicroSeconds32( KAutoScanAfter ),
-                      cb );
+        MPX_DEBUG1("CMPXHarvesterFileHandlerImp::HandleDirectoryChangedL adding in iAutoScanPaths");
+        iAutoScanPaths.AppendL( aPath );
+        if( !iIdle->IsActive() )
+            {
+            TCallBack cb( Callback, this );
+            iIdle->Start( TTimeIntervalMicroSeconds32( KAutoScanDelay ),
+                          TTimeIntervalMicroSeconds32( KAutoScanAfter ),
+                          cb );
+            }
         }
-
     }
 
 // ---------------------------------------------------------------------------
@@ -1277,6 +1202,7 @@ void CMPXHarvesterFileHandlerImp::HandleDirectoryChangedL( const TDesC& aPath )
 void CMPXHarvesterFileHandlerImp::HandleOpenDriveL( TDriveNumber aDrive,
                                                     const TDesC& aFolder )
     {
+    MPX_DEBUG3("--->CMPXHarvesterFileHandlerImp::HandleOpenDriveL drive=%d, folder=%S", aDrive, &aFolder);
 #ifdef __PRINTDB__
     if( iCurTable )
         iCurTable->PrintItemsInTableL();
@@ -1291,13 +1217,7 @@ void CMPXHarvesterFileHandlerImp::HandleOpenDriveL( TDriveNumber aDrive,
     // EnsureRamSpaceL will copy dbs from ram if ram space is low or dbs exceeded max space.
     iDBManager->EnsureRamSpaceL();
 #endif // __RAMDISK_PERF_ENABLE
-    MPX_TRAPD( err, iCurDB = &iDBManager->GetDatabaseL( aDrive ) );
-    if ( err != KErrNone )
-        {
-        iDBManager->OpenAllDatabasesL();
-        iCurDB = &iDBManager->GetDatabaseL( aDrive );
-        }
-    
+    iCurDB = &iDBManager->GetDatabaseL( aDrive );
     if( iDrivesToScan.Find( aFolder ) != KErrNotFound )
         {
         iCurTable = iCurDB->OpenAllFilesTableL();
@@ -1307,6 +1227,7 @@ void CMPXHarvesterFileHandlerImp::HandleOpenDriveL( TDriveNumber aDrive,
         iCurTable = iCurDB->OpenDirectoryL( aFolder );
         }
     iCurList = iCurTable->CreateTableRepresentationL();
+    MPX_DEBUG1("<--CMPXHarvesterFileHandlerImp::HandleOpenDriveL");
     }
 
 // ---------------------------------------------------------------------------
@@ -1831,7 +1752,7 @@ void CMPXHarvesterFileHandlerImp::ParseScanPathL()
 
     MPX_DEBUG2("ParseScanPathL scanPaths: %S", &scanPath);
     MPX_DEBUG2("ParseScanPathL blockPaths: %S", &blockPath);
-    ::ExtractTokensL( scanPath, iDrivesToScan );
+    ::ExtractTokensL( scanPath, iConfiguredDrivesToScan );
     ::ExtractTokensL( blockPath, iPathsToBlock );
     }
 
@@ -1898,6 +1819,25 @@ void CMPXHarvesterFileHandlerImp::ParseAutoScanL()
     CleanupStack::PopAndDestroy( array );
     }
 
+// ---------------------------------------------------------------------------
+// Refreshes scan drives
+// ---------------------------------------------------------------------------
+//
+void CMPXHarvesterFileHandlerImp::RefreshScanDrivesL()
+    {
+    iDrivesToScan.Reset();
+    for (TInt i = 0; i < iConfiguredDrivesToScan.Count(); ++i)
+        {
+        const TDesC& path = iConfiguredDrivesToScan[i];
+        TParsePtrC parse(path);
+        TDriveUnit drive(parse.Drive());
+        if ( iDBManager->DatabaseIsOpen( (TDriveNumber)(TInt) drive) )
+            {
+            iDrivesToScan.AppendL(path);
+            }
+        }
+    }
+    
 // ---------------------------------------------------------------------------
 // Resets the scanning table and array
 // ---------------------------------------------------------------------------
@@ -2015,10 +1955,7 @@ void CMPXHarvesterFileHandlerImp::DoCompleteRefreshL( TInt aErr )
     // If no error or cancel, return the final number of items added
     MPX_DEBUG2("Scan error %i", aErr );
     
-    // Reopen databases (in case we removed them for out of disk drives before scan)
-    iDBManager->OpenAllDatabasesL();
-    
-    if( aErr == KErrNone )
+    if( aErr == KErrNone || aErr == KErrCancel )
         {
         // Commit the changes on databases in transaction
         iDBManager->CommitL();
@@ -2034,12 +1971,27 @@ void CMPXHarvesterFileHandlerImp::DoCompleteRefreshL( TInt aErr )
     iDBManager->CopyDBsFromRamL();
 #endif //__RAMDISK_PERF_ENABLE
 
+    // Reopen databases (in case we removed them for out of disk drives before scan)
+    for (TInt i = 0, j = 0; i < iDrivesToScan.Count(); ++i)
+        {
+        if ( j < iFilteredDrivesToScan.Count() && ! iDrivesToScan[i].Compare( iFilteredDrivesToScan[j] ) )
+            {
+             ++j;
+            }
+        else
+            {
+            TParsePtrC fileNameParser ( iDrivesToScan[i] );
+            TDriveUnit drive ( fileNameParser.Drive() );
+            TRAP_IGNORE( iDBManager->OpenDatabaseL( TDriveNumber ( (TInt) drive ) ) );
+            }
+        }
+
     if( aErr == KErrNone || aErr == KErrCancel )
         {
         aErr = iAddedCount;
         }
     
-    if (iFilteredDrivesToScan.Count() != iDrivesToScan.Count())
+    if ( iFilteredOutOfDisk )
         {
         aErr = KErrDiskFull; 
         }
@@ -2191,7 +2143,24 @@ TBool CMPXHarvesterFileHandlerImp::DoAutoScanL()
         iRefreshCount++;
         CancelScan();
         Reset();
-        iFolderScanner->ScanL( iAutoScanPaths );
+        // ensure you don't try to scan paths that are on closed drives
+        for (TInt i = 0; i < iAutoScanPaths.Count(); )
+            {
+            TParsePtr parse(iAutoScanPaths[i]);
+            TDriveUnit drive(parse.Drive());
+            if ( iDBManager->DatabaseIsOpen( (TDriveNumber) (TInt) drive ) )
+                {
+                ++i;
+                }
+            else
+                {
+                iAutoScanPaths.Remove(i);
+                }
+            }
+        if ( iAutoScanPaths.Count() )
+            {
+            iFolderScanner->ScanL( iAutoScanPaths );
+            }
 
         // Cleanup
         iAutoScanPaths.Reset();
@@ -2313,7 +2282,6 @@ RPointerArray<CMPXHarvesterDbItem>* CMPXHarvesterFileHandlerImp::GetDrmFilesL()
     
     CleanupStack::PushL( drmFileList );
 
-#ifdef RD_MULTIPLE_DRIVE
     TDriveList driveList;
     TInt driveCount(0);
 
@@ -2344,81 +2312,9 @@ RPointerArray<CMPXHarvesterDbItem>* CMPXHarvesterFileHandlerImp::GetDrmFilesL()
                 }
             }
     	}
-#else
-    //ensure drive E is ready
-    //otherwise GetDataBaseL will leave if MMC is removed
-    if ( IsDriveReady( EDriveE ) )
-        {
-        // Get DRM files from database in E drive
-        db = &iDBManager->GetDatabaseL( EDriveE );
-        table = db->OpenDrmFileL(); 
-        CleanupStack::PushL( table );
-        tempList = table->CreateTableRepresentationL();
-        CleanupStack::PushL( tempList );
-        // copy content to drm file list
-        for ( TInt i=0; i<tempList->Count(); i++ )
-            {
-            drmFileList->AppendL( (*tempList)[i] );
-            }
-        // reset
-        tempList->Reset();
-        CleanupStack::PopAndDestroy( tempList );
-        CleanupStack::PopAndDestroy( table );
-        }
-
-    // Get DRM files from database in C drive
-    db = &iDBManager->GetDatabaseL( EDriveC );
-    table = db->OpenDrmFileL(); 
-    CleanupStack::PushL( table );
-    tempList = table->CreateTableRepresentationL();
-    CleanupStack::PushL( tempList );
-    // copy content to iCurList
-    for ( TInt i=0; i<tempList->Count(); i++ )
-        {
-        drmFileList->AppendL( (*tempList)[i] );
-        }
-    tempList->Reset();
-    CleanupStack::PopAndDestroy( tempList );
-    CleanupStack::PopAndDestroy( table );
-#endif
     CleanupStack::Pop( drmFileList );
     MPX_DEBUG1("CMPXHarvesterFileHandlerImp::GetDrmFiles --->");
     return drmFileList;
-    }
-
-// ---------------------------------------------------------------------------
-// Verifies if aDrive is ready.
-// ---------------------------------------------------------------------------
-//
-TBool CMPXHarvesterFileHandlerImp::IsDriveReady( TDriveNumber aDrive )
-    {
-    MPX_DEBUG1("CMPXHarvesterFileHandlerImp::IsDriveReady <---");
-
-    TDriveInfo driveInfo;
-    TInt error = iFs.Drive( driveInfo, aDrive );
-    TBool ready = ETrue;
-    if ( error != KErrNone )
-        {
-        ready = EFalse;
-        }
-    else if ( driveInfo.iDriveAtt == static_cast<TUint>( KDriveAbsent ) )
-        {
-        //aDrive is absent
-        ready = EFalse;
-        }
-    else
-        {
-        TVolumeInfo volumeInfo;
-        TInt errCode = iFs.Volume( volumeInfo, aDrive );
-        if( errCode != KErrNone )
-            {
-            //aDrive is ready for use
-            ready = EFalse;
-            }
-        }
-
-    MPX_DEBUG1("CMPXHarvesterFileHandlerImp::IsDriveReady --->");
-    return ready;
     }
 
 // END OF FILE

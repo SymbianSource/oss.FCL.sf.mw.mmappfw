@@ -196,7 +196,7 @@ TBool CAudioFetcherDialog::OkToExitL(TInt aKeycode)
         case EAknSoftkeySelect :
             {       
             TInt index = CurrentItemListIndex();
-            TBuf<128> fileName;
+            TFileName fileName;
             
             iFileHandler->GetAttribute( index, CAudioFetcherFileHandler::EAttrFullName, fileName, 0 );
             iSelectedFiles.AppendL( fileName );
@@ -928,7 +928,7 @@ TBool CAudioFetcherDialog::HandleListSelectionL()
     TBool closeDialog = EFalse;
     
     TInt index = CurrentItemListIndex();
-    TBuf<128> fileName;
+    TFileName fileName;
     
     iFileHandler->GetAttribute( index, CAudioFetcherFileHandler::EAttrFullName, fileName, 0 );
     iSelectedFiles.AppendL( fileName );

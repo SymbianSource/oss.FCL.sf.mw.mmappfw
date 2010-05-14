@@ -300,6 +300,10 @@ EXPORT_C TBool CSetObjectPropValue::DoHandleResponsePhaseL()
                     iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
                     iFramework.ObjectMgr().ModifyObjectL( *iObjectInfo );
                     }
+                else if ( KErrInUse == err ) // object file is being used by other program
+                    {
+                    responseCode = EMTPRespCodeDeviceBusy;
+                    }
                 else
                     {
                     responseCode = EMTPRespCodeGeneralError;

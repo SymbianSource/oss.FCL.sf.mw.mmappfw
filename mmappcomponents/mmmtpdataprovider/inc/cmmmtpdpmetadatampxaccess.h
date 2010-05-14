@@ -56,6 +56,16 @@ public:
 
 public:
     /**
+     * OpenSession, introduce to fix CollectionHelper Flush problem
+     */
+    void OpenSession();
+
+    /**
+     * CloseSession, introduce to fix CollectionHelper Flush problem
+     */
+    void CloseSession();
+
+    /**
      * Get all abstract medias from MPX database in the assigned store
      * @param aStoreRoot, specify in which drive abstract medias are stored
      * @param aAbstractMedias, return result array
@@ -203,6 +213,7 @@ private:
     TBuf<KStorageRootMaxLength> iStoreRoot;
 
     MMPXCollectionHelper* iCollectionHelper;
+    HBufC8* iSampleData;
 
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     CMmMtpDpPerfLog* iPerfLog;

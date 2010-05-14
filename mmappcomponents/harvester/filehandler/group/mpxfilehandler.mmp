@@ -69,9 +69,7 @@ LIBRARY                 mpxplaylistengine.lib
 LIBRARY                 mpxmetadataextractor.lib
 LIBRARY	                caf.lib
 LIBRARY                 DrmServerInterfaces.lib
-#ifdef RD_MULTIPLE_DRIVE
 LIBRARY                 PlatformEnv.lib
-#endif //RD_MULTIPLE_DRIVE
 
 #if defined(ARMCC)
 deffile ../eabi/ 

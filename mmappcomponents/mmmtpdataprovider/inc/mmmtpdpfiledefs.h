@@ -59,9 +59,7 @@ _LIT(KFormatExtensionASF, "0x300c:asf");
 
 //ODF container
 _LIT(KFormatExtensionODFAudio3GPP, "0xB984:ODF:audio/3gpp");
-_LIT(KFormatExtensionODFAudioMP4, "0xB982:ODF:audio/mp4");
 _LIT(KFormatExtensionODFVideo3GPP, "0xB984:ODF:video/3gpp");
-_LIT(KFormatExtensionODFVideoMP4, "0xB982:ODF:video/mp4");
 
 _LIT(KFormatExtensionM4A, "0xB982:m4a");
 _LIT(KFormatExtensionO4A, "0xB984:o4a");
@@ -100,7 +98,7 @@ enum TMmMtpSubFormatCode
     EMTPSubFormatCodeUnknown,
     EMTPSubFormatCodeAudio,
     EMTPSubFormatCodeVideo,
-    EMTPSubFormatCodeUndefine
+    EMTPSubFormatCodeUndefined
     };
 
 #endif // MMMTPDPFILEDEFS_H

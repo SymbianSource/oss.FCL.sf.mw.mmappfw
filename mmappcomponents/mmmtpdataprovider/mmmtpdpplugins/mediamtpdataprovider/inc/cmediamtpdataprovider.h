@@ -113,6 +113,12 @@ protected:
     */
     void RenameObjectL( const TMTPNotificationParamsHandle& aObject );
 
+    /**
+    * Notify the data provider that the object has been added
+    * @param aObjectHandle    the added object handle
+    */
+    void ObjectAddedL( TUint32 aObjectHandle );
+
     void StartObjectEnumerationL( TUint32 aStorageId );
 
     void StartStorageEnumerationL();

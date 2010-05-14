@@ -619,6 +619,13 @@ EXPORT_C void CMPXCollectionClientContext::CommandL(
             iEngine.PluginPop();
             break;
             }
+        case EMcCloseCollection:
+            {
+            // Forward to all plug-ins; argument is drive number
+            iEngine.Command ( aCmd, aData );
+            break;
+            }
+
         default:
             {
             User::Leave(KErrNotSupported);

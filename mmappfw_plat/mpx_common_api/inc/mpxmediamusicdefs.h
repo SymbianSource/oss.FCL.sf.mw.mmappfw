@@ -46,6 +46,7 @@ const TMPXAttributeData KMPXMediaMusicAlbumArtThumbnail={KMPXMediaIdMusic,0x400}
 const TMPXAttributeData KMPXMediaMusicAlbumArtThumbnailSize={KMPXMediaIdMusic,0x800}; // TSint
 const TMPXAttributeData KMPXMediaMusicAlbumArtChanged={KMPXMediaIdMusic,0x1000}; // TInt
 const TMPXAttributeData KMPXMediaMusicAlbumArtist={KMPXMediaIdMusic,0x2000}; // Text
+const TMPXAttributeData KMPXMediaMusicAlbumId={KMPXMediaIdMusic,0x4000}; // TMPXItemId
 const TMPXAttributeData KMPXMediaMusicAll={KMPXMediaIdMusic,0xffffffff}; // Text
 
 /** 
@@ -68,6 +69,7 @@ enum
     EMPXMediaMusicAlbumArtThumbnail=0x400,
     EMPXMediaMusicAlbumArtThumbnailSize=0x800,
     EMPXMediaMusicAlbumArtist=0x2000,
+    EMPXMediaMusicAlbumId=0x4000,
     EMPXMediaMusicAll=0xffffffff
     };
 

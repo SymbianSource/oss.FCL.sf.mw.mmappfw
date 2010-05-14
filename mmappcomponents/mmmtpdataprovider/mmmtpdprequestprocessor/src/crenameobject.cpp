@@ -145,12 +145,13 @@ EXPORT_C void CRenameObject::RunL()
 
             if ( iNewFolderName.Length() + iRightPartName.Length() <= KMaxFileName )
                 {
-                PerformAdditionalActionL();
-
                 iFileName.Zero();
                 iFileName.Append( iNewFolderName );
                 iFileName.Append( iRightPartName );
                 PRINT1( _L( "MM MTP <> CRenameObject::RunL new file name(%S)" ), &iFileName );
+
+                PerformAdditionalActionL();
+
                 // update framework metadata DB
                 iObjectInfo->SetDesCL( CMTPObjectMetaData::ESuid, iFileName );
                 iObjectInfo->SetUint( CMTPObjectMetaData::EObjectMetaDataUpdate, 1 );

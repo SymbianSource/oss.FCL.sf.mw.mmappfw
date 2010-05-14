@@ -89,14 +89,12 @@ void CAbstractMediaMtpDataProviderRenameObject::PerformAdditionalActionL()
         iWrapper.AddDummyFileL( iFileName );
         // Do not update MPX db to keep the same behavior in mass storage and device file manager.
         }
-    else
-        {
-        TRAPD( err, iWrapper.RenameObjectL( *iObjectInfo, iFileName ) );
 
-         // should not fail for 1 file, keep it going, as folder already renamed
-         if ( err != KErrNone )
-             PRINT1( _L( "MM MTP <> CRenameObject::PerformAdditionalActionL err = %d" ), err );
-        }
+     TRAPD( err, iWrapper.RenameObjectL( *iObjectInfo, iFileName ) );
+
+     // should not fail for 1 file, keep it going, as folder already renamed
+     if ( err != KErrNone )
+         PRINT1( _L( "MM MTP <> CRenameObject::PerformAdditionalActionL err = %d" ), err );
 
     // the reference DB use PUID
     // so we needn't to update the reference DB

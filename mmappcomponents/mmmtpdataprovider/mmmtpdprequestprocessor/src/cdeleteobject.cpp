@@ -315,9 +315,13 @@ void CDeleteObject::ProcessFinalPhaseL()
         {
         SendResponseL( EMTPRespCodePartialDeletion );
         }
-    else if( !iIsMultiDelete && iDeleteError == KErrAccessDenied )
+    else if ( !iIsMultiDelete && iDeleteError == KErrAccessDenied )
         {
         SendResponseL( EMTPRespCodeObjectWriteProtected );
+        }
+    else if ( iDeleteError == KErrInUse )
+        {
+        SendResponseL( EMTPRespCodeDeviceBusy );
         }
     else
         {

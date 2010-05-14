@@ -154,7 +154,7 @@ EXPORT_C TBool CSetObjectReferences::DoHandleResponsePhaseL()
         {
         MMTPReferenceMgr& referenceMgr = iFramework.ReferenceMgr();
         TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
-        PRINT1( _L( "MM MTP <>CSetObjectReferences::DoHandleResponsePhaseL objectHandle = 0x%x" ), objectHandle );
+        PRINT1( _L( "MM MTP <> CSetObjectReferences::DoHandleResponsePhaseL objectHandle = 0x%x" ), objectHandle );
         referenceMgr.SetReferencesL( TMTPTypeUint32( objectHandle ),
             *iReferences );
 
