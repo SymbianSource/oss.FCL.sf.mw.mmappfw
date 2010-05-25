@@ -20,6 +20,7 @@
 #define MMMTPDPUTILITY_H
 
 #include <mtp/mtpprotocolconstants.h>
+#include <mtpprivatepskeys.h>
 
 #include "mmmtpdpfiledefs.h"
 
@@ -143,6 +144,34 @@ public:
     * @return return DRM status code
     */
     IMPORT_C static TInt GetDrmStatus( const TDesC& aFullFileName );
+    
+    /**
+    * Set MTP PS Status
+    * @param aStatus, next TMtpPSStatus
+    *
+    * newly implemented function to as enabler
+    * to provide more state transition on application (MusicPlayer/MPX) during MTP by fully utilize the 3 PSStatus:
+    *
+    * EMtpPSStatusActive, == MTP operation related Media Files is performaning
+    * EMtpPSStatusUninitialized == MTP not in use
+    * EMtpPSStatusReadyToSync == MTP is connected, but no active operation related to Media Files
+    *
+    * this CAN enable 2 new behaviors:
+    * 1. MTP status monitor is extracted out from USB Event Observer in harvester
+    *    Harvester and Music player should be fully blocked if PS Status is EMtpPSStatusActive
+    *    Music Player would prevent refresh/delete/add on UI level if PS Status is EMtpPSStatusReadyToSync  
+    * 2. collectioncachedhelper to observed this status.
+    *    when the ps status changed from EMtpPSStatusActive to EMtpPSStatusReadyToSync, it starts timer.
+    *    and when it is reached, it flush all cache.
+    *    the timer is canceled when ps status is back to active.
+    */
+    IMPORT_C static void SetPSStatus( TMtpPSStatus aStatus );
+
+    /**
+    * Set MTP PS Status (actually)
+    * @param aStatus, next TMtpPSStatus
+    */
+    static void DoSetPSStatus( TMtpPSStatus aStatus );
 
     };
 

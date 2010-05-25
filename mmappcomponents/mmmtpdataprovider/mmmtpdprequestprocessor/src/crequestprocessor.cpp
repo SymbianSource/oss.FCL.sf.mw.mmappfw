@@ -21,11 +21,10 @@
 #include <mtp/tmtptypeevent.h>
 #include <mtp/mmtpconnection.h>
 #include <mtp/mmtpobjectmgr.h>
-#include <e32property.h>
-#include <mtpprivatepskeys.h>
 
 #include "crequestprocessor.h"
 #include "crequestchecker.h"
+#include "mmmtpdputility.h"
 #include "mmmtpdplogger.h"
 
 static const TInt KNullBufferSize = 4096;
@@ -214,6 +213,7 @@ EXPORT_C TBool CRequestProcessor::HandleRequestL( const TMTPTypeRequest& aReques
             break;
 
         case ECompletingPhase:
+            MmMtpDpUtility::SetPSStatus(EMtpPSStatusReadyToSync);
             result = DoHandleCompletingPhaseL();
             break;
 
@@ -424,23 +424,6 @@ EXPORT_C TInt CRequestProcessor::RunError( TInt aError )
 EXPORT_C TBool CRequestProcessor::HasDataphase() const
     {
     return EFalse;
-    }
-
-// -----------------------------------------------------------------------------
-// CRequestProcessor::SetPSStatus
-// Set P&S Status to avoid MPX access conflict
-// -----------------------------------------------------------------------------
-//
-void CRequestProcessor::SetPSStatus()
-    {
-    TInt mtpStatus;
-    RProperty::Get( KMtpPSUid, KMtpPSStatus, mtpStatus);
-
-    if ( mtpStatus != EMtpPSStatusActive )
-        {
-        TInt err = RProperty::Set( KMtpPSUid, KMtpPSStatus, EMtpPSStatusActive );
-        PRINT1( _L("MM MTP <> CRequestProcessor::SetPSStatus err = %d" ), err );
-        }
     }
 
 // -----------------------------------------------------------------------------

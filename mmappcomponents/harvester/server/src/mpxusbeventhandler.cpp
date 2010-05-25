@@ -24,7 +24,7 @@
 #include <coreapplicationuisdomainpskeys.h>
 #include <UsbWatcherInternalPSKeys.h>
 #include <usbpersonalityids.h>
-#include <MtpPrivatePSKeys.h>
+#include <mtpprivatepskeys.h>
 #include <mpxlog.h>
 #include "mpxusbeventhandler.h"
 

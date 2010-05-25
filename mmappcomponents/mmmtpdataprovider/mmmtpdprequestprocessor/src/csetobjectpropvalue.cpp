@@ -74,7 +74,6 @@ EXPORT_C CSetObjectPropValue::CSetObjectPropValue(
     iDpConfig( aDpConfig ),
     iFs( aFramework.Fs() )
     {
-    SetPSStatus();
     PRINT( _L( "Operation: SetObjectPropValue(0x9804)" ) );
     }
 
@@ -199,6 +198,9 @@ EXPORT_C TBool CSetObjectPropValue::HasDataphase() const
 EXPORT_C void CSetObjectPropValue::ServiceL()
     {
     PRINT( _L( "MM MTP => CSetObjectPropValue::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
+    
     __ASSERT_DEBUG( iRequestChecker, Panic( EMmMTPDpRequestCheckNull ) );
     TUint32 handle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
     PRINT1( _L( "MM MTP <> CSetObjectPropValue::ServiceL handle = 0x%x" ), handle );

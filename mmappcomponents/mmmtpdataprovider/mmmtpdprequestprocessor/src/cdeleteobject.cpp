@@ -64,7 +64,6 @@ EXPORT_C MMmRequestProcessor* CDeleteObject::NewL( MMTPDataProviderFramework& aF
 void CDeleteObject::ConstructL()
     {
     CActiveScheduler::Add( this );
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -104,6 +103,8 @@ CDeleteObject::CDeleteObject( MMTPDataProviderFramework& aFramework,
 //
 EXPORT_C void CDeleteObject::ServiceL()
     {
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
+    
     iObjectsToDelete.Reset();
     iDeleteError = KErrNone;
     TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );

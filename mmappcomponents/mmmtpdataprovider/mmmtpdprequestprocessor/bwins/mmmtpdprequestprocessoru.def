@@ -157,4 +157,7 @@ EXPORTS
 	??1CGetObjectPropList@@UAE@XZ @ 156 NONAME ; CGetObjectPropList::~CGetObjectPropList(void)
 	?ServiceL@CGetObjectPropList@@MAEXXZ @ 157 NONAME ; void CGetObjectPropList::ServiceL(void)
 	??0CRenameObject@@IAE@AAVMMTPDataProviderFramework@@AAVCMmMtpDpMetadataAccessWrapper@@@Z @ 158 NONAME ; CRenameObject::CRenameObject(class MMTPDataProviderFramework &, class CMmMtpDpMetadataAccessWrapper &)
+	?ActiveToIdleStatusChange@CMmMtpDpAccessSingleton@@SAXXZ @ 159 NONAME ; void CMmMtpDpAccessSingleton::ActiveToIdleStatusChange(void)
+	?SetPSStatus@MmMtpDpUtility@@SAXW4TMtpPSStatus@@@Z @ 160 NONAME ; void MmMtpDpUtility::SetPSStatus(enum TMtpPSStatus)
+	?CancelActiveToIdleStatusChange@CMmMtpDpAccessSingleton@@SAXXZ @ 161 NONAME ; void CMmMtpDpAccessSingleton::CancelActiveToIdleStatusChange(void)
 

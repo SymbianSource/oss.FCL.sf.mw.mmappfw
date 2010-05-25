@@ -38,6 +38,7 @@
 #include <mpxcollectioncommanddefs.h>
 #include <UsbWatcherInternalPSKeys.h>
 #include <usbpersonalityids.h>
+#include <mtpprivatepskeys.h>
 
 #include "mpxcollectionuihelperobserver.h"
 #include "mpxcollectionuihelperimp.h"
@@ -1399,11 +1400,16 @@ void CMPXCollectionUiHelperImp::ExecuteTaskL(TInt aTask, const CBufBase& aBuf, T
         {
         TInt usbStatus;
         RProperty::Get(KPSUidUsbWatcher, KUsbWatcherSelectedPersonality, usbStatus);
-            
-        if ((usbStatus == KUsbPersonalityIdMTP) || (usbStatus == KUsbPersonalityIdPCSuiteMTP)
-                         || (usbStatus == KUsbPersonalityIdMS) )
+        
+        TInt mtpStatus = EMtpPSStatusUninitialized;
+        RProperty::Get( KMtpPSUid, KMtpPSStatus, mtpStatus);
+
+        MPX_DEBUG2("CMPXCollectionViewHgImp::ConstructL, mtpstatus = %d", mtpStatus);
+
+        if ( (mtpStatus != EMtpPSStatusUninitialized)
+                || (usbStatus == KUsbPersonalityIdMS) )
             {
-            MPX_DEBUG1("USB is active, Leave with KErrLocked");
+            MPX_DEBUG1("MTP/USB is active, Leave with KErrLocked");
             // need to call back even if it leaves here
             iHelperObserver = (MMPXCHelperObserver*)aCallback;
             CompleteTask( aTask, KErrLocked );

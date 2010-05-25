@@ -24,6 +24,7 @@
 #endif
 
 #include "cgetobjectreferences.h"
+#include "mmmtpdputility.h"
 #include "mmmtpdplogger.h"
 
 // -----------------------------------------------------------------------------
@@ -67,7 +68,6 @@ EXPORT_C MMmRequestProcessor* CGetObjectReferences::NewL( MMTPDataProviderFramew
 //
 void CGetObjectReferences::ConstructL()
     {
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -103,6 +103,8 @@ CGetObjectReferences::CGetObjectReferences( MMTPDataProviderFramework& aFramewor
 void CGetObjectReferences::ServiceL()
     {
     PRINT( _L( "MM MTP => CGetObjectReferences::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
 
     TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
     PRINT1( _L( "MM MTP <> CGetObjectReferences::ServiceL objectHandle = 0x%x" ),

@@ -25,6 +25,7 @@
 #include <e32property.h>
 #include <mtpprivatepskeys.h>
 
+#include "mmmtpdp_variant.hrh"
 #include "cmmmtpdpmetadataaccesswrapper.h"
 #include "cmmmtpdpmetadatampxaccess.h"
 #include "cmmmtpdpmetadatavideoaccess.h"
@@ -76,6 +77,12 @@ void CMmMtpDpMetadataAccessWrapper::ConstructL()
                        KKeyReadPolicy,
                        KKeyWritePolicy);
 
+#ifdef MMMTPDP_RESET_STATUS_CLOSESESSION
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusUninitialized);
+#else
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusReadyToSync);
+#endif // MMMTPDP_RESET_STATUS_CLOSESESSION    
+    
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::ConstructL" ) );
     }
 
@@ -95,9 +102,8 @@ CMmMtpDpMetadataAccessWrapper::~CMmMtpDpMetadataAccessWrapper()
     delete iMmMtpDpMetadataMpxAccess;
 
     // unblock MPX
-    RProperty::Set( KMtpPSUid,
-                    KMtpPSStatus,
-                    EMtpPSStatusUninitialized );
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusUninitialized);
+    
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataAccessWrapper::~CMmMtpDpMetadataAccessWrapper" ) );
     }
 
@@ -337,6 +343,11 @@ void CMmMtpDpMetadataAccessWrapper::GetImageObjPropL( const CMTPObjectMetaData& 
 void CMmMtpDpMetadataAccessWrapper::OpenSessionL()
     {
     iOpenCount++;
+
+#ifdef MMMTPDP_RESET_STATUS_CLOSESESSION
+    if (iOpenCount == 1)
+        MmMtpDpUtility::SetPSStatus(EMtpPSStatusReadyToSync);
+#endif // MMMTPDP_RESET_STATUS_CLOSESESSION
     }
 
 // -----------------------------------------------------------------------------
@@ -355,8 +366,12 @@ void CMmMtpDpMetadataAccessWrapper::CloseSessionL()
         if ( iOpenCount == 0 )
             {
             PRINT( _L( "MM MTP <> CMmMtpDpMetadataAccessWrapper::CloseSessionL close" ) );
-            iMmMtpDpMetadataMpxAccess->CloseSession();
+            iMmMtpDpMetadataMpxAccess->CloseSession();    // trigger close and flush CollectionHelper
             iMmMtpDpMetadataVideoAccess->CloseSessionL();
+            
+#ifdef MMMTPDP_RESET_STATUS_CLOSESESSION
+            MmMtpDpUtility::SetPSStatus(EMtpPSStatusUninitialized);
+#endif // MMMTPDP_RESET_STATUS_CLOSESESSION
             }
         }
     else

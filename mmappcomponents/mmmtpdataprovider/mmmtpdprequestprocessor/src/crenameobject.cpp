@@ -25,6 +25,7 @@
 #include "mmmtpdplogger.h"
 #include "cmmmtpdpmetadataaccesswrapper.h"
 #include "crequestprocessor.h" // refer to KMmMtpRArrayGranularity
+#include "mmmtpdputility.h"
 
 // -----------------------------------------------------------------------------
 // CRenameObject::NewL
@@ -98,6 +99,8 @@ EXPORT_C void CRenameObject::StartL( const TUint32 aParentHandle,
     PRINT1( _L( "MM MTP <> CRenameObject::StartL, handle count = %d" ), iCount );
     if ( iCount > 0 )
         {
+        MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
+        
         // get the old/new folder full file name
         GetParentSuidL( aParentHandle, aOldFolderName );
 
@@ -169,6 +172,8 @@ EXPORT_C void CRenameObject::RunL()
         {
         if( iRenameWaiter->IsStarted() )
             iRenameWaiter->AsyncStop();
+        
+        MmMtpDpUtility::SetPSStatus(EMtpPSStatusReadyToSync);  
         }
 
     PRINT( _L( "MM MTP <= CRenameObject::RunL" ) );

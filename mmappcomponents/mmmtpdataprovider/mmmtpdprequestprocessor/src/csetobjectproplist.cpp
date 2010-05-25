@@ -73,7 +73,6 @@ void CSetObjectPropList::ConstructL()
     CActiveScheduler::Add( this );
 
     iPropertyList = CMTPTypeObjectPropList::NewL();
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -115,6 +114,9 @@ EXPORT_C TMTPResponseCode CSetObjectPropList::CheckRequestL()
 EXPORT_C void CSetObjectPropList::ServiceL()
     {
     PRINT( _L( "MM MTP => CSetObjectPropList::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
+    
     // Recieve the data from the property list
     ReceiveDataL( *iPropertyList );
     PRINT( _L( "MM MTP <= CSetObjectPropList::ServiceL" ) );

@@ -27,6 +27,7 @@
 #include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/tmtptypeuint32.h>
+#include <e32property.h>    // for RProperty
 
 // for asf mimetype parsing
 #ifdef __WINDOWS_MEDIA
@@ -39,6 +40,7 @@
 #include "tobjectdescription.h"
 #include "mmmtpdplogger.h"
 #include "mmmtpdp_variant.hrh"
+#include "cmmmtpdpaccesssingleton.h"
 
 using namespace ContentAccess;
 
@@ -702,4 +704,36 @@ EXPORT_C TInt MmMtpDpUtility::GetDrmStatus( const TDesC& aFullFileName )
     return drmStatus;
     }
 
+EXPORT_C void MmMtpDpUtility::SetPSStatus( TMtpPSStatus aStatus )
+    {
+    TBool changeScheduled = EFalse;
+    CMmMtpDpAccessSingleton::CancelActiveToIdleStatusChange();  // cancel any outstanding delay status change
+    
+    if ( aStatus == EMtpPSStatusReadyToSync )
+        {
+        TInt mtpStatus;
+        RProperty::Get( KMtpPSUid, KMtpPSStatus, mtpStatus );
+        
+        if ( mtpStatus == EMtpPSStatusActive )
+            {
+            CMmMtpDpAccessSingleton::ActiveToIdleStatusChange();
+            changeScheduled = ETrue;
+            }
+        }
+
+    if ( !changeScheduled )
+        DoSetPSStatus( aStatus );
+    }
+
+void MmMtpDpUtility::DoSetPSStatus( TMtpPSStatus aStatus )
+    {
+    TInt mtpStatus;
+    RProperty::Get( KMtpPSUid, KMtpPSStatus, mtpStatus );
+
+    if ( mtpStatus != aStatus )
+        {
+        TInt err = RProperty::Set( KMtpPSUid, KMtpPSStatus, aStatus );
+        PRINT3( _L("MM MTP <> CRequestProcessor::DoSetPSStatus err = %d, previous = %d, current = %d" ), err , mtpStatus, aStatus);
+        }
+    }
 // end of file

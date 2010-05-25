@@ -31,7 +31,7 @@
 class CMPXHarvesterFileHandler;
 class CMPXFsFormatMonitor;
 class CMPXMediaRemovalMonitor;
-class CMPXUsbEventHandler;
+class CMPXConnectionEventHandler;
 class CMPXMedia;
 class CMPXActiveTaskQueue;
 class CMPXPlaylistEngine;
@@ -304,7 +304,7 @@ private: // data
     // Move to RPointerArrays of monitors in the future
     CMPXFsFormatMonitor*      iFormatMonitor;
     CMPXMediaRemovalMonitor*  iMediaRemovalMonitor;
-    CMPXUsbEventHandler*      iUSBMonitor;
+    CMPXConnectionEventHandler*      iConnectionMonitor;
 
     // Internal task queue for async operations
     CMPXActiveTaskQueue*      iTaskQueue;

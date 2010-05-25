@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extracts metadata from a file
-*  Version     : %version: da1mmcf#38.1.4.2.6.1.12 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#38.1.4.2.6.1.13 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -147,6 +147,10 @@ CMPXMetadataExtractor::~CMPXMetadataExtractor()
     delete iDrmMediaUtility;
     delete iTaskTimer;
     iFile.Close();
+    if ( iMedia != NULL )
+        {
+        delete iMedia;
+        }
 #ifdef RD_MPX_TNM_INTEGRATION
     delete iTNManager;
     if (iTNSyncWait && iTNSyncWait->IsStarted() )
@@ -212,6 +216,7 @@ EXPORT_C void CMPXMetadataExtractor::CreateMediaL( const TDesC& aFile,
         }
     
     aNewProperty = iMedia;
+    iMedia = NULL;  // ownership transferred.
     CleanUp();
     }
 
@@ -811,14 +816,16 @@ void CMPXMetadataExtractor::CancelAllThumbnailRequests()
 void CMPXMetadataExtractor::DoCreateMediaL()
     {
     MPX_FUNC("CMPXMetadataExtractor::DoCreateMediaL()");
+    MPX_ASSERT( iMedia == NULL );
     RArray<TInt> contentIDs;
+    CleanupClosePushL( contentIDs );
     contentIDs.AppendL( KMPXMediaIdGeneral );
     contentIDs.AppendL( KMPXMediaIdAudio );
     contentIDs.AppendL( KMPXMediaIdMusic );
     contentIDs.AppendL( KMPXMediaIdDrm );
     contentIDs.AppendL( KMPXMediaIdMTP );
     iMedia = CMPXMedia::NewL( contentIDs.Array() );
-    contentIDs.Close();
+    CleanupStack::PopAndDestroy( &contentIDs );
 
     // CMPXMedia default types
     iMedia->SetTObjectValueL<TMPXGeneralType>( KMPXMediaGeneralType,
@@ -1014,7 +1021,10 @@ void CMPXMetadataExtractor::HandleTaskTimerExpired()
     {
     MPX_FUNC("CMPXMetadataExtractor::HandleTaskTimerExpired()");
     
-    iTaskTimer->Cancel();
+    if ( iTaskTimer && iTaskTimer->IsActive() )
+        {
+        iTaskTimer->Cancel();
+        }
     // execute task at index 0
     MPX_TRAPD( error, ExecuteTaskL() );
     if ( error || iCancelled )
@@ -1046,6 +1056,7 @@ void CMPXMetadataExtractor::HandleTaskTimerExpired()
         if ( iObs && !iCancelled )
             {
             iObs->HandleCreateMediaComplete( iMedia, error );
+            iMedia = NULL;  // ownership transferred.
             }
         
         CleanUp();

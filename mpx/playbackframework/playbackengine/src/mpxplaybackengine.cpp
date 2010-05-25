@@ -530,12 +530,6 @@ EXPORT_C void CMPXPlaybackEngine::CommandL(
                 iLastActiveProcess = aCmd.ValueTObjectL<TProcessId>(
                                            KMPXCommandPlaybackGeneralClientPid);
                 }
-            else if (EPbCmdStop == cmd)
-                {
-                ASSERT(aCmd.IsSupported(KMPXCommandPlaybackGeneralClientPid));
-                iLastInactiveProcess = aCmd.ValueTObjectL<TProcessId>(
-                                           KMPXCommandPlaybackGeneralClientPid);
-                }
             TInt data(0);
             if (aCmd.IsSupported(KMPXCommandPlaybackGeneralData))
                 {
@@ -651,6 +645,7 @@ EXPORT_C void CMPXPlaybackEngine::SetL(TMPXPlaybackProperty aProperty,
             break;
         case EPbPropertyMute:
             MPX_DEBUG2( "CMPXPlaybackEngine::SetL EPbPropertyMute %d", aValue );
+            iProperties[EPbPropertyMute] = aValue; // set now, needed when EPSetComplete is converted to EPropertyChanged 
             if ( iPluginHandler->Plugin() )
                 {
                 PluginL()->SetL( aProperty, aValue );
@@ -1134,14 +1129,12 @@ void CMPXPlaybackEngine::DoHandlePluginEventL(
                 }
             case EPMuteChanged:
                 {
-                if ( iProperties[EPbPropertyMute] != aData )
-                    {
-                    iProperties[EPbPropertyMute] = aData;
-                    iClientList->SendMsgL(
-                        TMPXPlaybackMessage(TMPXPlaybackMessage::EPropertyChanged,
+				// property changed broadcast message after successful return from plugins
+                iProperties[EPbPropertyMute] = aData;
+                iClientList->SendMsgL(
+                TMPXPlaybackMessage(TMPXPlaybackMessage::EPropertyChanged,
                                             EPbPropertyMute,
                                             iProperties[EPbPropertyMute]));
-                    }
                 break;
                 }
             case EPPositionChanged:

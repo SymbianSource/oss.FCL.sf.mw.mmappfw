@@ -98,8 +98,6 @@ EXPORT_C void CGetObjectPropList::ConstructL()
 
     iPropertyList = CMTPTypeObjectPropList::NewL();
 
-    SetPSStatus();
-
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     iPerfLog = CMmMtpDpPerfLog::NewL( _L( "MediaMtpDataProviderEnumerator" ) );
 #endif
@@ -143,6 +141,8 @@ EXPORT_C TMTPResponseCode CGetObjectPropList::CheckRequestL()
 //
 EXPORT_C void CGetObjectPropList::ServiceL()
     {
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
+    
     GetObjectHandlesL();
     TInt numOfObjects = iHandles.Count();
     PRINT2( _L( "MM MTP <> CGetObjectPropList::ServiceL, numOfObjects = %d, iPropCode = 0x%x" ),

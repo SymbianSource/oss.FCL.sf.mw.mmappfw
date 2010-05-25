@@ -129,7 +129,7 @@ void CSendObject::ConstructL()
 
     PRINT1( _L( "MM MTP <> CSendObject::ConstructL DataProviderId = 0x%x" ), iFramework.DataProviderId());
 
-    SetPSStatus();
+  
     PRINT( _L( "MM MTP <= CSendObject::ConstructL" ) );
     }
 
@@ -324,6 +324,8 @@ EXPORT_C TBool CSendObject::HasDataphase() const
 EXPORT_C void CSendObject::ServiceL()
     {
     PRINT( _L( "MM MTP => CSendObject::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
 
     if ( iProgress == EObjectNone )
         {
@@ -596,7 +598,7 @@ TBool CSendObject::DoHandleResponsePhaseObjectL()
             // Commits into MTP data object enumeration store the object handle and
             // storage space previously reserved for the specified object.
             iFramework.ObjectMgr().CommitReservedObjectHandleL( *iReceivedObjectInfo );
-            iRollbackList.Append( RemoveObjectFromDbL );
+            iRollbackList.Append( &CSendObject::RemoveObjectFromDbL );
             }
 
         // Commit object to MTP data store
@@ -1139,7 +1141,7 @@ TInt CSendObject::ReserveObjectL()
     // by the specified object information record.
     TRAP( err, iObjectMgr.ReserveObjectHandleL( *iReceivedObjectInfo,
         iObjectSize ) );
-    iRollbackList.Append( UnreserveObjectL );
+    iRollbackList.Append( &CSendObject::UnreserveObjectL );
 
     PRINT2( _L( "MM MTP => CSendObject::ReserveObjectL iObjectsize = %Lu, Operation: 0x%x" ), iObjectSize, iOperationCode );
     if ( err != KErrNone )
@@ -1152,7 +1154,7 @@ TInt CSendObject::ReserveObjectL()
         delete iFileReceived;
         iFileReceived = NULL;
         PRINT2( _L( "MM MTP <> CSendObject::ServiceObjectL, iFullPath is %S, iObjectSize: %Lu" ), &iFullPath, iObjectSize );
-        iRollbackList.Append( RemoveObjectFromFs );
+        iRollbackList.Append( &CSendObject::RemoveObjectFromFs );
         TRAP( err, iFileReceived = CMTPTypeFile::NewL( iFs, iFullPath, EFileWrite ) );
 
         PRINT1( _L("MM MTP <> CMTPTypeFile::NewL Leave Code is: %d"), err );
@@ -1269,7 +1271,7 @@ void CSendObject::SaveEmptyFileL()
     TRAPD( err, AddMediaToStoreL() );
 
     if ( err != KErrNone )
-        iRollbackList.Append( RemoveObjectFromDbL );
+        iRollbackList.Append( &CSendObject::RemoveObjectFromDbL );
     else
         iRollbackList.Reset();
 

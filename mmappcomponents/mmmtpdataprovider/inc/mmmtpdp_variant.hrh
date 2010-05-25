@@ -28,4 +28,7 @@
 // flag to enable support for non embedded album art, should be ON by default
 #define MMMTPDP_ABSTRACTAUDIOALBUM_SUPPORT
 
+// flag to enable reset of MTP PS Status flag at CloseSession
+#define MMMTPDP_RESET_STATUS_CLOSESESSION
+
 #endif // MMMTPDP_VARIANT_HRH
