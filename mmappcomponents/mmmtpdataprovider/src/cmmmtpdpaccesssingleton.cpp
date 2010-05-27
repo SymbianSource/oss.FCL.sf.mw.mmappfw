@@ -21,6 +21,7 @@
 #include "cmmmtpdpaccesssingleton.h"
 #include "cmmmtpdpmetadataaccesswrapper.h"
 #include "mmmtpdplogger.h"
+#include "mmmtpdputility.h"
 
 // -----------------------------------------------------------------------------
 // CMmMtpDpAccessSingleton::~CMmMtpDpAccessSingleton
@@ -30,6 +31,12 @@
 CMmMtpDpAccessSingleton::~CMmMtpDpAccessSingleton()
     {
     delete iWrapper;
+    
+    if (iDelayStatusChanger)
+        {
+        iDelayStatusChanger->Cancel();
+        delete iDelayStatusChanger;
+        }
     }
 
 // -----------------------------------------------------------------------------
@@ -151,7 +158,73 @@ CMmMtpDpAccessSingleton* CMmMtpDpAccessSingleton::NewL( MMTPDataProviderFramewor
 void CMmMtpDpAccessSingleton::ConstructL( MMTPDataProviderFramework& aFramework )
     {
     iWrapper = CMmMtpDpMetadataAccessWrapper::NewL( aFramework );
+    iDelayStatusChanger = CIdle::NewL(CActive::EPriorityIdle);
     }
 
+// -----------------------------------------------------------------------------
+// CMmMtpDpAccessSingleton::ActiveToIdleStatusChange
+// Issue ActiveToIdle Status Change (ActiveObject)
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMmMtpDpAccessSingleton::ActiveToIdleStatusChange()
+    {
+    PRINT( _L( "CMmMtpDpAccessSingleton::ActiveToIdleStatusChange" ) );
+    CMmMtpDpAccessSingleton* self = CMmMtpDpAccessSingleton::Instance();
+    
+    if (self != NULL)
+        {
+        CMmMtpDpAccessSingleton::CancelActiveToIdleStatusChange();
+    
+        if (self->DelayStatusChanger() != NULL)
+            self->DelayStatusChanger()->Start(TCallBack(DoActiveToIdleStatusChange, self));
+        }
+    }
+
+// -----------------------------------------------------------------------------
+// CMmMtpDpAccessSingleton::CancelActiveToIdleChange
+// Cancel Outstanding ActiveToIdle Status Change
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMmMtpDpAccessSingleton::CancelActiveToIdleStatusChange()
+    {
+    CMmMtpDpAccessSingleton* self = CMmMtpDpAccessSingleton::Instance();
+    
+    if ((self != NULL) && (self->DelayStatusChanger() != NULL))
+        {
+        if (self->DelayStatusChanger()->IsActive())
+            {
+            PRINT( _L( "CMmMtpDpAccessSingleton::CancelActiveToIdleStatusChange, cancel outstanding request" ) );
+            self->DelayStatusChanger()->Cancel();
+            }
+        }
+    }
+    
+// -----------------------------------------------------------------------------
+// CMmMtpDpAccessSingleton::DelayStatusChanger
+// get DelayStatusChanger instance, internal use only
+// -----------------------------------------------------------------------------
+//
+CIdle* CMmMtpDpAccessSingleton::DelayStatusChanger()
+    {
+    CIdle* delayStatusChanger = NULL;
+    CMmMtpDpAccessSingleton* self = CMmMtpDpAccessSingleton::Instance();
+    
+    if (self != NULL)
+        delayStatusChanger = self->iDelayStatusChanger;
+    
+    return delayStatusChanger;
+    }
+
+// -----------------------------------------------------------------------------
+// CMmMtpDpAccessSingleton::DoActiveToIdleChange
+// Perform actural ActiveToIdle Status Change after active object callback
+// -----------------------------------------------------------------------------
+//
+TInt CMmMtpDpAccessSingleton::DoActiveToIdleStatusChange(TAny* /*Any*/)
+    {
+    PRINT( _L( "CMmMtpDpAccessSingleton::DoActiveToIdleStatusChange ") );
+    MmMtpDpUtility::DoSetPSStatus(EMtpPSStatusReadyToSync);
+    return KErrNone;
+    }
 
 // end of file

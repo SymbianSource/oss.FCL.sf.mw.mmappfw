@@ -49,7 +49,6 @@ gint QTMSClientSink::GetType(QTMSSinkType& sinktype)
     if (iSink)
         {
         status = static_cast<TMSClientSink*> (iSink)->GetType(sinktype);
-        //status = iSink->GetType(sinktype); //virtual; should be ok
         }
     return status;
     }

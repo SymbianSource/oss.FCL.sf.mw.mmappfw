@@ -43,8 +43,7 @@
 #include <thumbnailmanager.h>
 #endif //RD_MPX_TNM_INTEGRATION
 // cenrep key need to be checked whether USB cable is connected in MTP/Combined Mode
-#include <UsbWatcherInternalPSKeys.h>
-#include <usbpersonalityids.h>
+#include <mtpprivatepskeys.h>
 #include <mpxcollectionuihelper.h>
 #include "mpxcollectionuihelperobserver.h"
 #include "mpxcollectionhelpercommon.h"
@@ -310,32 +309,16 @@ void CMPXDeleteHelper::RunL()
     {
     MPX_DEBUG3("CMPXDeleteHelper::RunL. [iMoreToDo %d] [iStatus %d]", iMoreToDo, iStatus.Int());
 
-    // cenrep key need to be checked whether USB cable is connected in MTP/Combined Mode
-    TUsbDeviceState deviceState = EUsbDeviceStateConfigured;
-    if ( !iUsbManConnected )
+    TInt mtpStatus = EMtpPSStatusUninitialized;
+    RProperty::Get( KMtpPSUid, KMtpPSStatus, mtpStatus);
+        
+    MPX_DEBUG2("CMPXCollectionViewHgImp::ConstructL, mtpstatus = %d", mtpStatus);
+
+    if (mtpStatus != EMtpPSStatusUninitialized)
         {
-        ConnectUsbMan();
-        }
-    
-    if ( iUsbManConnected )
-        {
-        if ( iUsbMan.GetDeviceState( deviceState ) != KErrNone )
-            {
-            deviceState = EUsbDeviceStateConfigured;
-            }
-        }
-    
-    if ( deviceState == EUsbDeviceStateAddress ||
-         deviceState == EUsbDeviceStateConfigured )
-        {
-        TInt usbStatus;
-        RProperty::Get(KPSUidUsbWatcher, KUsbWatcherSelectedPersonality, usbStatus);
-        if ((usbStatus == KUsbPersonalityIdMTP) || (usbStatus == KUsbPersonalityIdPCSuiteMTP))
-            {
-            MPX_DEBUG1("USB is active, Stop Delete");
-            CompleteDelete( KErrLocked );
-            return;
-            }
+        MPX_DEBUG1("MTP is active, Stop Delete");
+        CompleteDelete( KErrLocked );
+        return;
         }
     
     if (iMoreToDo && iStatus.Int() == KErrNone)

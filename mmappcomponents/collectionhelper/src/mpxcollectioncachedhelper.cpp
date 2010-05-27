@@ -30,6 +30,10 @@
 #include <mpxcollectioncommanddefs.h>
 #include <mpxmediamtpdefs.h>
 
+#include <e32property.h>    // for RProperty
+#include <UsbWatcherInternalPSKeys.h>
+#include <usbpersonalityids.h>
+
 #include <mpxcollectionutility.h>
 #include <mpxharvesterutility.h>
 
@@ -153,11 +157,21 @@ void CMPXCollectionCachedHelper::AddL( CMPXMedia* aMedia )
     MPX_FUNC("CMPXCollectionCachedHelper::::AddL");    
     // Commit when we have cached more than a set amount
     //
-    if( iCache->Count() >= KCacheCount)
-        {
+    
+    TInt cacheCount = KCacheCount;
+    TInt usbStatus;
+    RProperty::Get( KPSUidUsbWatcher, KUsbWatcherSelectedPersonality, usbStatus );
+    
+    // if MTP is not connected via USB, disable caching mechanism and flush immediately
+    // in case UI is not blocked and need to reflect the change in real time
+    // this logic is hardly invoked during MTP, because ::FindAllL (which flush) is always called before AddL
+    if ((usbStatus != KUsbPersonalityIdMTP) && (usbStatus != KUsbPersonalityIdPCSuiteMTP))
+        cacheCount = 1;            
+    
+    if( iCache->Count() >= cacheCount)
         Commit();
-        }
-#ifdef ABSTRACTAUDIOALBUM_INCLUDED
+
+    #ifdef ABSTRACTAUDIOALBUM_INCLUDED
     TBool extract = ETrue;
     if( aMedia->IsSupported( KMPXMediaMTPSampleDataFlag ) )
         {
@@ -746,6 +760,14 @@ const CMPXMedia& CMPXCollectionCachedHelper::GetL( const TDesC& aFile,
 #else  //RD_MPX_COLLECTION_CACHE
 
     MPX_DEBUG1("CMPXCollectionCachedHelper::GetL <--");
+    
+    TInt usbStatus;
+    RProperty::Get( KPSUidUsbWatcher, KUsbWatcherSelectedPersonality, usbStatus );
+    
+    // if MTP is not connected via USB, flush immediately
+    // in case UI is not blocked and need to reflect the change in real time
+    if ((usbStatus != KUsbPersonalityIdMTP) && (usbStatus != KUsbPersonalityIdPCSuiteMTP))
+        Commit();
 
 #ifdef ABSTRACTAUDIOALBUM_INCLUDED
     if (aItemCat != EMPXSong && aItemCat != EMPXPlaylist && aItemCat != EMPXAbstractAlbum)

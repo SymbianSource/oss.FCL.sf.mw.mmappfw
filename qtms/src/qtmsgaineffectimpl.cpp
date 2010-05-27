@@ -57,13 +57,14 @@ gint QTMSGainEffectImpl::PostConstruct()
     }
 
 gint QTMSGainEffectImpl::AddObserver(TMS::TMSEffectObserver& obsrvr,
-        gpointer /*user_data*/)
+        gpointer user_data)
     {
     gint ret(QTMS_RESULT_SUCCESS);
 
     if (iEffect)
         {
-        ret = static_cast<TMSGainEffect*> (iEffect)->AddObserver(obsrvr, NULL);
+        ret = static_cast<TMSGainEffect*> (iEffect)->AddObserver(obsrvr,
+                user_data);
         }
     return ret;
     }

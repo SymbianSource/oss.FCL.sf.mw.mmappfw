@@ -53,6 +53,18 @@ public:
      */
     IMPORT_C static void CloseSessionL();
     
+    /**
+     * Issue ActiveToIdle Status Change (ActiveObject)
+     * this function is to be called after an MTP operation is finish to change status from Active to Idle
+     * observer of the status might not get the notification if idle->active->idle happens in one synchronous operation 
+     */
+    IMPORT_C static void ActiveToIdleStatusChange();
+
+    /**
+     * Cancel Outstanding ActiveToIdle Status Change
+     */
+    IMPORT_C static void CancelActiveToIdleStatusChange();
+
 private:
     /*
      * get singleton instance, for internal use
@@ -73,8 +85,20 @@ private:
      */
     ~CMmMtpDpAccessSingleton();
     
+    /**
+     * get DelayStatusChanger instance, internal use only
+     */
+    static CIdle* DelayStatusChanger();
+    
+    /**
+     * Perform actural ActiveToIdle Status Change after active object callback
+     */
+    static TInt DoActiveToIdleStatusChange(TAny* Any);
+    
 private:
     CMmMtpDpMetadataAccessWrapper* iWrapper;
+    
+    CIdle* iDelayStatusChanger;
 
     };
 

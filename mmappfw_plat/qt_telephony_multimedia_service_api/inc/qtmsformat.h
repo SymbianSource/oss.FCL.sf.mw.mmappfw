@@ -125,7 +125,7 @@ protected:
     QTMSFormat();
 
 protected:
-    TMS::TMSFormat *iFormat;
+    TMS::TMSFormat* iFormat;
     };
 
 } //namespace QTMS

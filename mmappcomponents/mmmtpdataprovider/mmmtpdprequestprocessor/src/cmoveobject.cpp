@@ -105,10 +105,6 @@ EXPORT_C CMoveObject::CMoveObject( MMTPDataProviderFramework& aFramework,
 EXPORT_C void CMoveObject::ConstructL()
     {
     iPropertyList = CMTPTypeObjectPropList::NewL();
-
-    // Set the CenRep value of MTP status,
-    // also need to do in other processors which related to MPX
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -119,7 +115,8 @@ EXPORT_C void CMoveObject::ConstructL()
 EXPORT_C void CMoveObject::ServiceL()
     {
     PRINT( _L( "MM MTP => CMoveObject::ServiceL" ) );
-
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
     MoveObjectL();
 
     PRINT( _L( "MM MTP <= CMoveObject::ServiceL" ) );
@@ -515,7 +512,6 @@ void CMoveObject::SetPropertiesL( const TDesC& aNewFileName )
         iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
         iFramework.ObjectMgr().ModifyObjectL(*iObjectInfo);
 
-        iDpConfig.GetWrapperL().SetStorageRootL( aNewFileName );
         iDpConfig.GetWrapperL().AddObjectL( *iObjectInfo );
 
         if ( formatCode == EMTPFormatCodeAbstractAudioVideoPlaylist

@@ -24,6 +24,7 @@
 
 namespace QTMS {
 
+// FORWARD DECLARATION
 class QTMSFormat;
 
 // Result codes

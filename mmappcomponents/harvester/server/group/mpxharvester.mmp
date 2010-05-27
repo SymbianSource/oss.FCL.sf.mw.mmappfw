@@ -43,7 +43,7 @@ SOURCE                  mpxharvesterengine.cpp
 // System events
 SOURCE                  mpxfsformatmonitor.cpp
 SOURCE                  mpxmediaremovalmonitor.cpp
-SOURCE                  mpxusbeventhandler.cpp
+SOURCE                  mpxconnectioneventhandler.cpp
 
 USERINCLUDE             ../inc
 USERINCLUDE             ../../inc

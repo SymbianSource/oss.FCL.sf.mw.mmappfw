@@ -20,7 +20,6 @@
 #define CABSTRACTMEDIAMTPDATAPROVIDERENUMERATOR_H
 
 #include <e32base.h>
-#include <d32dbms.h>
 
 #include "mmmtpenumerationcallback.h"
 #include "cmmmtpdpperflog.h"
@@ -29,8 +28,6 @@
 class MMTPDataProviderFramework;
 class MMTPObjectMgr;
 class CAbstractMediaMtpDataProvider;
-class CMTPObjectMetaData;
-class CMmMtpDpMetadataAccessWrapper;
 class CMPXMediaArray;
 
 /**
@@ -77,6 +74,7 @@ private:
 
     enum TEnumState
     {
+        EEnumNone,
         EEnumPlaylist,
         EEnumAbstractAlbum,
         EEnumCount
@@ -128,12 +126,8 @@ private:
     /** Provides Callback mechanism for completion of enumeration*/
     CAbstractMediaMtpDataProvider& iDataProvider;
 
-    TParse iPath;
-    TEntryArray iEntries;
-    TInt iFirstUnprocessed;
     RArray<TUint> iStorages;
     TUint32 iStorageId;
-    TUint32 iParentHandle;
 
     CMPXMediaArray* iAbstractMedias;
     TInt iCount;

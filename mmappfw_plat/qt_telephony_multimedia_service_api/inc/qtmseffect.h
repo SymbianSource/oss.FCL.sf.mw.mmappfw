@@ -34,7 +34,6 @@ namespace QTMS {
  */
 class QTMSEffect
     {
-    //Q_OBJECT
 public:
     /**
      * Return effect type.

@@ -57,18 +57,23 @@ using namespace TMS;
 
 QTMSFactoryImpl::QTMSFactoryImpl()
     {
+    TRACE_PRN_FN_ENT;
     TMSVer* ver = NULL;
     TMSFactory::CreateFactory(iFactory, *ver);
+    TRACE_PRN_FN_EXT;
     }
 
 QTMSFactoryImpl::~QTMSFactoryImpl()
     {
+    TRACE_PRN_FN_ENT;
     delete iFactory;
+    TRACE_PRN_FN_EXT;
     }
 
 gint QTMSFactoryImpl::CreateCall(QTMSCallType ctype, QTMSCall*& qtmscall,
         guint /*ctxid*/)
     {
+    TRACE_PRN_FN_ENT;
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
     TMSCall* tmscall(NULL);
@@ -81,14 +86,17 @@ gint QTMSFactoryImpl::CreateCall(QTMSCallType ctype, QTMSCall*& qtmscall,
             ret = QTMSCallImpl::Create(qtmscall, tmscall);
             }
         }
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::DeleteCall(QTMSCall*& qtmscall)
     {
+    TRACE_PRN_FN_ENT;
     gint ret(QTMS_RESULT_SUCCESS);
     delete qtmscall;
     qtmscall = NULL;
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
@@ -113,11 +121,12 @@ gint QTMSFactoryImpl::IsCallTypeSupported(QTMSCallType ctype, gboolean& flag)
 gint QTMSFactoryImpl::GetSupportedFormats(const QTMSStreamType strmtype,
         FormatVector& fmtlist)
     {
-    gint ret(QTMS_RESULT_SUCCESS);
+    TRACE_PRN_FN_ENT;
+    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
     TMS::FormatVector tmsfmtlist;
-    if(iFactory)
+    if (iFactory)
         {
-        iFactory->GetSupportedFormats(strmtype,tmsfmtlist);
+        ret = iFactory->GetSupportedFormats(strmtype,tmsfmtlist);
         }
 
     std::vector<TMSFormat*>::iterator itCodecs = tmsfmtlist.begin();
@@ -147,20 +156,20 @@ gint QTMSFactoryImpl::GetSupportedFormats(const QTMSStreamType strmtype,
                 break;
             }
 
-        if(qtmsfmt)
+        if (qtmsfmt)
             {
             fmtlist.push_back(qtmsfmt);
             }
         }
-
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::CreateFormat(QTMSFormatType fmttype,
         QTMSFormat*& qtmsfmt)
     {
-    gint ret(QTMS_RESULT_SUCCESS);
-
+    TRACE_PRN_FN_ENT;
+    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
     TMSFormat* tmsformat(NULL);
 
     if (iFactory)
@@ -187,18 +196,21 @@ gint QTMSFactoryImpl::CreateFormat(QTMSFormatType fmttype,
                     ret = QTMSILBCFormatImpl::Create(qtmsfmt, tmsformat);
                     break;
                 default:
+                    ret = QTMS_RESULT_FORMAT_TYPE_NOT_SUPPORTED;
                     break;
                 }
             }
         }
-
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::DeleteFormat(QTMSFormat*& qtmsfmt)
     {
-    gint ret(QTMS_RESULT_FORMAT_TYPE_NOT_SUPPORTED);
+    TRACE_PRN_FN_ENT;
+    __ASSERT_ALWAYS(qtmsfmt, PANIC(QTMS_RESULT_NULL_ARGUMENT));
 
+    gint ret(QTMS_RESULT_SUCCESS);
     QTMSFormatType fmttype;
     ret = qtmsfmt->GetType(fmttype);
     switch (fmttype)
@@ -206,41 +218,38 @@ gint QTMSFactoryImpl::DeleteFormat(QTMSFormat*& qtmsfmt)
         case QTMS_FORMAT_PCM:
             delete (static_cast<QTMSPCMFormatImpl*>(qtmsfmt));
             qtmsfmt = NULL;
-            ret = QTMS_RESULT_SUCCESS;
             break;
         case QTMS_FORMAT_AMR:
             delete (static_cast<QTMSAMRFormatImpl*>(qtmsfmt));
             qtmsfmt = NULL;
-            ret = QTMS_RESULT_SUCCESS;
             break;
         case QTMS_FORMAT_G711:
             delete (static_cast<QTMSG711FormatImpl*>(qtmsfmt));
             qtmsfmt = NULL;
-            ret = QTMS_RESULT_SUCCESS;
             break;
         case QTMS_FORMAT_G729:
             delete (static_cast<QTMSG729FormatImpl*>(qtmsfmt));
             qtmsfmt = NULL;
-            ret = QTMS_RESULT_SUCCESS;
             break;
         case QTMS_FORMAT_ILBC:
             delete (static_cast<QTMSILBCFormatImpl*>(qtmsfmt));
             qtmsfmt = NULL;
-            ret = QTMS_RESULT_SUCCESS;
             break;
         default:
+            ret = QTMS_RESULT_FORMAT_TYPE_NOT_SUPPORTED;
             break;
         }
-
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::CreateEffect(QTMSEffectType tmseffecttype,
         QTMSEffect*& qtmseffect)
     {
-    //gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    gint ret(TMS_RESULT_SUCCESS);
+    TRACE_PRN_FN_ENT;
+    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
     TMSEffect* tmseffect(NULL);
+
     if (iFactory)
         {
         ret = iFactory->CreateEffect((TMSEffectType) tmseffecttype, tmseffect);
@@ -269,12 +278,13 @@ gint QTMSFactoryImpl::CreateEffect(QTMSEffectType tmseffecttype,
                 }
             }
         }
-
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::DeleteEffect(QTMSEffect*& qtmseffect)
     {
+    TRACE_PRN_FN_ENT;
     gint ret(QTMS_RESULT_SUCCESS);
 
     QTMSEffectType effecttype;
@@ -301,24 +311,31 @@ gint QTMSFactoryImpl::DeleteEffect(QTMSEffect*& qtmseffect)
             ret = QTMS_RESULT_EFFECT_TYPE_NOT_SUPPORTED;
             break;
         }
-
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::CreateBuffer(QTMSBufferType buffertype, guint size,
         QTMSBuffer*& qtmsbuffer)
     {
-    gint ret(TMS_RESULT_INSUFFICIENT_MEMORY);
     TRACE_PRN_FN_ENT;
-
-    switch (buffertype)
+    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
+    TMSBuffer* tmsbuffer(NULL);
+    if (iFactory)
         {
-        case QTMS_BUFFER_MEMORY:
-            ret = QTMSMemBuffer::Create(size, qtmsbuffer);
-            break;
-        default:
-            ret = QTMS_RESULT_BUFFER_TYPE_NOT_SUPPORTED;
-            break;
+        ret = iFactory->CreateBuffer(buffertype, size, tmsbuffer);
+        if (ret == TMS_RESULT_SUCCESS)
+            {
+            switch (buffertype)
+                {
+                case QTMS_BUFFER_MEMORY:
+                    ret = QTMSMemBuffer::Create(size, qtmsbuffer, tmsbuffer);
+                    break;
+                default:
+                    ret = QTMS_RESULT_BUFFER_TYPE_NOT_SUPPORTED;
+                    break;
+                }
+            }
         }
 
     TRACE_PRN_FN_EXT;
@@ -327,15 +344,19 @@ gint QTMSFactoryImpl::CreateBuffer(QTMSBufferType buffertype, guint size,
 
 gint QTMSFactoryImpl::DeleteBuffer(QTMSBuffer*& qtmsbuffer)
     {
+    TRACE_PRN_FN_ENT;
+    gint ret(QTMS_RESULT_SUCCESS);
     delete (static_cast<QTMSMemBuffer*> (qtmsbuffer));
     qtmsbuffer = NULL;
-    return QTMS_RESULT_SUCCESS;
+    TRACE_PRN_FN_EXT;
+    return ret;
     }
 
 gint QTMSFactoryImpl::CreateSource(QTMSSourceType srctype,
         QTMSSource*& qtmssrc)
     {
-    gint ret(QTMS_RESULT_SUCCESS);
+    TRACE_PRN_FN_ENT;
+    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
     TMS::TMSSource* tmssource(NULL);
     if (iFactory)
@@ -356,18 +377,21 @@ gint QTMSFactoryImpl::CreateSource(QTMSSourceType srctype,
                     ret = QTMSMicSourceImpl::Create(qtmssrc, tmssource);
                     break;
                 default:
+                    ret = TMS_RESULT_SOURCE_TYPE_NOT_SUPPORTED;
                     break;
                 }
             }
         }
-
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::DeleteSource(QTMSSource*& qtmssrc)
     {
-    gint ret(TMS_RESULT_INVALID_ARGUMENT);
+    TRACE_PRN_FN_ENT;
+    __ASSERT_ALWAYS(qtmssrc, PANIC(QTMS_RESULT_NULL_ARGUMENT));
 
+    gint ret(QTMS_RESULT_SUCCESS);
     QTMSSourceType sourcetype;
     ret = qtmssrc->GetType(sourcetype);
     switch (sourcetype)
@@ -375,20 +399,17 @@ gint QTMSFactoryImpl::DeleteSource(QTMSSource*& qtmssrc)
         case QTMS_SOURCE_CLIENT:
             delete (static_cast<QTMSClientSourceImpl*>(qtmssrc));
             qtmssrc = NULL;
-            ret = QTMS_RESULT_SUCCESS;
             break;
         case QTMS_SOURCE_MODEM:
             {
             delete (static_cast<QTMSModemSourceImpl*>(qtmssrc));
             qtmssrc = NULL;
-            ret = TMS_RESULT_SUCCESS;
             }
             break;
         case TMS_SOURCE_MIC:
             {
             delete (static_cast<QTMSMicSourceImpl*>(qtmssrc));
             qtmssrc = NULL;
-            ret = TMS_RESULT_SUCCESS;
             }
             break;
         default:
@@ -402,7 +423,8 @@ gint QTMSFactoryImpl::DeleteSource(QTMSSource*& qtmssrc)
 
 gint QTMSFactoryImpl::CreateSink(QTMSSinkType sinktype, QTMSSink*& qtmssink)
     {
-    gint ret(QTMS_RESULT_SUCCESS);
+    TRACE_PRN_FN_ENT;
+    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
     TMS::TMSSink* tmssink(NULL);
 
@@ -424,18 +446,21 @@ gint QTMSFactoryImpl::CreateSink(QTMSSinkType sinktype, QTMSSink*& qtmssink)
                     ret = QTMSSpeakerSinkImpl::Create(qtmssink, tmssink);
                     break;
                 default:
+                    ret = TMS_RESULT_SINK_TYPE_NOT_SUPPORTED;
                     break;
                 }
             }
         }
-
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::DeleteSink(QTMSSink*& qtmssink)
     {
-    gint ret(QTMS_RESULT_INVALID_ARGUMENT);
+    TRACE_PRN_FN_ENT;
+    __ASSERT_ALWAYS(qtmssink, PANIC(QTMS_RESULT_NULL_ARGUMENT));
 
+    gint ret(QTMS_RESULT_SUCCESS);
     QTMSSinkType sinktype;
     ret = qtmssink->GetType(sinktype);
     switch (sinktype)
@@ -444,34 +469,32 @@ gint QTMSFactoryImpl::DeleteSink(QTMSSink*& qtmssink)
             {
             delete (static_cast<QTMSClientSinkImpl*>(qtmssink));
             qtmssink = NULL;
-            ret = QTMS_RESULT_SUCCESS;
             }
             break;
         case QTMS_SINK_MODEM:
             {
             delete (static_cast<QTMSModemSinkImpl*>(qtmssink));
             qtmssink = NULL;
-            ret = QTMS_RESULT_SUCCESS;
             }
             break;
         case QTMS_SINK_SPEAKER:
             {
             delete (static_cast<QTMSSpeakerSinkImpl*>(qtmssink));
             qtmssink = NULL;
-            ret = QTMS_RESULT_SUCCESS;
             }
             break;
         default:
             ret = QTMS_RESULT_SINK_TYPE_NOT_SUPPORTED;
             break;
         }
-
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::CreateGlobalRouting(QTMSGlobalRouting*& qrouting)
     {
-    gint ret(QTMS_RESULT_SUCCESS);
+    TRACE_PRN_FN_ENT;
+    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
     TMS::TMSGlobalRouting* tmsrouting(NULL);
     if (iFactory)
@@ -483,20 +506,24 @@ gint QTMSFactoryImpl::CreateGlobalRouting(QTMSGlobalRouting*& qrouting)
             ret = QTMSGlobalRoutingImpl::Create(qrouting, tmsrouting);
             }
         }
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::DeleteGlobalRouting(QTMSGlobalRouting*& globalrouting)
     {
+    TRACE_PRN_FN_ENT;
     gint ret(QTMS_RESULT_SUCCESS);
     delete (static_cast<QTMSGlobalRoutingImpl*>(globalrouting));
     globalrouting = NULL;
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::CreateDTMF(QTMSStreamType streamtype, QTMSDTMF*& qdtmf)
     {
-    gint ret(QTMS_RESULT_SUCCESS);
+    TRACE_PRN_FN_ENT;
+    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
     TMS::TMSDTMF* tmsdtmf = NULL;
 
@@ -509,20 +536,24 @@ gint QTMSFactoryImpl::CreateDTMF(QTMSStreamType streamtype, QTMSDTMF*& qdtmf)
             ret = QTMSDTMFImpl::Create(qdtmf, tmsdtmf);
             }
         }
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::DeleteDTMF(QTMSDTMF*& dtmf)
     {
+    TRACE_PRN_FN_ENT;
     gint ret(QTMS_RESULT_SUCCESS);
     delete (static_cast<QTMSDTMFImpl*>(dtmf));
     dtmf = NULL;
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::CreateRingTonePlayer(QTMSRingTone*& rt)
     {
-    gint ret(QTMS_RESULT_SUCCESS);
+    TRACE_PRN_FN_ENT;
+    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
     TMS::TMSRingTone* tmsrt = NULL;
 
@@ -535,20 +566,24 @@ gint QTMSFactoryImpl::CreateRingTonePlayer(QTMSRingTone*& rt)
             ret = QTMSRingToneImpl::Create(rt, tmsrt);
             }
         }
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::DeleteRingTonePlayer(QTMSRingTone*& rt)
     {
+    TRACE_PRN_FN_ENT;
     gint ret(QTMS_RESULT_SUCCESS);
     delete (static_cast<QTMSRingToneImpl*>(rt));
     rt = NULL;
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::CreateInbandTonePlayer(QTMSInbandTone*& qinbandtone)
     {
-    gint ret(QTMS_RESULT_SUCCESS);
+    TRACE_PRN_FN_ENT;
+    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
     TMS::TMSInbandTone* tmsinband = NULL;
     if (iFactory)
@@ -560,14 +595,17 @@ gint QTMSFactoryImpl::CreateInbandTonePlayer(QTMSInbandTone*& qinbandtone)
             ret = QTMSInbandToneImpl::Create(qinbandtone, tmsinband);
             }
         }
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 
 gint QTMSFactoryImpl::DeleteInbandTonePlayer(QTMSInbandTone*& inbandtone)
     {
+    TRACE_PRN_FN_ENT;
     gint ret(QTMS_RESULT_SUCCESS);
     delete (static_cast<QTMSInbandToneImpl*>(inbandtone));
     inbandtone = NULL;
+    TRACE_PRN_FN_EXT;
     return ret;
     }
 

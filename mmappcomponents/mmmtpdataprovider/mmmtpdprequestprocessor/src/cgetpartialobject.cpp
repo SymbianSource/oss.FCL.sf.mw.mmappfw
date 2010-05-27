@@ -19,6 +19,7 @@
 #include <mtp/cmtptypefile.h>
 
 #include "cgetpartialobject.h"
+#include "mmmtpdputility.h"
 #include "mmmtpdplogger.h"
 #include "tmmmtpdppanic.h"
 #include "mmmtpdpconfig.h"
@@ -80,7 +81,6 @@ EXPORT_C CGetPartialObject::CGetPartialObject( MMTPDataProviderFramework& aFrame
 //
 void CGetPartialObject::ConstructL()
     {
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -147,6 +147,8 @@ TBool CGetPartialObject::VerifyParametersL()
 EXPORT_C void CGetPartialObject::ServiceL()
     {
     PRINT( _L( "MM MTP => CGetPartialObject::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
 
     // Get file information
     CMTPObjectMetaData* objectInfo = iRequestChecker->GetObjectInfo( iObjectHandle );

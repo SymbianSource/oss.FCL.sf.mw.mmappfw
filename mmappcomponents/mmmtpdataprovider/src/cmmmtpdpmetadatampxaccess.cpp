@@ -398,7 +398,10 @@ MMPXCollectionHelper* CMmMtpDpMetadataMpxAccess::CollectionHelperL()
         searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXSong );
         searchMedia->SetTObjectValueL<TMPXItemId>( KMPXMediaGeneralId,
             KMtpInvalidSongID );
-        searchMedia->SetTextValueL( KMPXMediaGeneralDrive, iStoreRoot );
+        if ( iStoreRoot.Length() > 0 )
+            {
+            searchMedia->SetTextValueL( KMPXMediaGeneralDrive, iStoreRoot );
+            }
 
         RArray<TMPXAttribute> songAttributes;
         CleanupClosePushL( songAttributes ); // + songAttributes
@@ -941,7 +944,9 @@ void CMmMtpDpMetadataMpxAccess::AddSongL( const TDesC& aFullFileName )
     searchMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXItem );
     searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXSong );
     searchMedia->SetTextValueL( KMPXMediaGeneralUri, aFullFileName );
-    searchMedia->SetTextValueL( KMPXMediaGeneralDrive, iStoreRoot );
+
+    TParsePtrC parse( aFullFileName );
+    searchMedia->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
 
     RArray<TMPXAttribute> songAttributes;
     CleanupClosePushL( songAttributes ); // + songAttributes
@@ -1173,7 +1178,7 @@ void CMmMtpDpMetadataMpxAccess::SetReferenceL( const TDesC& aRefOwnerName,
         TParsePtrC parse( aRefFileArray[j] );
         media->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
         media->SetTObjectValueL( KMPXMediaGeneralModified, EFalse );
-  
+
         // Add media into array contents
         abstractMediaArray->AppendL( media );
 
@@ -1583,7 +1588,9 @@ TBool CMmMtpDpMetadataMpxAccess::IsExistL( const TDesC& aSuid )
     searchMedia->SetTObjectValueL( KMPXMediaGeneralType, EMPXItem );
     searchMedia->SetTObjectValueL( KMPXMediaGeneralCategory, EMPXPlaylist );
     searchMedia->SetTextValueL( KMPXMediaGeneralUri, aSuid );
-    searchMedia->SetTextValueL( KMPXMediaGeneralDrive, iStoreRoot );
+
+    TParsePtrC parse( aSuid );
+    searchMedia->SetTextValueL( KMPXMediaGeneralDrive, parse.Drive() );
 
     RArray<TMPXAttribute> playlistAttributes;
     CleanupClosePushL( playlistAttributes ); // + playlistAttributes

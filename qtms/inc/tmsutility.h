@@ -20,7 +20,7 @@
 
 #include <e32std.h>
 #include <tms.h>
-#include <telephonyaudiorouting.h>
+#include <TelephonyAudioRouting.h>
 #ifdef _DEBUG
 #include <e32debug.h>
 #endif
@@ -62,6 +62,9 @@ namespace TMS {
 #define TOTAROUTPUT(output) TMSUtility::ToTAROutput(output)
 #define TOFOURCC(format) TMSUtility::ToFourCC(format)
 #define TOTMSFORMAT(fourcc) TMSUtility::FourCCToTMSFormat(fourcc)
+
+_LIT(KQTMSPanic, "QTMS Panic!" );
+#define PANIC(reason) User::Panic(KQTMSPanic, reason)
 
 // TMSUtility class
 class TMSUtility

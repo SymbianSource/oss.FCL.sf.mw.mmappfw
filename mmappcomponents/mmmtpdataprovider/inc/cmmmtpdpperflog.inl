@@ -72,7 +72,7 @@ void CMmMtpDpPerfLog::WriteFormat( TRefByValue<const TDesC> aFmt, ... )
     VA_START( list, aFmt );
 
     HBufC* buf = HBufC::New( KMtpLogBufferSize );
-    if ( buf )
+    if ( buf != NULL )
         {
         buf->Des().AppendFormatList( aFmt, list, &iOverflowHandler );
         Write( *buf );

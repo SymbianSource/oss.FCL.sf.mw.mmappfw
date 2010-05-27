@@ -83,7 +83,6 @@ gint QTMSCall::CreateStream(const QTMSStreamType type, QTMSStream*& qstrm)
 gint QTMSCall::DeleteStream(QTMSStream*& strm)
     {
     gint status(QTMS_RESULT_SUCCESS);
-    //delete (static_cast<QTMSStreamImpl*> (strm));
     delete strm;
     strm = NULL;
     return status;

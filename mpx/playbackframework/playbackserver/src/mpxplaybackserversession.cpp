@@ -475,10 +475,6 @@ void CMPXPlaybackSession::DispatchMessageL( const RMessage2& aMessage, TInt& aMs
             CMPXCommand* cmd( NULL );
             ::NewFromMessageL<CMPXMedia>(aMessage, 1, cmd);
             CleanupStack::PushL(cmd);
-            if (aMessage.Int0())
-                { // aSync command
-                SetAsync(aMessage);
-                } // else sync command
             iPlayer->CommandL(*cmd, *iMessageQueue);
             CleanupStack::PopAndDestroy(cmd);
             break;

@@ -70,7 +70,6 @@ EXPORT_C MMmRequestProcessor* CSetObjectReferences::NewL( MMTPDataProviderFramew
 //
 void CSetObjectReferences::ConstructL()
     {
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -126,6 +125,9 @@ EXPORT_C void CSetObjectReferences::DoSetObjectReferencesL( const CMTPObjectMeta
 EXPORT_C void CSetObjectReferences::ServiceL()
     {
     PRINT( _L( "MM MTP => CSetObjectReferences::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
+    
     delete iReferences;
     iReferences = NULL;
     iReferences = CMTPTypeArray::NewL( EMTPTypeAUINT32 );

@@ -20,6 +20,10 @@
 
 #include <qtmsbuffer.h>
 
+namespace TMS {
+class TMSBuffer;
+}
+
 namespace QTMS {
 
 // QTMSMemBuffer class
@@ -35,8 +39,11 @@ public:
      * @param  size
      *      Size of the buffer to be created.
      *
+     * @param  qbuffer
+     *      Created QTMSBuffer object.
+     *
      * @param  buffer
-     *      Created buffer object.
+     *      TMS::TMSBuffer buffer object.
      *
      * @return
      *      TMS_RESULT_SUCCESS if buffer is created successfully.
@@ -46,7 +53,8 @@ public:
      *      supported.
      *
      */
-    static gint Create(guint size, QTMSBuffer*& buffer);
+    static gint Create(guint size, QTMSBuffer*& qbuffer,
+            TMS::TMSBuffer*& tmsbuffer);
 
     /**
      * Return buffer type.
@@ -108,13 +116,10 @@ public:
 
 private:
     QTMSMemBuffer();
-    gint PostConstruct(guint size);
+    gint PostConstruct();
 
-private:
-    guint iBufferSize;
-    guint iTimeStamp;
-    guint8* iDataPtr;
-    gboolean iOwnsBuffer;
+protected:
+    TMS::TMSBuffer* iBuffer;
     };
 
 } //namespace QTMS

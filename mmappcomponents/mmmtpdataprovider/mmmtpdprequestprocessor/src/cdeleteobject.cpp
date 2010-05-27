@@ -64,7 +64,6 @@ EXPORT_C MMmRequestProcessor* CDeleteObject::NewL( MMTPDataProviderFramework& aF
 void CDeleteObject::ConstructL()
     {
     CActiveScheduler::Add( this );
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -104,6 +103,8 @@ CDeleteObject::CDeleteObject( MMTPDataProviderFramework& aFramework,
 //
 EXPORT_C void CDeleteObject::ServiceL()
     {
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
+    
     iObjectsToDelete.Reset();
     iDeleteError = KErrNone;
     TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
@@ -223,8 +224,6 @@ void CDeleteObject::DeleteObjectL( const CMTPObjectMetaData& aObjectInfo )
     {
     TFileName fileName( aObjectInfo.DesC( CMTPObjectMetaData::ESuid ) );
     PRINT1( _L( "MM MTP <> CDeleteObject::DeleteObjectL fileName = %S" ), &fileName );
-
-    iDpConfig.GetWrapperL().SetStorageRootL( fileName );
 
     // To capture special situation: After copy, move, rename playlist folder name,
     // record in MPX is not inlined with framework db, playlist should not be deleted

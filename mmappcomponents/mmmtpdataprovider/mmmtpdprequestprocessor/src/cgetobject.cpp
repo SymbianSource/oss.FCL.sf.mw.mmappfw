@@ -19,6 +19,7 @@
 #include <mtp/cmtptypefile.h>
 
 #include "cgetobject.h"
+#include "mmmtpdputility.h"
 #include "mmmtpdplogger.h"
 
 // -----------------------------------------------------------------------------
@@ -60,7 +61,6 @@ EXPORT_C MMmRequestProcessor* CGetObject::NewL( MMTPDataProviderFramework& aFram
 //
 void CGetObject::ConstructL()
     {
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -99,6 +99,8 @@ CGetObject::CGetObject( MMTPDataProviderFramework& aFramework,
 void CGetObject::ServiceL()
     {
     PRINT( _L( "MM MTP => CGetObject::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
 
     // Get the objectinfo
     TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );

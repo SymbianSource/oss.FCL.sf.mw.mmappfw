@@ -30,26 +30,10 @@ class TMSStream;
 
 namespace QTMS {
 
-// FORWARD DECLARATIONS
-//class QTMSStream;
-class QTMSSource;
-class QTMSSink;
-class QTMSForamt;
-class QTMSEffect;
-class QTMSBuffer;
-class QTMSFormat;
-
 // QTMSStreamImpl class
 class QTMSStreamImpl : public QTMSStream,
                        public TMS::TMSStreamObserver
-
     {
-    enum TQueueType
-        {
-        EMsgBufQueue,
-        EMsgComQueue
-        };
-
 public:
     static gint Create(QTMSCallType callType, QTMSStreamType stype,
             QTMSStream*& qstrm, TMS::TMSStream*& tmsstrm);

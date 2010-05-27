@@ -386,6 +386,7 @@ void CMPXPlaybackUtility::CommandL(
     TPtr8 ptr = buf->Ptr(0);
     if (asyncVar)
         { // async request
+        MPX_DEBUG1("CMPXPlaybackUtility::CommandL asynchronous command");		
         ASSERT(aCallback); // callback must be provided for asynchronous command
         // Increase reference count on command ownership transferred
         CMPXCommand* ref = CMPXCommand::NewL(aCmd);

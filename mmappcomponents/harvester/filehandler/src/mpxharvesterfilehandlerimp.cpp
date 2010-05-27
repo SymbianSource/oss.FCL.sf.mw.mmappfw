@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Handles all file related activities
-*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.5.2 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.5.3 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -46,8 +46,7 @@
 #include <caf/caferr.h>
 #include <caf/content.h>
 #include <caf/data.h>
-#include <UsbWatcherInternalPSKeys.h>
-#include <usbpersonalityids.h>
+#include <mtpprivatepskeys.h>
 
 #include "mpxharvesterfilehandlerimp.h"
 #include "mpxfolderscanner.h"
@@ -299,14 +298,16 @@ void CMPXHarvesterFileHandlerImp::ScanL()
         }
     iCollectionUtil = MMPXCollectionUtility::NewL( NULL, KMusicPlayerUid );
     
-    // cenrep key need to be checked whether USB cable is connected in MTP/Combined Mode
+    // cenrep key need to be checked whether MTP is connected
     // to prevent refresh
-    TInt usbStatus;
-    RProperty::Get(KPSUidUsbWatcher, KUsbWatcherSelectedPersonality, usbStatus);
-       
-    if ((usbStatus == KUsbPersonalityIdMTP) || (usbStatus == KUsbPersonalityIdPCSuiteMTP))
+    TInt mtpStatus = EMtpPSStatusUninitialized;
+    RProperty::Get( KMtpPSUid, KMtpPSStatus, mtpStatus);
+        
+    MPX_DEBUG2("CMPXCollectionViewHgImp::ConstructL, mtpstatus = %d", mtpStatus);
+
+    if (mtpStatus != EMtpPSStatusUninitialized)
         {
-        MPX_DEBUG1("USB is active, Leave with KErrLocked");
+        MPX_DEBUG1("MTP is active, Leave with KErrLocked");
         // need to call back even if it leaves here
         iCollectionUtil->Collection().NotifyL( EMcMsgRefreshEnd, KErrLocked );
         //User::Leave(KErrLocked);

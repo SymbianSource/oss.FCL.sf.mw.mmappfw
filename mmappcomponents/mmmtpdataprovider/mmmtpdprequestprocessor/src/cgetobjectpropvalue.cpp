@@ -70,7 +70,6 @@ EXPORT_C CGetObjectPropValue::CGetObjectPropValue( MMTPDataProviderFramework& aF
         KMTPGetObjectPropValuePolicy ),
     iDpConfig( aDpConfig )
     {
-    SetPSStatus();
     PRINT( _L( "Operation: GetObjectPropValue(0x9803)" ) );
     }
 
@@ -130,6 +129,8 @@ EXPORT_C TMTPResponseCode CGetObjectPropValue::CheckRequestL()
 EXPORT_C void CGetObjectPropValue::ServiceL()
     {
     PRINT( _L( "MM MTP => CGetObjectPropValue::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
 
     //Get the request information
     TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );

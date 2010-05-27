@@ -47,7 +47,7 @@ public:
      *      QTMS_RESULT_SUCCESS if the operation was successful.
      *
      */
-    virtual gint GetType(QTMSBufferType& buftype)=0;
+    virtual gint GetType(QTMSBufferType& buftype) = 0;
 
     /**
      * Returns time stamp of the buffer so that the framework can determine
@@ -61,7 +61,7 @@ public:
      *      QTMS_RESULT_SUCCESS if the operation was successful.
      *
      */
-    virtual gint GetTimeStamp(guint64& ts)=0;
+    virtual gint GetTimeStamp(guint64& ts) = 0;
 
     /**
      * Sets the time stamp on the Buffer so that the framework can determine
@@ -75,7 +75,7 @@ public:
      *      QTMS_RESULT_SUCCESS if the operation was successful.
      *
      */
-    virtual gint SetTimeStamp(const guint64 ts) =0;
+    virtual gint SetTimeStamp(const guint64 ts) = 0;
 
     /**
      * Returns size of data in the buffer.
@@ -87,7 +87,7 @@ public:
      *      QTMS_RESULT_SUCCESS if the operation was successful.
      *
      */
-    virtual gint GetDataSize(guint& size)=0;
+    virtual gint GetDataSize(guint& size) = 0;
 
     /**
      * Set size of data in the buffer after filling in by the client.
@@ -99,7 +99,7 @@ public:
      *      QTMS_RESULT_SUCCESS if the operation was successful.
      *
      */
-    virtual gint SetDataSize(const guint size)=0;
+    virtual gint SetDataSize(const guint size) = 0;
 
     /**
      * Return pointer to the memory location of the data associated with this
@@ -112,7 +112,7 @@ public:
      *      QTMS_RESULT_SUCCESS if the operation was successful.
      *
      */
-    virtual gint GetDataPtr(guint8*& bufptr) =0;
+    virtual gint GetDataPtr(guint8*& bufptr) = 0;
     };
 
 } //namespace QTMS

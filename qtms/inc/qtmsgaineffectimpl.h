@@ -50,9 +50,6 @@ public:
 private:
     QTMSGainEffectImpl();
     gint PostConstruct();
-
-private:
-    gpointer iUserData;
     };
 
 } //namespace QTMS
