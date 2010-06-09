@@ -46,7 +46,7 @@ EXPORT_C MMmRequestProcessor* CGetFormatCapabilities::NewL( MMTPDataProviderFram
 // Standard c++ constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CGetFormatCapabilities::CGetFormatCapabilities( MMTPDataProviderFramework& aFramework,
+CGetFormatCapabilities::CGetFormatCapabilities( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
         CRequestProcessor( aFramework, aConnection, 0, NULL ),
@@ -60,7 +60,7 @@ EXPORT_C CGetFormatCapabilities::CGetFormatCapabilities( MMTPDataProviderFramewo
 // The second phase constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CGetFormatCapabilities::ConstructL()
+void CGetFormatCapabilities::ConstructL()
     {
     // Do nothing
     }

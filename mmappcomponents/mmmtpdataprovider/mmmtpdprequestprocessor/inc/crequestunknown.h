@@ -45,7 +45,7 @@ protected:
     /**
     * Standard c++ constructor
     */
-    IMPORT_C CRequestUnknown( MMTPDataProviderFramework& aFramework,
+    CRequestUnknown( MMTPDataProviderFramework& aFramework,
         MMTPConnection& aConnection );
 
 protected:

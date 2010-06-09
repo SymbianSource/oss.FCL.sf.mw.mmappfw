@@ -502,7 +502,7 @@ TMPXGeneralCategory CMmMtpDpMetadataAccessWrapper::ContainerCategoryL( const TDe
 // CMmMtpDpMetadataAccessWrapper::GetAllAbstractMediaL
 //
 // ---------------------------------------------------------------------------
-EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetAllAbstractMediaL( const TDesC& aStoreRoot, CMPXMediaArray** aAbstractMedias, TMPXGeneralCategory aCategory )
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetAllAbstractMediaL( const TDesC& aStoreRoot, CDesCArray& aAbstractMedias, TMPXGeneralCategory aCategory )
     {
     iMmMtpDpMetadataMpxAccess->GetAllAbstractMediaL( aStoreRoot, aAbstractMedias, aCategory );
     }
@@ -512,19 +512,11 @@ EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetAllAbstractMediaL( const TDesC& 
 //
 // ---------------------------------------------------------------------------
 //
-EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetAllReferenceL( CMPXMedia* aAbstractMedia, CDesCArray& aReferences )
+EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetAllReferenceL( const CMTPObjectMetaData& aRefOwner, CDesCArray& aReferences )
     {
-    iMmMtpDpMetadataMpxAccess->GetAllReferenceL( aAbstractMedia, aReferences );
-    }
-
-// ---------------------------------------------------------------------------
-// CMmMtpDpMetadataAccessWrapper::GetAbstractMediaNameL
-//
-// ---------------------------------------------------------------------------
-//
-EXPORT_C HBufC* CMmMtpDpMetadataAccessWrapper::GetAbstractMediaNameL( CMPXMedia* aAbstractMedia, TMPXGeneralCategory aCategory )
-    {
-    return iMmMtpDpMetadataMpxAccess->GetAbstractMediaNameL( aAbstractMedia, aCategory );
+    TMPXGeneralCategory category = Category( aRefOwner );
+    if ( category == EMPXPlaylist || category == EMPXAbstractAlbum )
+        iMmMtpDpMetadataMpxAccess->GetAllReferenceL( aRefOwner.DesC( CMTPObjectMetaData::ESuid ), category, aReferences );
     }
 
 // -----------------------------------------------------------------------------

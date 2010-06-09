@@ -56,7 +56,7 @@ EXPORT_C CGetInterdependentPropDesc::~CGetInterdependentPropDesc()
 // Standard c++ constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CGetInterdependentPropDesc::CGetInterdependentPropDesc( MMTPDataProviderFramework& aFramework,
+CGetInterdependentPropDesc::CGetInterdependentPropDesc( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
         CRequestProcessor( aFramework, aConnection, 0, NULL ),
@@ -70,7 +70,7 @@ EXPORT_C CGetInterdependentPropDesc::CGetInterdependentPropDesc( MMTPDataProvide
 // Two-phase construction method
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CGetInterdependentPropDesc::ConstructL()
+void CGetInterdependentPropDesc::ConstructL()
     {
     // Do nothing
     }

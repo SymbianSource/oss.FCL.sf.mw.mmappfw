@@ -71,9 +71,9 @@ LOCAL_C void StartServerL()
     CMPXHarvesterServer* server = CMPXHarvesterServer::NewL();
     CleanupStack::PushL(server);    
     RProcess::Rendezvous(KErrNone);
-    CActiveScheduler::Start();
-    CActiveScheduler::Install(NULL);
+    CActiveScheduler::Start();    
     CleanupStack::PopAndDestroy(server);
+    CActiveScheduler::Install(NULL);
     CleanupStack::PopAndDestroy(scheduler);
     }
 

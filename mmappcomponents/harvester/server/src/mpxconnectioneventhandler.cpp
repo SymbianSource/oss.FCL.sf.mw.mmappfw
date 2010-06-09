@@ -166,11 +166,7 @@ void CMPXConnectionEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ 
     MPX_DEBUG3("CMPXConnectionEventHandler::DoHandlePSEventL, usbStatus = %d, mtpStatus = %d", usbStatus, mtpStatus);
     MPX_DEBUG2("CMPXConnectionEventHandler::DoHandlePSEventL, iState = %d", iState);
     MPX_DEBUG4("CMPXConnectionEventHandler::DoHandlePSEventL, iDeviceState = %d, EUsbDeviceStateAddress(%d), EUsbDeviceStateConfigured(%d)", iDeviceState, EUsbDeviceStateAddress, EUsbDeviceStateConfigured);
-    
-    RDebug::Print(_L("tpoon: CMPXConnectionEventHandler::DoHandlePSEventL, usbStatus = %d, mtpStatus = %d"), usbStatus, mtpStatus);
-    RDebug::Print(_L("tpoon: CMPXConnectionEventHandler::DoHandlePSEventL, iState = %d"), iState);
-    RDebug::Print(_L("tpoon: CMPXConnectionEventHandler::DoHandlePSEventL, iDeviceState = %d, EUsbDeviceStateAddress(%d), EUsbDeviceStateConfigured(%d)"), iDeviceState, EUsbDeviceStateAddress, EUsbDeviceStateConfigured);
-    
+        
     // events from lower level is not causing multiple callback on the same type
     // usb is really only connected if went through Address or Configured state
     if( (usbStatus == KUsbPersonalityIdMS) && (iDeviceState == EUsbDeviceStateAddress || iDeviceState == EUsbDeviceStateConfigured))
@@ -178,7 +174,6 @@ void CMPXConnectionEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ 
         if ((iState == EMPXConnectionMTPIdle) || (iState == EMPXConnectionMTPActive))
             {
             MPX_DEBUG1("CMPXConnectionEventHandler::DoHandlePSEvent - MTP End");
-            RDebug::Print(_L("tpoon: MTP End"));
             iObserver.HandleSystemEventL( EUSBMTPEndEvent, -1 );
             iState = EMPXConnectionNone;
             }
@@ -193,7 +188,6 @@ void CMPXConnectionEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ 
         if (usbStatus != KUsbPersonalityIdMS)
             {
             MPX_DEBUG1("CMPXConnectionEventHandler::DoHandlePSEvent - USB MassStorage End");
-            RDebug::Print(_L("tpoon: MS End"));
             iObserver.HandleSystemEventL( EUSBMassStorageEndEvent, -1 );
             iState = EMPXConnectionNone;
             }
@@ -205,7 +199,6 @@ void CMPXConnectionEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ 
         if ((mtpStatus == EMtpPSStatusUninitialized) && (iState != EMPXConnectionNone))
             {
             MPX_DEBUG1("CMPXConnectionEventHandler::DoHandlePSEvent - MTP End");
-            RDebug::Print(_L("tpoon: MTP End"));
             iObserver.HandleSystemEventL( EUSBMTPEndEvent, -1 );
             iState = EMPXConnectionNone;
             }
@@ -224,7 +217,6 @@ void CMPXConnectionEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ 
 void CMPXConnectionEventHandler::DoMSStartEventL()
     {
     MPX_DEBUG1("CMPXConnectionEventHandler::DoMSStartEventL - USB MassStorage Start");
-    RDebug::Print(_L("tpoon: MS Start"));
     iObserver.HandleSystemEventL( EUSBMassStorageStartEvent, -1 );
     iState = EMPXConnectionMassStorage;
     }
@@ -232,7 +224,6 @@ void CMPXConnectionEventHandler::DoMSStartEventL()
 void CMPXConnectionEventHandler::DoMTPStartEventL()
     {
     MPX_DEBUG1("CMPXConnectionEventHandler::DoMTPStartEventL - MTP Start");
-    RDebug::Print(_L("tpoon: MTP Start"));
     iObserver.HandleSystemEventL( EUSBMTPStartEvent, -1 );
     iState = EMPXConnectionMTPActive;
     }
@@ -240,7 +231,6 @@ void CMPXConnectionEventHandler::DoMTPStartEventL()
 void CMPXConnectionEventHandler::DoMTPNotActiveEventL()
     {
     MPX_DEBUG1("CMPXConnectionEventHandler::DoMTPNotActiveEventL - MTP Not Active");
-    RDebug::Print(_L("tpoon: MTP Not Active"));
     iObserver.HandleSystemEventL( EUSBMTPNotActiveEvent, -1 );
     iState = EMPXConnectionMTPIdle;
     }

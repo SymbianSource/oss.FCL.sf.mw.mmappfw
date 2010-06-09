@@ -279,9 +279,9 @@ TMTPResponseCode CMoveObject::CanMoveObjectL( const TDesC& aOldName,
 //
 void CMoveObject::MoveFileL( const TDesC& aNewFileName )
     {
-    TFileName oldFileName = iObjectInfo->DesC( CMTPObjectMetaData::ESuid );
+    HBufC* oldFileName = iObjectInfo->DesC( CMTPObjectMetaData::ESuid ).AllocLC(); // + oldFileName
     PRINT2( _L( "MM MTP => CMoveObject::MoveFileL old name = %S, aNewFileName = %S" ),
-        &oldFileName,
+        oldFileName,
         &aNewFileName );
 
     if ( iStorageId == iObjectInfo->Uint( CMTPObjectMetaData::EStorageId ) )
@@ -295,7 +295,9 @@ void CMoveObject::MoveFileL( const TDesC& aNewFileName )
     TRAPD( err, SetPropertiesL( aNewFileName ) );
 
     CFileMan* fileMan = CFileMan::NewL( iFramework.Fs() );
-    err = fileMan->Move( oldFileName, aNewFileName );
+    err = fileMan->Move( *oldFileName, aNewFileName );
+	
+	CleanupStack::PopAndDestroy( oldFileName );     // - oldFileName
 
     if ( err != KErrNone )
         PRINT1( _L( "MM MTP <> CMoveObject::MoveFileL err = %d" ), err );

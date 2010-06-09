@@ -20,6 +20,7 @@
 #define CGETOBJECTREFERENCES_H
 
 #include "crequestprocessor.h"
+#include "cmmmtpdpperflog.h"
 
 // forward declaration
 class CMTPTypeArray;
@@ -62,16 +63,31 @@ private:
     * @param aWrapper      Medadata access interface
     */
     CGetObjectReferences( MMTPDataProviderFramework& aFramework,
-        MMTPConnection& aConnection );
+        MMTPConnection& aConnection,
+        MMmMtpDpConfig& aDpConfig );
 
     /**
     * Two-phase construction
     */
     void ConstructL();
 
+    /**
+    * Add references of specified object into reference db,
+    * for the insertion delayed until the first time it was queried by pc
+    * @param aRefOwnerSuid, specify the reference owner of which references should be added into db
+    * @param aReferences, suid array which stored references
+    */
+    void AddReferencesL( const TDesC& aRefOwnerSuid,
+        CDesCArray& aReferences );
+
 private:
     // Array object to store object references
     CMTPTypeArray* iReferences;
+    MMmMtpDpConfig& iDpConfig;
+
+#if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
+    CMmMtpDpPerfLog* iPerfLog;
+#endif
 
     };
 

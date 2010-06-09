@@ -72,7 +72,7 @@ public:
      * @param aCategory, indicate the category of abstract medias
      */
     void GetAllAbstractMediaL( const TDesC& aStoreRoot,
-        CMPXMediaArray** aAbstractMedias,
+        CDesCArray& aAbstractMedias,
         TMPXGeneralCategory aCategory );
 
     /**
@@ -80,17 +80,9 @@ public:
      * @param aAbstractMedia, specify of which reference should be get
      * @param aReferences, return result array which stored handles of all references
      */
-    void GetAllReferenceL( CMPXMedia* aAbstractMedia,
+    void GetAllReferenceL( const TDesC& aRefOwnerSuid,
+        TMPXGeneralCategory aCategory,
         CDesCArray& aReferences );
-
-    /**
-     * Get an abstract media name from CMPXMedia object
-     * @param aAbstractMedia, specify the source
-     * @param aCategory, specify the category
-     * @return, name of the source, ownership transferred
-     */
-    HBufC* GetAbstractMediaNameL( CMPXMedia* aAbstractMedia,
-        TMPXGeneralCategory aCategory );
 
     /**
      * Adds Songs info to Mpx DB
@@ -214,6 +206,8 @@ private:
 
     MMPXCollectionHelper* iCollectionHelper;
     HBufC8* iSampleData;
+
+    TBool iHasCleanUp;
 
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     CMmMtpDpPerfLog* iPerfLog;

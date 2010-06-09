@@ -154,7 +154,7 @@ EXPORT_C TMTPResponseCode CSetObjectPropValue::CheckRequestL()
             return EMTPRespCodeInvalidObjectHandle;
             }
 
-        TFileName fileName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
+        TPtrC fileName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
         TUint32 formatCode = objectInfo->Uint( CMTPObjectMetaData::EFormatCode );
         PRINT3( _L( "MM MTP <> CSetObjectPropValue::CheckRequestL, handle = 0x%x, filename = %S, formatCode = 0x%x" ),
             objectHandle,
@@ -199,7 +199,7 @@ EXPORT_C void CSetObjectPropValue::ServiceL()
     {
     PRINT( _L( "MM MTP => CSetObjectPropValue::ServiceL" ) );
     
-    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
+    MmMtpDpUtility::SetPSStatus( EMtpPSStatusActive );
     
     __ASSERT_DEBUG( iRequestChecker, Panic( EMmMTPDpRequestCheckNull ) );
     TUint32 handle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );

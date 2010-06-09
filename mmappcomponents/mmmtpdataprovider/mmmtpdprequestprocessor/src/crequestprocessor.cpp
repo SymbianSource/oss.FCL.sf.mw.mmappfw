@@ -137,7 +137,6 @@ EXPORT_C MMTPConnection& CRequestProcessor::Connection() const
 //
 EXPORT_C void CRequestProcessor::UsbDisconnect()
     {
-    // TODO: reset the CenRep value
     }
 
 // -----------------------------------------------------------------------------

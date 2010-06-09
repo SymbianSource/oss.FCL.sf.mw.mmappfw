@@ -163,7 +163,7 @@ void CMediaMtpDataProviderEnumerator::RunL()
     if ( iStorages.Count() > 0 )
         {
         const CMTPStorageMetaData& storage( iFramework.StorageMgr().StorageL( iStorages[0] ) );
-        const TDesC& root( storage.DesC( CMTPStorageMetaData::EStorageSuid ) );
+        TPtrC root( storage.DesC( CMTPStorageMetaData::EStorageSuid ) );
         GetModifiedContentL( root );
         TRAPD( err, iDataProvider.GetWrapperL().UpdateMusicCollectionL( root ) );
         if ( err != KErrNone )

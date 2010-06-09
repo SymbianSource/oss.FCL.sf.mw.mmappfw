@@ -63,7 +63,7 @@ EXPORT_C CGetPartialObject::~CGetPartialObject()
 // Standard c++ constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CGetPartialObject::CGetPartialObject( MMTPDataProviderFramework& aFramework,
+CGetPartialObject::CGetPartialObject( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection ) :
         CRequestProcessor( aFramework,
             aConnection,
@@ -154,12 +154,10 @@ EXPORT_C void CGetPartialObject::ServiceL()
     CMTPObjectMetaData* objectInfo = iRequestChecker->GetObjectInfo( iObjectHandle );
     __ASSERT_DEBUG( objectInfo, Panic( EMmMTPDpObjectNull ) );
 
-    // NOTE: Change all TBuf<KMaxFileName> into TFileName for easily change when fs change the limitation of filename
-    TFileName fileSuid;
-    fileSuid.Append( objectInfo->DesC( CMTPObjectMetaData::ESuid ) );
+    TPtrC fileName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
 
     iFileObject = CMTPTypeFile::NewL( iFramework.Fs(),
-        fileSuid,
+        fileName,
         ( TFileMode ) ( EFileRead | EFileShareReadersOnly ),
         iPartialDataLength,
         iOffset );

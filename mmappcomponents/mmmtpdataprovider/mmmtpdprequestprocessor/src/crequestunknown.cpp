@@ -60,7 +60,7 @@ EXPORT_C CRequestUnknown::~CRequestUnknown()
 // Standard c++ constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CRequestUnknown::CRequestUnknown( MMTPDataProviderFramework& aFramework,
+CRequestUnknown::CRequestUnknown( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection ) :
         CRequestProcessor( aFramework, aConnection, 0, NULL )
     {
