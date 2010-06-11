@@ -57,7 +57,7 @@ EXPORT_C CGetObjectPropDesc::~CGetObjectPropDesc()
 // Standard c++ constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CGetObjectPropDesc::CGetObjectPropDesc( MMTPDataProviderFramework& aFramework,
+CGetObjectPropDesc::CGetObjectPropDesc( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
         CRequestProcessor( aFramework, aConnection, 0, NULL ),
@@ -72,7 +72,7 @@ EXPORT_C CGetObjectPropDesc::CGetObjectPropDesc( MMTPDataProviderFramework& aFra
 // The second phase constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CGetObjectPropDesc::ConstructL()
+void CGetObjectPropDesc::ConstructL()
     {
     // Do nothing
     }

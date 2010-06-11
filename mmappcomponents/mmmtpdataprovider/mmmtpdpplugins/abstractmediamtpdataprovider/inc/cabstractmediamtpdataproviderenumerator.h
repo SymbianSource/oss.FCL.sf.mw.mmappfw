@@ -104,13 +104,12 @@ private:
     * @param aPath current scanned file path
     */
     void AddEntryL( const TDesC& aSuid );
-
+    
     /**
-    * Add references of specified abstract media into reference db
-    * @param aAbstractMediaName, specify the abstract media of which references should be added into db
-    * @param aReferences, suid array which stored references
+    * reset Object's format sub code in object manager
     */
-    void AddReferencesL( const TDesC& aAbstractMediaName, CDesCArray& aReferences );
+    void ResetObjectFormatSubCodeL( TUint32 aStorageId );
+
 
 private:
     // Owned
@@ -129,11 +128,13 @@ private:
     RArray<TUint> iStorages;
     TUint32 iStorageId;
 
-    CMPXMediaArray* iAbstractMedias;
+    CDesCArray* iAbstractMedias;
     TInt iCount;
     TInt iCurrentIndex;
     TInt iEnumState;
-
+    
+    TInt iResetCount;
+    
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     CMmMtpDpPerfLog* iPerfLog;
 #endif

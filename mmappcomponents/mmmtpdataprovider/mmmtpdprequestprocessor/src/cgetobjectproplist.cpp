@@ -486,7 +486,7 @@ TInt CGetObjectPropList::ServiceAllPropertiesL( TUint32 aHandle )
     PRINT1( _L( "MM MTP => CGetObjectPropList::ServiceAllPropertiesL aHandle = 0x%x" ), aHandle );
 
     // Append the current object info onto our list
-    TFileName fileName( iObject->DesC( CMTPObjectMetaData::ESuid ) );
+    TPtrC fileName( iObject->DesC( CMTPObjectMetaData::ESuid ) );
     TUint32 formatCode = iObject->Uint( CMTPObjectMetaData::EFormatCode );
 
     PRINT2( _L( "MM MTP <> CGetObjectPropList::ServiceAllPropertiesL, fileName = %S, formatCode = 0x%x" ),
@@ -534,7 +534,7 @@ TInt CGetObjectPropList::ServiceGroupPropertiesL( TUint32 aHandle )
     {
     PRINT1( _L( "MM MTP => CGetObjectPropList::ServiceGroupPropertiesL aHandle = 0x%x" ), aHandle );
 
-    TFileName fileName( iObject->DesC( CMTPObjectMetaData::ESuid ) );
+    TPtrC fileName( iObject->DesC( CMTPObjectMetaData::ESuid ) );
     TUint32 formatCode = iObject->Uint( CMTPObjectMetaData::EFormatCode );
 
     PRINT2( _L( "MM MTP <> CGetObjectPropList::ServiceGroupPropertiesL, fileName = %S, formatCode = 0x%x" ),

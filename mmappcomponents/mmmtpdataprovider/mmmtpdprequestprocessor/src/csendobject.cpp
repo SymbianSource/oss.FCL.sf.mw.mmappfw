@@ -129,7 +129,6 @@ void CSendObject::ConstructL()
 
     PRINT1( _L( "MM MTP <> CSendObject::ConstructL DataProviderId = 0x%x" ), iFramework.DataProviderId());
 
-  
     PRINT( _L( "MM MTP <= CSendObject::ConstructL" ) );
     }
 
@@ -1035,6 +1034,7 @@ TBool CSendObject::GetFullPathNameL( const TDesC& aFileName )
 
     TBool result( EFalse );
 
+    TParsePtrC parser( aFileName );
     if ( aFileName.Length() > 0 )
         {
         iFullPath.Zero();
@@ -1044,7 +1044,6 @@ TBool CSendObject::GetFullPathNameL( const TDesC& aFileName )
         // Only add extension for alb to pass winlogo test cases
         TInt length = iFullPath.Length() + aFileName.Length();
 
-        TParsePtrC parser( aFileName );
         TBool isAlbWithoutExt =
             ( ( iObjectFormat == EMTPFormatCodeAbstractAudioAlbum ) && ( !parser.ExtPresent() ) );
         if ( isAlbWithoutExt )
@@ -1062,8 +1061,7 @@ TBool CSendObject::GetFullPathNameL( const TDesC& aFileName )
 
     if ( result && ( iObjectFormat != MmMtpDpUtility::FormatFromFilename( iFullPath ) ) )
         {
-        TParsePtrC file( aFileName );
-        if ( ( iObjectFormat == EMTPFormatCode3GPContainer ) && (file.Ext().CompareF( KTxtExtensionODF ) == 0))
+        if ( ( iObjectFormat == EMTPFormatCode3GPContainer ) && ( parser.Ext().CompareF( KTxtExtensionODF ) == 0))
             {
             PRINT( _L( "MM MTP <> might happen if function is called before physical file arrives" ) );
             // might happen if function is called before physical file arrives
@@ -1266,6 +1264,11 @@ void CSendObject::SaveEmptyFileL()
             PRINT1( _L( "MM MTP <> CSendObject::SaveEmptyFileL err = %d" ), err );
         iDpConfig.GetWrapperL().AddDummyFileL( iFullPath );
         }
+
+    // Set subformat code to avoid MPX query for the first time to GetObjectReference,
+    // in which case references has been kept in fw.
+    if ( MmMtpDpUtility::HasReference( iObjectFormat ) )
+        iReceivedObjectInfo->SetUint( CMTPObjectMetaData::EFormatSubCode, EMTPSubFormatCodeUndefined );
 
     // add playlist to MPX DB
     TRAPD( err, AddMediaToStoreL() );

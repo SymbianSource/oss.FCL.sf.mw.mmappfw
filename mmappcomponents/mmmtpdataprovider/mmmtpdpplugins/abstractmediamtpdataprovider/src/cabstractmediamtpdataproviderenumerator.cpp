@@ -22,6 +22,7 @@
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/mmtpstoragemgr.h>
 #include <mtp/mmtpreferencemgr.h>
+#include <mtp/tmtptypeuint32.h>
 #include <mpxmediaarray.h>
 #include <mpxmedia.h>
 
@@ -39,11 +40,9 @@ _LIT( KPlaylistFilePath, "Playlists\\" );
 
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
 _LIT( KMpxGetAllAbstractMedia, "MpxGetAllAbstractMedia" );
-_LIT( KMpxQueryAbstractMediaReference, "MpxQueryAbstractMediaReference" );
 _LIT( KObjectManagerObjectUid, "ObjectManagerObjectUid" );
 _LIT( KObjectManagerInsert, "ObjectManagerInsert" );
-_LIT( KObjectManagerHandle, "ObjectManagerHandle" );
-_LIT( KReferenceManagerSetReference, "ReferenceManagerSetReference" );
+_LIT( KResetObjectFormatSubCode, "ResetObjectFormatSubCode" );
 #endif
 
 // -----------------------------------------------------------------------------
@@ -80,7 +79,8 @@ CAbstractMediaMtpDataProviderEnumerator::CAbstractMediaMtpDataProviderEnumerator
     iAbstractMedias( NULL ),
     iCount( 0 ),
     iCurrentIndex( 0 ),
-    iEnumState ( EEnumNone )
+    iEnumState ( EEnumNone ),
+    iResetCount( 0 )
     {
     PRINT1( _L( "MM MTP <> CAbstractMediaMtpDataProviderEnumerator::CAbstractMediaMtpDataProviderEnumerator, iDataProviderId = %d" ), iDataProviderId );
     }
@@ -200,7 +200,7 @@ void CAbstractMediaMtpDataProviderEnumerator::InitStorageL()
     __ASSERT_DEBUG( ( storage.Uint( CMTPStorageMetaData::EStorageSystemType ) ==
         CMTPStorageMetaData::ESystemTypeDefaultFileSystem ), User::Invariant() );
 
-    TFileName root( storage.DesC( CMTPStorageMetaData::EStorageSuid ) );
+    TPtrC root( storage.DesC( CMTPStorageMetaData::EStorageSuid ) );
     PRINT1( _L( "MM MTP <> CAbstractMediaMtpDataProviderEnumerator::InitStorageL StorageSuid = %S" ), &root );
 
     if ( iEnumState == EEnumPlaylist )
@@ -238,9 +238,10 @@ void CAbstractMediaMtpDataProviderEnumerator::InitStorageL()
     // find all abstract medias stored in MPX
     delete iAbstractMedias;
     iAbstractMedias = NULL;
+    iAbstractMedias = new( ELeave ) CDesCArrayFlat( KMTPDriveGranularity );
     TMPXGeneralCategory category = ( iEnumState == EEnumPlaylist ) ? EMPXPlaylist : EMPXAbstractAlbum;
     PERFLOGSTART( KMpxGetAllAbstractMedia );
-    TRAPD( err, iDataProvider.GetWrapperL().GetAllAbstractMediaL( root, &iAbstractMedias, category  ) );
+    TRAPD( err, iDataProvider.GetWrapperL().GetAllAbstractMediaL( root, *iAbstractMedias, category  ) );
     PERFLOGSTOP( KMpxGetAllAbstractMedia );
 
     if ( iAbstractMedias != NULL && err == KErrNone )
@@ -273,6 +274,13 @@ void CAbstractMediaMtpDataProviderEnumerator::ScanNextL()
     if ( iEnumState >= EEnumCount )
         {
         iEnumState = EEnumPlaylist;
+        iResetCount = 0;
+        
+        PERFLOGSTART( KResetObjectFormatSubCode );
+        ResetObjectFormatSubCodeL( iStorages[0] );
+        PERFLOGSTOP( KResetObjectFormatSubCode );
+        
+        PRINT2( _L( "MM MTP <> ResetObjectFormatSubCodeL, storage = 0x%x, iResetCount = %d" ), iStorages[0], iResetCount );
         iStorages.Remove( 0 );
         }
 
@@ -313,49 +321,28 @@ void CAbstractMediaMtpDataProviderEnumerator::RunL()
         PRINT2( _L( "MM MTP <> Current storage is still being scanned, current index = %d, total AbstractMedia count = %d" ),
             iCurrentIndex,
             iCount );
-        // insert all abstract medias into handle db of framework
-        CMPXMedia* media = ( *iAbstractMedias )[iCurrentIndex];
 
-        // Increase the index first in case of leave
-        iCurrentIndex++;
-        TMPXGeneralCategory category = ( iEnumState == EEnumPlaylist ) ? EMPXPlaylist : EMPXAbstractAlbum;
-        HBufC* abstractMedia = iDataProvider.GetWrapperL().GetAbstractMediaNameL( media, category );
-        CleanupStack::PushL( abstractMedia ); // + abstractMedia
+        // Insert all abstract medias into handle db of framework
+        iCurrentIndex++;    // Increase the index first in case of leave
+        TPtrC entrySuid( ( *iAbstractMedias )[iCurrentIndex-1] );
 
-        TBool ret = ETrue;
         if ( iEnumState == EEnumAbstractAlbum )
             {
             // The abstract album may be removed, check it first
-            ret = BaflUtils::FileExists( iFramework.Fs(), *abstractMedia );
-            PRINT2( _L( "MM MTP <> BaflUtils::FileExists( RFs,%S ) ret = %d" ), abstractMedia, ret );
+            TBool ret = BaflUtils::FileExists( iFramework.Fs(), entrySuid );
+            PRINT2( _L( "MM MTP <> BaflUtils::FileExists( RFs,%S ) ret = %d" ), &entrySuid, ret );
             }
         else // EEnumPlaylist
             {
             // Add an object to the object store for DB based playlist
-            AddEntryL( *abstractMedia );
+            AddEntryL( entrySuid );
             }
 
-        if ( ret )
-            {
-            PRINT1( _L( "MM MTP <> CAbstractMediaMtpDataProviderEnumerator::RunL abstractMedia=%S" ), abstractMedia );
-
-            // find all reference of each abstract media
-            CDesCArray* references = new ( ELeave ) CDesCArrayFlat( KMTPDriveGranularity );
-            CleanupStack::PushL( references ); // + references
-
-            PERFLOGSTART( KMpxQueryAbstractMediaReference );
-            iDataProvider.GetWrapperL().GetAllReferenceL( media, *references );
-            PERFLOGSTOP( KMpxQueryAbstractMediaReference );
-
-            // insert references into reference db
-            AddReferencesL( *abstractMedia, *references );
-
-            CleanupStack::PopAndDestroy( references ); // - references
-            }
-        CleanupStack::PopAndDestroy( abstractMedia ); // - abstractMedia
+        // Getting all reference during internal enumeration takes too long, query later on demand
         }
 
     ScanNextL();
+
     PRINT( _L( "MM MTP <= CAbstractMediaMtpDataProviderEnumerator::RunL" ) );
     }
 
@@ -465,48 +452,40 @@ void CAbstractMediaMtpDataProviderEnumerator::AddEntryL( const TDesC& aSuid )
     PRINT( _L( "MM MTP <= CAbstractMediaMtpDataProviderEnumerator::AddEntryL" ) );
     }
 
-// -----------------------------------------------------------------------------
-// CAbstractMediaMtpDataProviderEnumerator::AddReferencesL
-// Add references into reference db according to abstract media name
-// -----------------------------------------------------------------------------
-//
-void CAbstractMediaMtpDataProviderEnumerator::AddReferencesL( const TDesC& aAbstractMediaName,
-    CDesCArray& aReferences )
+void CAbstractMediaMtpDataProviderEnumerator::ResetObjectFormatSubCodeL( TUint32 aStorageId )
     {
-    TInt count = aReferences.Count();
-    PRINT2( _L("MM MTP => CAbstractMediaMtpDataProviderEnumerator::AddReferencesL AbstractMedia name = %S, ref count = %d"), &aAbstractMediaName, count );
+    PRINT1( _L( "MM MTP => CAbstractMediaMtpDataProviderEnumerator::ResetObjectFormatSubCodeL, StorageId = 0x%x" ),
+        aStorageId );
+    RMTPObjectMgrQueryContext context;
+    RArray<TUint> handles;
+    CleanupClosePushL( context ); // + context
+    CleanupClosePushL( handles ); // + handles
+    
+    // search all handles in desired storage with desired DP id
+    TMTPObjectMgrQueryParams params( aStorageId, KMTPFormatsAll, KMTPHandleNone, iFramework.DataProviderId() );
 
-    // check if references are valid
-    CMTPObjectMetaData* object = CMTPObjectMetaData::NewLC();   // + object
-    MMTPObjectMgr& objectMgr = iFramework.ObjectMgr();
-
-    TInt removeCount = 0;
-    for ( TInt i = 0; i < count; i++ )
+    do
         {
-        TInt index = i - removeCount;
-        TPtrC temp( aReferences[index] );
-        PRINT2( _L( "MM MTP <> CAbstractMediaMtpDataProviderEnumerator::AddReferencesL ref[%d]'s name = %S" ), index, &temp );
-        PERFLOGSTART( KObjectManagerHandle );
-        TUint32 handle = iFramework.ObjectMgr().HandleL( temp );
-        PERFLOGSTOP( KObjectManagerHandle );
-        if ( handle == KMTPHandleNone ) // object doesn't exist
-            {
-            PRINT1( _L( "MM MTP <> CAbstractMediaMtpDataProviderEnumerator::AddReferencesL, [%S] doesn't existed in handle db, remove this from reference array" ), &temp );
+        iObjectMgr.GetObjectHandlesL( params, context, handles );
 
-            // if handle is invalid, remove from reference array
-            aReferences.Delete( index, 1 );
-            removeCount++;
+        for ( TInt i = 0; i < handles.Count(); i++ )
+            {
+            CMTPObjectMetaData* objectInfo = CMTPObjectMetaData::NewLC(); // + objectInfo
+            
+            iResetCount++;
+            iObjectMgr.ObjectL( handles[i], *objectInfo );
+            // EMTPSubFormatCodeUnknown means references of the object haven't been insert into reference db of fw.
+            objectInfo->SetUint( CMTPObjectMetaData::EFormatSubCode, EMTPSubFormatCodeUnknown );
+            iObjectMgr.ModifyObjectL( *objectInfo );
+            CleanupStack::PopAndDestroy( objectInfo ); // - objectInfo
             }
         }
-    CleanupStack::PopAndDestroy( object );  // - object
+    while ( !context.QueryComplete() );
 
-    // add all references into references db
-    MMTPReferenceMgr& referenceMgr = iFramework.ReferenceMgr();
-    PERFLOGSTART( KReferenceManagerSetReference );
-    referenceMgr.SetReferencesL( aAbstractMediaName, aReferences );
-    PERFLOGSTOP( KReferenceManagerSetReference );
+    CleanupStack::PopAndDestroy( &handles ); // - handles
+    CleanupStack::PopAndDestroy( &context ); // - context
 
-    PRINT( _L( "MM MTP <= CAbstractMediaMtpDataProviderEnumerator::AddReferencesL" ) );
+    PRINT( _L( "MM MTP <= CAbstractMediaMtpDataProviderEnumerator::ResetObjectFormatSubCodeL" ) );
     }
 
 //end of file

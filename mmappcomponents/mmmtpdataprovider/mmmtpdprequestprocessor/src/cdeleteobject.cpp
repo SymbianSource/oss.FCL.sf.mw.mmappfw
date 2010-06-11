@@ -103,7 +103,7 @@ CDeleteObject::CDeleteObject( MMTPDataProviderFramework& aFramework,
 //
 EXPORT_C void CDeleteObject::ServiceL()
     {
-    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
+    MmMtpDpUtility::SetPSStatus( EMtpPSStatusActive );
     
     iObjectsToDelete.Reset();
     iDeleteError = KErrNone;
@@ -126,7 +126,6 @@ EXPORT_C void CDeleteObject::ServiceL()
         {
         iIsMultiDelete = EFalse;
         // Not Owned the object
-        // TODO: need to check if this is best way and if it is applicable to other processors
         CMTPObjectMetaData* objectInfo = iRequestChecker->GetObjectInfo( objectHandle );
 
         if ( objectInfo->Uint( CMTPObjectMetaData::EFormatCode ) == EMTPFormatCodeAssociation )
@@ -192,8 +191,9 @@ EXPORT_C void CDeleteObject::RunL()
 
         TUint32 handle = iObjectsToDelete[0];
         iFramework.ObjectMgr().ObjectL( handle, *objectInfo );
-        TFileName fileName( objectInfo->DesC( CMTPObjectMetaData::ESuid ) );
-        PRINT2( _L( "MM MTP <> CDeleteObject::RunL delete object handle is 0x%x, fileName is %S" ), handle, &fileName );
+        PRINT2( _L( "MM MTP <> CDeleteObject::RunL delete object handle is 0x%x, fileName is %S" ),
+            handle,
+            &( objectInfo->DesC( CMTPObjectMetaData::ESuid ) ) );
 
         if ( objectInfo->Uint( CMTPObjectMetaData::EFormatCode ) == EMTPFormatCodeAssociation )
             {
@@ -222,7 +222,7 @@ EXPORT_C void CDeleteObject::RunL()
 //
 void CDeleteObject::DeleteObjectL( const CMTPObjectMetaData& aObjectInfo )
     {
-    TFileName fileName( aObjectInfo.DesC( CMTPObjectMetaData::ESuid ) );
+    TPtrC fileName( aObjectInfo.DesC( CMTPObjectMetaData::ESuid ) );
     PRINT1( _L( "MM MTP <> CDeleteObject::DeleteObjectL fileName = %S" ), &fileName );
 
     // To capture special situation: After copy, move, rename playlist folder name,

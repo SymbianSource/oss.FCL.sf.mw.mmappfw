@@ -30,7 +30,7 @@ QTMSModemSink::QTMSModemSink() :
 
 QTMSModemSink::~QTMSModemSink()
     {
-    delete iSink;
+    delete (static_cast<TMSModemSink*>(iSink));
     }
 
 gint QTMSModemSink::GetType(QTMSSinkType& sinktype)

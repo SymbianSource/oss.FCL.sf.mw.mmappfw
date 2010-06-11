@@ -450,7 +450,6 @@ void CCopyObject::SetPreviousPropertiesL()
             case EMTPObjectPropCodeNonConsumable:
                 iTargetObject->SetUint( CMTPObjectMetaData::ENonConsumable,
                     element.Uint8L( CMTPTypeObjectPropListElement::EValue ) );
-                // TODO: need to reconsider,
                 // should wait all property setting finished then insert object, or not?
                 // need to investigate if it will affect performance result
                 iFramework.ObjectMgr().ModifyObjectL( *iTargetObject );

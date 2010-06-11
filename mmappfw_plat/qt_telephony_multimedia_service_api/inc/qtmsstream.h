@@ -344,27 +344,27 @@ public:
     gint GetState();
 
     /**
-     * Get stream type.
-     *
-     * This function can be called at any time.
-     *
-     * The possible types are:
-     *  QTMS_STREAM_UPLINK
-     *  QTMS_STREAM_DOWNLINK
-     *
-     * @return
-     *      Stream type indicating whether it is an uplink or downlink.
-     *
-     */
-    gint GetStreamId();
-
-    /**
      * Get stream ID.
      *
      * This function can be called at any time.
      *
      * @return
      *      Unique ID of the stream.
+     *
+     */
+    gint GetStreamId();
+
+    /**
+     * Get stream type.
+     *
+     * This function can be called at any time.
+     *
+     * The possible types are:
+     *  TMS_STREAM_UPLINK
+     *  TMS_STREAM_DOWNLINK
+     *
+     * @return
+     *      Stream type indicating whether it is an uplink or downlink.
      *
      */
     gint GetStreamType();
@@ -381,13 +381,22 @@ public:
      * Upon stream's successful transition to initialized state, the stream will
      * be in the QTMS_STREAM_INITIALIZED state.
      *
-     * QUESTION??? Should we do the initial checking here??? (for source,
-     * sink and other settings)
+     * Before stream can transition to initialized state the following
+     * objects must be added to the stream:
+     *      CS call: UPL: mic source and modem sink
+     *      CS call: DNL: modem source and speaker sink
+     *      IP call: UPL: mic source, codec format and client sink
+     *      IP call: DNL: client source, codec format and speaker sink
      *
      * @return
+     *      Common return codes:
      *      QTMS_RESULT_SUCCESS if stream transitioned to the initialized state.
      *      QTMS_RESULT_INVALID_STATE if stream has not transitioned to the
-     *      QTMS_STREAM_UNINITIALIZED state.
+     *      QTMS_STREAM_INITIALIZED state.
+     *      QTMS_RESULT_FORMAT_TYPE_UNSPECIFIED (IP call only) when stream
+     *      has no format attached to it.
+     *      QTMS_RESULT_UNINITIALIZED_OBJECT when stream has no sink or source
+     *      element attached to it.
      *
      */
     gint Init();
@@ -407,10 +416,11 @@ public:
      * Note: In QTMS Ver 1.0.0.0, pausing stream for CS call is not supported.
      *
      * @return
-     *      QTMS_RESULT_SUCCESS if stream successfully transitioned to the paused
-     *      state.
+     *      Common return codes:
+     *      QTMS_RESULT_SUCCESS if stream successfully transitioned to the
+     *      paused state.
      *      QTMS_RESULT_INVALID_STATE if stream is not in the
-     *      QTMS_STREAM_INITIALIZED or QTMS_STREAM_STARTED state.
+     *      QTMS_STREAM_INITIALIZED or QTMS_STREAM_PAUSED state.
      *
      */
     gint Pause();
@@ -432,10 +442,11 @@ public:
      * be in the QTMS_STREAM_STARTED state.
      *
      * @return
-     *      QTMS_RESULT_SUCCESS if stream successfully transitioned to the paused
-     *      state.
+     *      Common return codes:
+     *      QTMS_RESULT_SUCCESS if stream successfully transitioned to the
+     *      started state.
      *      QTMS_RESULT_INVALID_STATE if stream is not in the
-     *      QTMS_STREAM_INITIALIZED or QTMS_STREAM_PAUSED state.
+     *      QTMS_STREAM_INITIALIZED or QTMS_STREAM_STARTED state.
      *
      */
     gint Start();
@@ -453,8 +464,9 @@ public:
      * be in the QTMS_STREAM_INITIALIZED state.
      *
      * @return
-     *      QTMS_RESULT_SUCCESS if stream successfully transitioned to the paused
-     *      state.
+     *      Common return codes:
+     *      QTMS_RESULT_SUCCESS if stream successfully transitioned to the
+     *      stopped state.
      *      QTMS_RESULT_INVALID_STATE if stream is not in the
      *      QTMS_STREAM_STARTED or QTMS_STREAM_PAUSED state.
      *

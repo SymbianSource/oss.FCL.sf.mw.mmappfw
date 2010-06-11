@@ -61,7 +61,7 @@ private:
     * @param aConnection    The connection from which the request comes
     * @param aWrapper    medadata access interface
     */
-    IMPORT_C CGetObjectInfo( MMTPDataProviderFramework& aFramework,
+    CGetObjectInfo( MMTPDataProviderFramework& aFramework,
         MMTPConnection& aConnection,
         MMmMtpDpConfig& aDpConfig );
 
