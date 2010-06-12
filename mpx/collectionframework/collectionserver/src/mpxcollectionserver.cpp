@@ -117,8 +117,8 @@ CMPXCollectionServer::~CMPXCollectionServer()
 //
 void CMPXCollectionServer::ConstructL()
     {
+    StartL(KMPXCollectionServerName);    	
     iEngine = CMPXCollectionEngine::NewL();
-    StartL(KMPXCollectionServerName);
     }
  
 // ----------------------------------------------------------------------------

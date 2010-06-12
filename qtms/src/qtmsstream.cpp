@@ -361,12 +361,12 @@ gint QTMSStream::GetStreamId()
     return status;
     }
 
-gint QTMSStream::Init()
+gint QTMSStream::Init(gint retrytime)
     {
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
     if (iStream)
         {
-        status = iStream->Init();
+        status = iStream->Init(retrytime);
         }
     return status;
     }
@@ -381,12 +381,12 @@ gint QTMSStream::Pause()
     return status;
     }
 
-gint QTMSStream::Start()
+gint QTMSStream::Start(gint retrytime)
     {
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
     if (iStream)
         {
-        status = iStream->Start();
+        status = iStream->Start(retrytime);
         }
     return status;
     }

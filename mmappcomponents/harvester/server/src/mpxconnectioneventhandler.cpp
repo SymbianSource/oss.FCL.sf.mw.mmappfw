@@ -161,7 +161,7 @@ void CMPXConnectionEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ 
     iUSBKeyWatcher->GetValue( usbStatus );
     
     TInt mtpStatus;
-    iMTPKeyWatcher->GetValue(mtpStatus);
+    TInt err = iMTPKeyWatcher->GetValue(mtpStatus);
     
     MPX_DEBUG3("CMPXConnectionEventHandler::DoHandlePSEventL, usbStatus = %d, mtpStatus = %d", usbStatus, mtpStatus);
     MPX_DEBUG2("CMPXConnectionEventHandler::DoHandlePSEventL, iState = %d", iState);
@@ -196,20 +196,29 @@ void CMPXConnectionEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ 
     // after MassStorage End, it is possible that MTP is still connected
     if (iState != EMPXConnectionMassStorage)
         {
-        if ((mtpStatus == EMtpPSStatusUninitialized) && (iState != EMPXConnectionNone))
-            {
-            MPX_DEBUG1("CMPXConnectionEventHandler::DoHandlePSEvent - MTP End");
-            iObserver.HandleSystemEventL( EUSBMTPEndEvent, -1 );
-            iState = EMPXConnectionNone;
+		if (err == KErrNone)
+		    {
+            if ((mtpStatus == EMtpPSStatusUninitialized) && (iState != EMPXConnectionNone))
+                {
+                MPX_DEBUG1("CMPXConnectionEventHandler::DoHandlePSEvent - MTP End");
+                iObserver.HandleSystemEventL( EUSBMTPEndEvent, -1 );
+                iState = EMPXConnectionNone;
+                }
+            else if ((mtpStatus == EMtpPSStatusActive) && (iState != EMPXConnectionMTPActive)
+                    && ((usbStatus == KUsbPersonalityIdMTP) || (usbStatus == KUsbPersonalityIdPCSuiteMTP))) // only trigger MusicPlayer fully block and RAM Drive if USB MTP/PCSuiteMTP is connected
+                {
+                DoMTPStartEventL();
+                }
+            else if ((mtpStatus == EMtpPSStatusReadyToSync) && (iState != EMPXConnectionMTPIdle) && (iState != EMPXConnectionMTPActive))
+                {
+                DoMTPNotActiveEventL();
+                }
             }
-        else if ((mtpStatus == EMtpPSStatusActive) && (iState != EMPXConnectionMTPActive)
-                && ((usbStatus == KUsbPersonalityIdMTP) || (usbStatus == KUsbPersonalityIdPCSuiteMTP))) // only trigger MusicPlayer fully block and RAM Drive if USB MTP/PCSuiteMTP is connected
+        else
             {
-            DoMTPStartEventL();
-            }
-        else if ((mtpStatus == EMtpPSStatusReadyToSync) && (iState != EMPXConnectionMTPIdle) && (iState != EMPXConnectionMTPActive))
-            {
-            DoMTPNotActiveEventL();
+            // mtpwatcher can err out because the mtp ps key would only be defined and default after first use,
+            // and this logic here might hit before that
+            MPX_DEBUG2("CMPXConnectionEventHandler::DoHandlePSEvent - MTPWatcher err = %d", err);
             }
         }
     }
