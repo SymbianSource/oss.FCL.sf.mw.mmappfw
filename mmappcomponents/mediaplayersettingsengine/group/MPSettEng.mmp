@@ -35,7 +35,7 @@ CAPABILITY      CAP_GENERAL_DLL
 LIBRARY         euser.lib
 LIBRARY         ecom.lib
 
-#if defined(ARMCC)
+#if defined(EABI)
 deffile ../eabi/ 
 #elif defined(WINSCW)
 deffile ../bwinscw/ 
