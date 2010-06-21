@@ -264,6 +264,13 @@ private: // New Functions
     void ParseScanPathL();
 
     /**
+	 * Read cenrep file for paths	
+     * @param aScanPath fetched from cenrep dirs to scan
+     * @param aBlockPath fetched from cenrep dirs not to scan 
+     */
+    void FetchPathsFromCenrepL( TDes16& aScanPath, TDes16& aBlockPath );
+    
+    /**
     * Parse cenrep string (KHarvesterContainerKey)
     * for a list of containers
     */

@@ -48,8 +48,9 @@
 
 ; Install files
 
-;"..\..\init\TestFramework.ini"   -   "c:\testframework\TestFramework.ini" 
+"..\..\init\TestFramework.ini"   -   "c:\testframework\TestFramework.ini" 
 "..\..\conf\ui_mpxbaseviewpluginstest.cfg"   -   "c:\testframework\ui_mpxbaseviewpluginstest.cfg"
+"..\..\conf\tcmpxbaseviewpluginstest.cfg"   -   "c:\testframework\tcmpxbaseviewpluginstest.cfg"
 
 "\epoc32\release\armv5\urel\ui_mpxbaseviewpluginstest.dll"   -   "c:\Sys\Bin\ui_mpxbaseviewpluginstest.dll"
   

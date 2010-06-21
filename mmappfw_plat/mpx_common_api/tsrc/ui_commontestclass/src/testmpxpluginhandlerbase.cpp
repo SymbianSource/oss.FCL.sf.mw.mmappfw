@@ -19,12 +19,15 @@
 #include "commontestclass.h"
 #include <mpxpluginhandlerbase.h>
 #include <mpxplugininfo.h>
+#include <mpxpluginhandlerobserver.h>
 
 
 // Begin MPXPluginHandlerBase testing implementation (mpxpluginhandlerbase.h)============================
 const TUid KMPXPPluginHandlerBaseUid = {0x12345};
-const TUid KMPXPlaybackInterfaceUid = {0x21CD4510};
-class CDummyMpxPluginHandler : public CMPXPluginHandlerBase
+
+const TUid KMPXPlaybackInterfaceUid = {0x101FFC05};
+class CDummyMpxPluginHandler : public CMPXPluginHandlerBase,
+                               public MMPXPluginHandlerObserver
     {
 public:  // Constructors and destructor
     CDummyMpxPluginHandler();  
@@ -40,6 +43,15 @@ public:  // Constructors and destructor
     
     void BaseHandlePluginUnload(const TUid& aPluginUid);
     
+    /*
+    * From MMPXPluginHandlerObserver
+    * @see MMPXPluginHandlerObserver
+    */
+    void HandlePluginHandlerEvent(
+            TPluginHandlerEvents aEvent, 
+            const TUid& aPluginUid,
+            TInt aLoaded, TInt aData);
+    
     };
     
 // -----------------------------------------------------------------------------
@@ -47,7 +59,11 @@ public:  // Constructors and destructor
 // -----------------------------------------------------------------------------
 
 CDummyMpxPluginHandler::CDummyMpxPluginHandler():
-    CMPXPluginHandlerBase (KMPXPPluginHandlerBaseUid, CMPXPluginHandlerBase::ESelectionUid, 0,iObserver,CMPXPluginMonitor::NewL((TUid)KMPXPlaybackInterfaceUid/*, *this*/))
+    CMPXPluginHandlerBase (
+            KMPXPlaybackInterfaceUid,
+            CMPXPluginHandlerBase::ESelectionUid, 
+            0,*this,
+            CMPXPluginMonitor::NewL((TUid)KMPXPlaybackInterfaceUid/*, *this*/))
     {
         TInt err = KErrNone;
         TRAP(err,iDataType = HBufC8::NewL(11));//NULL;
@@ -96,6 +112,15 @@ void CDummyMpxPluginHandler::BaseHandlePluginUnload(const TUid& aPluginUid)
 TBool CDummyMpxPluginHandler::BaseIsPluginLoaded(const TUid&  aPluginUid )
     {
     return IsPluginLoaded( aPluginUid );
+    }
+
+// -----------------------------------------------------------------------------
+// CDummyMpxPluginHandler::HandlePluginHandlerEvent()
+// -----------------------------------------------------------------------------
+void CDummyMpxPluginHandler::HandlePluginHandlerEvent(
+        TPluginHandlerEvents /*aEvent*/, const TUid& /*aPluginUid*/,
+        TBool /*aLoaded*/, TInt /*aData*/ )
+    {
     }
 
 // -----------------------------------------------------------------------------
@@ -452,7 +477,7 @@ TInt CCommonTestClass::MpxPluginHandlerBaseSupportUids(CStifItemParser& /*aItem*
     //----------------------------------------------
     
     TUid uid = pluginHandler->FindPlugin(uids.Array());
-    pluginHandler->SupportUids(KMPXPPluginHandlerBaseUid,uids.Array());
+    pluginHandler->SupportUids(uid, uids.Array());
     //pluginHandler->SupportUids(uid,uids.Array());
     CleanupStack::PopAndDestroy( &uids );
     delete pluginHandler;
@@ -574,12 +599,18 @@ TInt CCommonTestClass::MpxPluginHandlerBasePluginFlagsL(CStifItemParser& /*aItem
     {//TODO need to update
     FTRACE(FPrint(_L("CCommonTestClass::MpxPluginHandlerBasePluginFlagsL testing CMPXPluginHandlerBase::PluginFlagsL() begin")));
     iLog->Log(_L("CCommonTestClass::MpxPluginHandlerBasePluginFlagsL testing CMPXPluginHandlerBase::PluginFlagsL() begin"));
-    TInt err=KErrNone;
+
     CDummyMpxPluginHandler pluginHandler;
     
-    //TInt index = pluginHandler.IndexOf(KMPXPPluginHandlerBaseUid);
+    //TInt index = pluginHandler.IndexOf(KMPXPPluginHandlerBaseUid);    
+    TRAPD( err, pluginHandler.PluginFlagsL(KMPXPPluginHandlerBaseUid));
+    // Using the invalid id (KMPXPPluginHandlerBaseUid), so it is right if the 
+    // return err is KErrNotFound.
+    if ( err == KErrNotFound )
+        {
+        err = KErrNone;
+        }
     
-    pluginHandler.PluginFlagsL(KMPXPPluginHandlerBaseUid);
     iLog->Log(_L("CCommonTestClass::MpxPluginType testing CMPXPluginHandlerBase::MpxPluginFlagsL() end"),err);
     return err;
     }

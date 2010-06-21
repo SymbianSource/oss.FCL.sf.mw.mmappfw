@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extracts metadata from a file
-*  Version     : %version: da1mmcf#38.1.4.2.6.1.13 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#38.1.4.2.6.1.14 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -741,6 +741,8 @@ void CMPXMetadataExtractor::AddMediaAlbumArtL( CMPXMedia& aMedia,
         TThumbnailRequestId tnId = iTNManager->CreateThumbnails( *source );
         iArrayTNRequestId.Append( tnId ); // add thumbnail id to array
         CleanupStack::Pop( value8 );
+        delete source;
+        
         aMedia.SetTextValueL( KMPXMediaMusicOriginalAlbumArtFileName, aFile );
 #endif // RD_MPX_TNM_INTEGRATION          
         aMedia.SetTextValueL( KMPXMediaMusicAlbumArtFileName, aFile );

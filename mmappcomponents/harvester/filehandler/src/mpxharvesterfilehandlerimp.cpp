@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Handles all file related activities
-*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.1.7 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.1.9 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -61,8 +61,8 @@
 #include "mpxbrokenlinkcleanup.h"
 
 // ============ CONSTANTS ==========
-_LIT( KDefaultScanPath, "C:\\DATA\\|E:\\" );
-_LIT( KDefaultBlockPath, "\\SYS\\|\\PRIVATE\\|\\SYSTEM\\|\\CITIES\\");
+_LIT( KDefaultScanPath, "C:\\DATA\\|E:\\|F:\\" );
+_LIT( KDefaultBlockPath, "\\SYS\\|\\PRIVATE\\|\\SYSTEM\\|\\CITIES\\|\\SOUNDS\\SIMPLE\\|\\GAMES\\|\\RESOURCE\\|\\IMAGES\\"); 
 _LIT( KDefaultContainers, ".odf|.dcf|.asf|.m4a|.mp4" );
 _LIT( KDefaultAutoScanFolder, "C:\\data\\sounds\\digital\\|E:\\sounds\\digital\\");
 const TUid KCRUIDHarvesterFeatures  = { 0x101FFCD2 };
@@ -343,12 +343,11 @@ void CMPXHarvesterFileHandlerImp::ScanL()
                 // Remove current drive from the scanned drives list
                 TParse fileNameParser;
                 User::LeaveIfError(fileNameParser.Set(iFilteredDrivesToScan[index],NULL,NULL));
-                TFileName driveName(fileNameParser.Drive());
+                TPtrC driveName(fileNameParser.Drive());
                 TInt driveNumber = TDriveUnit( driveName );
                 if (currentDriveNumber == driveNumber)
                     {
                     iFilteredDrivesToScan.Remove(index);
-                    iFilteredOutOfDisk = ETrue;
                     count--;
                     }
                 else
@@ -357,6 +356,7 @@ void CMPXHarvesterFileHandlerImp::ScanL()
                     }
                 }
             iDBManager->CloseDatabase(static_cast<TDriveNumber>(currentDriveNumber));
+            iFilteredOutOfDisk = ETrue;
             }
         }
 
@@ -1737,15 +1737,8 @@ void CMPXHarvesterFileHandlerImp::ParseScanPathL()
     //
     TBuf<255> scanPath;
     TBuf<255> blockPath;
-    CRepository* cenrep(NULL);
-    TRAPD( err, cenrep = CRepository::NewL( KCRUIDHarvesterFeatures ) );
-    if( err == KErrNone )
-        {
-        cenrep->Get( KHarvesterScanPathKey, scanPath );
-        cenrep->Get( KHarvesterBlockPathKey, blockPath );
-        delete cenrep;
-        }
-    else
+    TRAPD( err, FetchPathsFromCenrepL(scanPath,blockPath) );
+    if( err )
         {
         scanPath = KDefaultScanPath;
         blockPath = KDefaultBlockPath;
@@ -1755,6 +1748,20 @@ void CMPXHarvesterFileHandlerImp::ParseScanPathL()
     MPX_DEBUG2("ParseScanPathL blockPaths: %S", &blockPath);
     ::ExtractTokensL( scanPath, iConfiguredDrivesToScan );
     ::ExtractTokensL( blockPath, iPathsToBlock );
+    }
+
+// ---------------------------------------------------------------------------
+// Fetches scan - and block - paths from cenrep 
+// ---------------------------------------------------------------------------
+//
+void CMPXHarvesterFileHandlerImp::FetchPathsFromCenrepL( TDes16& aScanPath, 
+                                                         TDes16& aBlockPath )
+    {
+    MPX_FUNC("CMPXHarvesterFileHandlerImp::FetchPathsFromCenrepL");
+    CRepository* cenrep( CRepository::NewLC( KCRUIDHarvesterFeatures ) );
+    User::LeaveIfError( cenrep->Get( KHarvesterScanPathKey, aScanPath ) );
+    User::LeaveIfError( cenrep->Get( KHarvesterBlockPathKey, aBlockPath ) );
+    CleanupStack::PopAndDestroy(cenrep);
     }
 
 // ---------------------------------------------------------------------------

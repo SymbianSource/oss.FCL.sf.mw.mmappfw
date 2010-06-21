@@ -268,7 +268,7 @@ private: // data
     RPointerArray<CMPXHarvesterDB>   iDatabases;
 
     RFs&                             iFs;   // Not Owned
-
+    TBool                            iEMMC; //Has system an internal drive
 #ifdef __RAMDISK_PERF_ENABLE
     // Defined for RAM disk performance
     TBool                   iRAMDiskPerfEnabled;  // flag to indicate RAM disk feature is enabled from cenrep.

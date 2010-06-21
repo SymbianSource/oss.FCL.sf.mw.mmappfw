@@ -24,9 +24,11 @@ _LIT( KHarvesterDBPath, "\\private\\101ffca9\\");
 // Please update the increment number for each increment 
 // Please update the version number for each schema change
 #ifdef ABSTRACTAUDIOALBUM_INCLUDED
-_LIT( KHarvesterDBName, "harvesterdbv9_6.dat" );
+_LIT( KHarvesterDBName, "harvesterdbv10_0.dat" );
+_LIT( KHarvesterDBNameEMMC, "harvesterdbv10_0i.dat" );
 #else
-_LIT( KHarvesterDBName, "harvesterdbv9_5.dat" );
+_LIT( KHarvesterDBName, "harvesterdbv10_0n.dat" );
+_LIT( KHarvesterDBNameEMMC, "harvesterdbv10_0in.dat" );
 #endif 
 _LIT( KHarvesterDBPattern, "harvesterdbv*.dat" );
 
