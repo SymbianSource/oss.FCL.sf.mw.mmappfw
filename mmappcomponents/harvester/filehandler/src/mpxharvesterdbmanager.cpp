@@ -48,7 +48,8 @@ const TInt KMPMinimumRAMSizeToRun = 6 * KMPMegaByte;
 // ---------------------------------------------------------------------------
 //
 CMPXHarvesterDatabaseManager::CMPXHarvesterDatabaseManager( RFs& aFs ):
-        iFs( aFs )
+        iFs( aFs ),
+        iEMMC( EFalse )
 #ifdef __RAMDISK_PERF_ENABLE
         ,iRAMDiskPerfEnabled(EFalse),
         iMaximumAllowedRAMDiskSpaceToCopy(0),
@@ -70,6 +71,13 @@ void CMPXHarvesterDatabaseManager::ConstructL()
     MPX_FUNC("CMPXHarvesterDatabaseManager::ConstructL");
     User::LeaveIfError( iDBSession.Connect() );
 
+    //Find out if the system has an internal drive (eMMC)
+    TDriveInfo driveInfo;
+    if( iFs.Drive( driveInfo, EDriveE ) == KErrNone )
+    	{
+        if ( driveInfo.iDriveAtt & KDriveAttInternal )
+        	iEMMC = ETrue;
+    	}
 #ifdef __RAMDISK_PERF_ENABLE
     TInt temp;
     CRepository* repository = CRepository::NewLC( KCRUIDMpxHarvesterFeatures );
@@ -162,7 +170,7 @@ TInt CMPXHarvesterDatabaseManager::OpenAllDatabasesL()
                 {
                 MPX_DEBUG1("CMPXHarvesterDatabaseManager::OpenAllDatabasesL: re-creating database");
                 CMPXHarvesterDB* dB = CMPXHarvesterDB::NewL(
-                    static_cast<TDriveNumber>(driveNum), iFs );
+                    static_cast<TDriveNumber>(driveNum), iFs, iEMMC );
                 CleanupStack::PushL( dB );
                 TRAPD(openError, rtn |= dB->OpenL() );  //lint !e665
                 if(openError == KErrNone)
@@ -212,7 +220,7 @@ void CMPXHarvesterDatabaseManager::OpenDatabaseL( TDriveNumber aDrive )
     if ( index == KErrNotFound )
         {
         index = iDatabases.Count();
-        db = CMPXHarvesterDB::NewL( aDrive, iFs );
+        db = CMPXHarvesterDB::NewL( aDrive, iFs, iEMMC );
         CleanupStack::PushL( db );
         iDatabases.AppendL( db );
         CleanupStack::Pop( db );
@@ -1000,13 +1008,23 @@ TFileName CMPXHarvesterDatabaseManager::GenerateHarvesterDbName( TDriveUnit aDri
         {
         name.Append(iRAMFolder);
         name.Append(aDriveUnit.Name()[0]);
-        name.Append(KHarvesterDBName);
+
+        //Use different name for Dbs if the system has an internal drive vs. MMC-only.
+        //Since hard-coded drive letters in the Thumbnail URIs
+        //So Dbs are not interchangeable between an internal drive system and MMC-only system.
+        if ( iEMMC )
+            name.Append( KHarvesterDBNameEMMC );
+        else
+            name.Append( KHarvesterDBName );
         }
     else
         {
         name.Append(aDriveUnit.Name());
         name.Append(KHarvesterDBPath);
-        name.Append(KHarvesterDBName);
+        if ( iEMMC )
+            name.Append( KHarvesterDBNameEMMC );
+        else
+            name.Append( KHarvesterDBName );
         }
     
     MPX_DEBUG2("CMPXHarvesterDatabaseManager::GenerateHarvesterDbName name = %S", &name );

@@ -501,7 +501,17 @@ HBufC8* MmMtpDpUtility::Mp4MimeTypeL( const TDesC& aFullPath )
 
     if ( mimebuf == NULL )
         {
-        User::Leave( KErrNotFound );
+        PRINT( _L( "MM MTP <> MmMtpDpUtility::Mp4MimeTypeL, mimebuf == NULL, default as video" ) );
+
+        if ( file.Ext().CompareF( KTxtExtension3GP ) == 0
+            || file.Ext().CompareF( KTxtExtension3G2 ) == 0 )
+            {
+            mimebuf = KMimeTypeVideo3gpp().Alloc();
+            }
+        else
+            {
+            mimebuf = KMimeTypeVideoMp4().Alloc();
+            }
         }
     PRINT( _L( "MM MTP <= MmMtpDpUtility::Mp4MimeTypeL" ) );
     return mimebuf;

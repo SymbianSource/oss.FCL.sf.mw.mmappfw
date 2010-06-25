@@ -51,9 +51,10 @@ public:
     * Two-phased constructor
     * @param aDrive drive of the database
     * @param aFs file session
+    * @param aEMMC whether the system has an internal drive 
     * @return new instance of CMPXHarvesterDB
     */
-    static CMPXHarvesterDB* NewL( TDriveNumber aDrive, RFs& aFs );
+    static CMPXHarvesterDB* NewL( TDriveNumber aDrive, RFs& aFs, TBool aEMMC = EFalse );
 
     /**
     * Virtual destructor
@@ -209,7 +210,7 @@ private:
     /**
     * Default constructor
     */
-    CMPXHarvesterDB( TDriveNumber aDrive, RFs& aFs  );
+    CMPXHarvesterDB( TDriveNumber aDrive, RFs& aFs, TBool aEMMC );
 
     /**
     * 2nd phase constructor
@@ -219,6 +220,7 @@ private:
 private: // data
     TDriveNumber      iDrive;
     RFs&              iFs;
+    TBool             iEMMC;      //Has system an internal drive
     // Internal database
     CFileStore*       iStore;
     RDbStoreDatabase* iDatabase;  // Local single client db

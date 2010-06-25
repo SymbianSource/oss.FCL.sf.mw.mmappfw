@@ -536,6 +536,7 @@ CMTPTypeObjectPropDesc* CMediaMtpDataProviderDescriptionUtility::NewCodeSampleRa
     TUint32 values[] =
         {
             EMTPSampleRate8K,
+            EMTPSampleRate11_025K,
             EMTPSampleRate16K,
             EMTPSampleRate22_05K,
             EMTPSampleRate24K,

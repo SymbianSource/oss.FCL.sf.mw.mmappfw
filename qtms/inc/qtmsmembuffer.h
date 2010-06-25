@@ -20,6 +20,7 @@
 
 #include <qtmsbuffer.h>
 
+// FORWARD DECLARATION
 namespace TMS {
 class TMSBuffer;
 }
@@ -33,28 +34,9 @@ public:
     virtual ~QTMSMemBuffer();
 
     /**
-     * Creates Memory Buffer object of the given size.
-     * The memory is allocated on the heap.
-     *
-     * @param  size
-     *      Size of the buffer to be created.
-     *
-     * @param  qbuffer
-     *      Created QTMSBuffer object.
-     *
-     * @param  buffer
-     *      TMS::TMSBuffer buffer object.
-     *
-     * @return
-     *      TMS_RESULT_SUCCESS if buffer is created successfully.
-     *      TMS_RESULT_INSUFFICIENT_MEMORY if buffer creation failed due to
-     *      insufficient memory.
-     *      TMS_RESULT_BUFFER_TYPE_NOT_SUPPORTED if the buffer type is not
-     *      supported.
-     *
+     * Factory methods
      */
-    static gint Create(guint size, QTMSBuffer*& qbuffer,
-            TMS::TMSBuffer*& tmsbuffer);
+    static gint Create(QTMSBuffer*& buffer, TMS::TMSBuffer*& tmsbuffer);
 
     /**
      * Return buffer type.
@@ -116,10 +98,16 @@ public:
 
 private:
     QTMSMemBuffer();
-    gint PostConstruct();
+    gint PostConstruct(guint size, TMS::TMSBuffer*& tmsbuffer);
 
 protected:
-    TMS::TMSBuffer* iBuffer;
+    TMS::TMSBuffer* iTmsBuffer;
+
+private:
+    guint iBufferSize;
+    guint64 iTimeStamp;
+    guint8* iDataPtr;
+    gboolean iOwnsBuffer;
     };
 
 } //namespace QTMS

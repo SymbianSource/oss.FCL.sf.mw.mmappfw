@@ -369,7 +369,7 @@ EXPORT_C TMTPResponseCode CSetObjectPropValue::ServiceMetaDataToWrapperL( const 
     else if ( err == KErrNotFound )
         {
         if( MmMtpDpUtility::HasMetadata( aObjectMetaData.Uint( CMTPObjectMetaData::EFormatCode ) ) )
-            SendResponseL( EMTPRespCodeAccessDenied );
+            resCode = EMTPRespCodeAccessDenied;
         }
     else
         {

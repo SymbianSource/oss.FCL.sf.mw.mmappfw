@@ -18,22 +18,19 @@
 #ifndef QTMS_CLIENT_SINK_H
 #define QTMS_CLIENT_SINK_H
 
-#include <qtms.h>
-#include <qtmssink.h>
 #include <QObject>
+#include <qtms.h>
+#include <qtmsbuffer.h>
+#include <qtmssink.h>
 #include <qglobal.h>
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
 namespace TMS {
 class TMSSink;
-class TMSBuffer;
 }
 
 namespace QTMS {
-
-// FORWARD DECLARATIONS
-class QTMSBuffer;
 
 /**
  * QTMSClientSink class
@@ -74,7 +71,7 @@ public:
      *      Status of the operation.
      *
      */
-    gint BufferProcessed(TMS::TMSBuffer* buffer);
+    gint BufferProcessed(QTMSBuffer* buffer);
 
     /**
      * Return sink type.
@@ -91,7 +88,7 @@ public:
     virtual gint GetType(QTMSSinkType& sinktype);
 
     Q_SIGNALS:
-    void ProcessBuffer(const TMS::TMSBuffer* buffer);
+    void ProcessBuffer(const QTMSBuffer* buffer);
 
 protected:
     /**

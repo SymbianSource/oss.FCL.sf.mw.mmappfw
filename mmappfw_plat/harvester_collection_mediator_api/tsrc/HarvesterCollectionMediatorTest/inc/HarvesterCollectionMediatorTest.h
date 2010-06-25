@@ -43,9 +43,9 @@ _LIT( KHarvesterCollectionMediatorTestLogPath, "\\logs\\testframework\\Harvester
 // Log file
 _LIT( KHarvesterCollectionMediatorTestLogFile, "HarvesterCollectionMediatorTest.txt" ); 
 _LIT( KHarvesterCollectionMediatorTestLogFileWithTitle, "HarvesterCollectionMediatorTest_[%S].txt" );
-_LIT( KTestItemPath, "\\testing\\data\\test0000.mp3");
-_LIT( KTestItemPath2, "\\testing\\data\\test0001.mp3");
-_LIT( KTestItemPath3, "\\testing\\data\\test0002.mp3");
+_LIT( KTestItemPath, "e:\\testing\\data\\test0000.mp3");
+_LIT( KTestItemPath2, "e:\\testing\\data\\test0001.mp3");
+_LIT( KTestItemPath3, "e:\\testing\\data\\test0002.mp3");
 // FUNCTION PROTOTYPES
 //?type ?function_name(?arg_list);
 

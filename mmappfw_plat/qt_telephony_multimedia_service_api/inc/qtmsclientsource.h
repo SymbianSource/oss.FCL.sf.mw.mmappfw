@@ -18,15 +18,15 @@
 #ifndef QTMS_CLIENT_SOURCE_H
 #define QTMS_CLIENT_SOURCE_H
 
-#include <qtms.h>
-#include <qtmssource.h>
 #include <QObject>
+#include <qtms.h>
+#include <qtmsbuffer.h>
+#include <qtmssource.h>
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
 namespace TMS {
 class TMSSource;
-class TMSBuffer;
 }
 
 namespace QTMS {
@@ -68,7 +68,7 @@ public:
      *      Status of the operation.
      *
      */
-    gint BufferFilled(TMS::TMSBuffer& buffer);
+    gint BufferFilled(QTMSBuffer& buffer);
 
     /**
      * In the PUSH MODE, tell the source that the supplied buffer filled in
@@ -83,7 +83,7 @@ public:
      *      The buffer with audio data supplied by the client for playback.
      *
      */
-    gint ProcessBuffer(TMS::TMSBuffer* buffer);
+    gint ProcessBuffer(QTMSBuffer* buffer);
 
     /**
      * PUSH MODE ONLY
@@ -152,8 +152,8 @@ public:
     virtual gint GetType(QTMSSourceType& sourcetype);
 
     Q_SIGNALS:
-    void FillBuffer(TMS::TMSBuffer& buffer);
-    void BufferProcessed(const TMS::TMSBuffer* buffer, gint reason);
+    void FillBuffer(QTMSBuffer& buffer);
+    void BufferProcessed(const QTMSBuffer* buffer, gint reason);
 
 protected:
     /**

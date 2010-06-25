@@ -59,7 +59,7 @@ _LIT( KMsgBadTestParameters, "[Error] No valid test case parameters");
 //#define ?macro ?macro_def
 // Logging path
 #ifdef __WINSCW__
-_LIT( KCollectionHelperTestClassLogPath, "\\logs\\testframework\\CollectionHelperTestClass\\" ); 
+_LIT( KCollectionHelperTestClassLogPath, "c:\\logs\\testframework\\CollectionHelperTestClass\\" ); 
 #else
 _LIT( KCollectionHelperTestClassLogPath, "e:\\logs\\testframework\\CollectionHelperTestClass\\" );
 #endif
@@ -73,10 +73,10 @@ _LIT( KTestFileMimeType, "audio/aac" );
 _LIT( KRenameOldUri, "c:\\Blackbird.aac");
 _LIT( KRenameNewUri, "c:\\data\\Blackbird.aac");
 
-_LIT( KFileWmaSong, "f:\\1.wma");
+_LIT( KFileWmaSong, "c:\\data\\sounds\\digital\\1.mp3");
 
 _LIT( KFile1, "e:\\data\\sounds\\digital\\1.mp3");    //ok
-_LIT( KOldAbstractAlbumName, "1.wma");    //ok
+_LIT( KOldAbstractAlbumName, "1.mp3");    //ok
 _LIT( KNewAbstractAlbumName, "The 99 Most Essential Beethoven MasterpiecesVarious Artists");    //ok
 _LIT( KFile3, "e:\\data\\sounds\\digital\\(01) Amber - Yes.mp3");    //ok
 _LIT( KFilet, "e:\\data\\sounds\\digital\\02 What A Wonderful World.mp3");    //ok
@@ -85,10 +85,10 @@ _LIT( KFilet, "e:\\data\\sounds\\digital\\02 What A Wonderful World.mp3");    //
 _LIT( KTestFile3, "e:\\data\\sounds\\digital\\Atomic Kitten - It's Ok.mp3");    //ok
 _LIT( KSongtest, "e:\\data\\sounds\\digital\\02 What A Wonderful World.mp3"); //ok
 
-_LIT( KAbstractalbum1, "f:\\1.alb");
-_LIT( KAbstractalbum2, "f:\\2.alb");
-_LIT( KAbstractalbum3, "f:\\3.alb");
-_LIT( KStoreRoot, "f:\\");
+_LIT( KAbstractalbum1, "e:\\data\\sounds\\digital\\1.alb");
+_LIT( KAbstractalbum2, "e:\\data\\sounds\\digital\\2.alb");
+_LIT( KAbstractalbum3, "e:\\data\\sounds\\digital\\3.alb");
+_LIT( KStoreRoot, "e:\\");
 
 _LIT( KAbstractAlbumName, "The 99 Most Essential Beethoven MasterpiecesVarious Artists");
 

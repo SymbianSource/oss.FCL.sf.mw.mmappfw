@@ -50,7 +50,7 @@
 #include "qtmsg711impl.h"
 #include "qtmsg729impl.h"
 #include "qtmsilbcimpl.h"
-#include "qtmsmembuffer.h"
+#include "qtmsbufferimpl.h"
 
 using namespace QTMS;
 using namespace TMS;
@@ -126,7 +126,8 @@ gint QTMSFactoryImpl::GetSupportedFormats(const QTMSStreamType strmtype,
     TMS::FormatVector tmsfmtlist;
     if (iFactory)
         {
-        ret = iFactory->GetSupportedFormats(strmtype,tmsfmtlist);
+        ret = iFactory->GetSupportedFormats((TMSStreamType) strmtype,
+                tmsfmtlist);
         }
 
     std::vector<TMSFormat*>::iterator itCodecs = tmsfmtlist.begin();
@@ -316,20 +317,21 @@ gint QTMSFactoryImpl::DeleteEffect(QTMSEffect*& qtmseffect)
     }
 
 gint QTMSFactoryImpl::CreateBuffer(QTMSBufferType buffertype, guint size,
-        QTMSBuffer*& qtmsbuffer)
+        QTMSBuffer*& buffer)
     {
     TRACE_PRN_FN_ENT;
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
     TMSBuffer* tmsbuffer(NULL);
     if (iFactory)
         {
-        ret = iFactory->CreateBuffer(buffertype, size, tmsbuffer);
+        ret = iFactory->CreateBuffer((TMSBufferType) buffertype, size,
+                tmsbuffer);
         if (ret == TMS_RESULT_SUCCESS)
             {
             switch (buffertype)
                 {
                 case QTMS_BUFFER_MEMORY:
-                    ret = QTMSMemBuffer::Create(size, qtmsbuffer, tmsbuffer);
+                    ret = QTMSBufferImpl::Create(buffertype, buffer, tmsbuffer);
                     break;
                 default:
                     ret = QTMS_RESULT_BUFFER_TYPE_NOT_SUPPORTED;
@@ -346,7 +348,7 @@ gint QTMSFactoryImpl::DeleteBuffer(QTMSBuffer*& qtmsbuffer)
     {
     TRACE_PRN_FN_ENT;
     gint ret(QTMS_RESULT_SUCCESS);
-    delete (static_cast<QTMSMemBuffer*> (qtmsbuffer));
+    delete qtmsbuffer;
     qtmsbuffer = NULL;
     TRACE_PRN_FN_EXT;
     return ret;
@@ -361,7 +363,7 @@ gint QTMSFactoryImpl::CreateSource(QTMSSourceType srctype,
     TMS::TMSSource* tmssource(NULL);
     if (iFactory)
         {
-        ret = iFactory->CreateSource(srctype, tmssource);
+        ret = iFactory->CreateSource((TMSSourceType) srctype, tmssource);
 
         if (ret == TMS_RESULT_SUCCESS)
             {
@@ -430,7 +432,7 @@ gint QTMSFactoryImpl::CreateSink(QTMSSinkType sinktype, QTMSSink*& qtmssink)
 
     if (iFactory)
         {
-        ret = iFactory->CreateSink(sinktype, tmssink);
+        ret = iFactory->CreateSink((TMSSinkType) sinktype, tmssink);
 
         if (ret == TMS_RESULT_SUCCESS)
             {
@@ -529,7 +531,7 @@ gint QTMSFactoryImpl::CreateDTMF(QTMSStreamType streamtype, QTMSDTMF*& qdtmf)
 
     if (iFactory)
         {
-        ret = iFactory->CreateDTMF(streamtype, tmsdtmf);
+        ret = iFactory->CreateDTMF((TMSStreamType) streamtype, tmsdtmf);
 
         if (ret == TMS_RESULT_SUCCESS)
             {

@@ -73,7 +73,7 @@ _LIT( KCommonTestClassLogPath, "e:\\testing\\log\\" );
 #endif
 
 _LIT( KCommonTestClassLogFile, "CommonTestClass.log" ); 
-_LIT( KCommonTestFilePath, "C:\\testing\\data\\" );
+_LIT( KCommonTestFilePath, "e:\\testing\\data\\" );
 _LIT( KMsgBadTestParameters, "[Error] No valid test case parameters");
 _LIT( KTagCompareNotEqual, "<>");
 _LIT( KTagCompareEqual, "==");
