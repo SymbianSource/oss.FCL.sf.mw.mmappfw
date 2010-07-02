@@ -198,12 +198,14 @@ TMTPResponseCode CSendObject::CheckSendingStateL()
             {
             delete iObjectInfo;
             iObjectInfo = NULL;
+            Rollback();
             iProgress = EObjectNone;
             }
         else if ( iOperationCode == EMTPOpCodeSendObjectPropList )
             {
             delete iObjectPropList;
             iObjectPropList = NULL;
+            Rollback();
             iProgress = EObjectNone;
             }
         }
@@ -328,6 +330,10 @@ EXPORT_C void CSendObject::ServiceL()
 
     if ( iProgress == EObjectNone )
         {
+        // iCancelled could have been set after the last transaction
+        // reset the flag here
+        iCancelled = EFalse;
+        
         if ( iOperationCode == EMTPOpCodeSendObjectInfo )
             {
             ServiceInfoL();
@@ -606,6 +612,8 @@ TBool CSendObject::DoHandleResponsePhaseObjectL()
 
         SendResponseL( EMTPRespCodeOK );
         }
+
+    iCancelled = EFalse;
 
     PRINT1( _L( "MM MTP <= CSendObject::DoHandleResponsePhaseObjectL result = %d" ), result );
 
