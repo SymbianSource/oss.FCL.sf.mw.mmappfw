@@ -74,23 +74,25 @@ gint QTMSClientSource::GetType(QTMSSourceType& sourcetype)
     return status;
     }
 
-gint QTMSClientSource::BufferFilled(TMS::TMSBuffer& buffer)
+gint QTMSClientSource::BufferFilled(QTMSBuffer& buffer)
     {
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
     if (iSource)
         {
-        status = static_cast<TMSClientSource*> (iSource)->BufferFilled(buffer);
+        TMSBuffer& buf(reinterpret_cast<TMSBuffer&>(buffer));
+        status = static_cast<TMSClientSource*> (iSource)->BufferFilled(buf);
         }
     return status;
     }
 
 // Push mode
-gint QTMSClientSource::ProcessBuffer(TMS::TMSBuffer* buffer)
+gint QTMSClientSource::ProcessBuffer(QTMSBuffer* buffer)
     {
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
     if (iSource)
         {
-        status = static_cast<TMSClientSource*> (iSource)->ProcessBuffer(buffer);
+        TMSBuffer* buf(reinterpret_cast<TMSBuffer*>(buffer));
+        status = static_cast<TMSClientSource*> (iSource)->ProcessBuffer(buf);
         }
     return status;
     }

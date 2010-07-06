@@ -38,7 +38,7 @@ TInt CCommonTestClass::CreateCenRepWatcherL()
         }
     iCenRepWatcher = NULL;
     iCenRepWatcher = CMPXCenRepWatcher::NewL(KCRUidMPXSettings, 
-                                             KMPXPlaybackRepeatMode, 
+                                             KMPXPlaybackVolume, 
                                              this);
     if ( iCenRepWatcher == NULL)
         {

@@ -16,6 +16,7 @@
  */
 
 #include <qtms.h>
+#include <qtmsbuffer.h>
 #include <tmsbuffer.h>
 #include <tmsclientsource.h>
 #include "qtmsclientsourceimpl.h"
@@ -32,8 +33,7 @@ QTMSClientSourceImpl::~QTMSClientSourceImpl()
     RemoveObserver(*this);
     }
 
-gint QTMSClientSourceImpl::Create(QTMSSource*& qsource,
-        TMS::TMSSource*& tmssource)
+gint QTMSClientSourceImpl::Create(QTMSSource*& qsource, TMSSource*& tmssource)
     {
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSClientSourceImpl* self = new QTMSClientSourceImpl();
@@ -70,7 +70,8 @@ gint QTMSClientSourceImpl::AddObserver(TMS::TMSClientSourceObserver& obsrvr,
     return ret;
     }
 
-gint QTMSClientSourceImpl::RemoveObserver(TMS::TMSClientSourceObserver& obsrvr)
+gint QTMSClientSourceImpl::RemoveObserver(
+        TMS::TMSClientSourceObserver& obsrvr)
     {
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
     if (iSource)
@@ -94,13 +95,15 @@ gint QTMSClientSourceImpl::GetSource(TMS::TMSSource*& tmssource)
 
 void QTMSClientSourceImpl::FillBuffer(TMS::TMSBuffer& buffer)
     {
-    emit QTMS::QTMSClientSource::FillBuffer(buffer);
+    emit QTMSClientSource::FillBuffer(reinterpret_cast<QTMSBuffer&> (buffer));
     }
 
 void QTMSClientSourceImpl::BufferProcessed(const TMS::TMSBuffer* buffer,
         gint reason)
     {
-    emit QTMS::QTMSClientSource::BufferProcessed(buffer, reason);
+    TMSBuffer* buf(const_cast<TMSBuffer*> (buffer));
+    emit QTMSClientSource::BufferProcessed(
+            reinterpret_cast<QTMSBuffer*> (buf), reason);
     }
 
 // End of file

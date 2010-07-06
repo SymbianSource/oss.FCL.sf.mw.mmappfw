@@ -28,7 +28,7 @@ QTMSSpeakerSink::QTMSSpeakerSink() :
 
 QTMSSpeakerSink::~QTMSSpeakerSink()
     {
-    delete (static_cast<TMSSpeakerSink*>(iSink));
+    delete (static_cast<TMSSpeakerSink*> (iSink));
     }
 
 gint QTMSSpeakerSink::GetType(QTMSSinkType& sinktype)

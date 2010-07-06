@@ -17,55 +17,48 @@
 
 #include <qtms.h>
 #include <tmsbuffer.h>
-#include "qtmsmembuffer.h"
 #include "tmsutility.h"
+#include "qtmsmembuffer.h"
 
 using namespace QTMS;
 using namespace TMS;
 
 QTMSMemBuffer::QTMSMemBuffer()
     {
+    iTmsBuffer = NULL;
+    iOwnsBuffer = FALSE;
     }
 
 QTMSMemBuffer::~QTMSMemBuffer()
     {
-    delete iBuffer;
+    if (iOwnsBuffer)
+        {
+        free(iDataPtr);
+        }
     }
 
-gint QTMSMemBuffer::Create(guint size, QTMSBuffer*& qbuffer,
-        TMS::TMSBuffer*& tmsbuffer)
+gint QTMSMemBuffer::Create(QTMSBuffer*& buffer, TMS::TMSBuffer*& tmsbuffer)
     {
+    gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     TRACE_PRN_FN_ENT;
-    gint ret(TMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSMemBuffer* self = new QTMSMemBuffer();
     if (self)
         {
-        ret = self->PostConstruct();
-        if (ret != TMS_RESULT_SUCCESS)
-            {
-            delete self;
-            self = NULL;
-            }
-        self->iBuffer = tmsbuffer;
+        self->iTmsBuffer = tmsbuffer;
+        tmsbuffer->GetDataPtr(self->iDataPtr);
+        tmsbuffer->GetDataSize(self->iBufferSize);
+        tmsbuffer->GetTimeStamp(self->iTimeStamp);
+        self->iOwnsBuffer = FALSE;
         }
-    qbuffer = self;
+    buffer = self;
     TRACE_PRN_FN_EXT;
-    return ret;
-    }
-
-gint QTMSMemBuffer::PostConstruct()
-    {
-    gint ret(TMS_RESULT_SUCCESS);
     return ret;
     }
 
 gint QTMSMemBuffer::GetType(QTMSBufferType& buffertype)
     {
-    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iBuffer)
-        {
-        ret = iBuffer->GetType(buffertype);
-        }
+    gint ret(TMS_RESULT_SUCCESS);
+    buffertype = QTMS_BUFFER_MEMORY;
     return ret;
     }
 
@@ -79,11 +72,8 @@ gint QTMSMemBuffer::GetType(QTMSBufferType& buffertype)
  */
 gint QTMSMemBuffer::GetTimeStamp(guint64& ts)
     {
-    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iBuffer)
-        {
-        ret = iBuffer->GetTimeStamp(ts);
-        }
+    gint ret(QTMS_RESULT_SUCCESS);
+    ts = iTimeStamp;
     return ret;
     }
 
@@ -97,11 +87,9 @@ gint QTMSMemBuffer::GetTimeStamp(guint64& ts)
  */
 gint QTMSMemBuffer::SetTimeStamp(const guint64 ts)
     {
-    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iBuffer)
-        {
-        ret = iBuffer->SetTimeStamp(ts);
-        }
+    gint ret(QTMS_RESULT_SUCCESS);
+    iTimeStamp = ts;
+    ret = iTmsBuffer->SetTimeStamp(ts);
     return ret;
     }
 
@@ -113,11 +101,8 @@ gint QTMSMemBuffer::SetTimeStamp(const guint64 ts)
  */
 gint QTMSMemBuffer::GetDataSize(guint& size)
     {
-    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iBuffer)
-        {
-        ret = iBuffer->GetDataSize(size);
-        }
+    gint ret(QTMS_RESULT_SUCCESS);
+    size = iBufferSize;
     return ret;
     }
 
@@ -129,11 +114,9 @@ gint QTMSMemBuffer::GetDataSize(guint& size)
  */
 gint QTMSMemBuffer::SetDataSize(const guint size)
     {
-    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iBuffer)
-        {
-        ret = iBuffer->SetDataSize(size);
-        }
+    gint ret(QTMS_RESULT_SUCCESS);
+    ret = iTmsBuffer->SetDataSize(size);
+    iBufferSize = size; //TODO: should realloc when new size > old size (?)
     return ret;
     }
 
@@ -146,10 +129,8 @@ gint QTMSMemBuffer::SetDataSize(const guint size)
  */
 gint QTMSMemBuffer::GetDataPtr(guint8*& bufptr)
     {
-    gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iBuffer)
-        {
-        ret = iBuffer->GetDataPtr(bufptr);
-        }
+    gint ret(QTMS_RESULT_SUCCESS);
+    bufptr = iDataPtr;
     return ret;
     }
+

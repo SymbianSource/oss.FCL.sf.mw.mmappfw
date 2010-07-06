@@ -386,12 +386,19 @@ TInt Cmpxharvestertest::CopyTestFile( CStifItemParser& aItem )
 		KTo.Append(Kmpxharvester_digitalPath);
 		KTo.Append(string);
 
-	    err = iFileMan->Copy(KFrom, KTo);
- 		if ( err != KErrNone )
- 			{
-			iLog->Log(_L("CopyTestFile returned: %d"), err);
-			break;
-			}
+		for( TInt i = 0; i < 5; i++ )
+		    {
+            err = iFileMan->Copy(KFrom, KTo);
+	        if ( err != KErrNone )
+	            {
+	            iLog->Log(_L("CopyTestFile returned: %d"), err);
+	            User::After( 1000000 );
+	            }
+	        else
+	            {
+                break;
+	            }
+		    }
         }
     return err;
     }
@@ -413,12 +420,20 @@ TInt Cmpxharvestertest::DeleteTestFile( CStifItemParser& aItem )
 		KFrom.Append(Kmpxharvester_digitalPath);
 		KFrom.Append(string);
 
-	    err = iFileMan->Delete(KFrom);
- 		if ( err != KErrNone )
- 			{
-			iLog->Log(_L("DeleteTestFile returned: %d"), err);
-			break;
-			}
+		for( TInt i = 0; i < 5; i++ )
+		    {
+            err = iFileMan->Delete(KFrom);
+	        if ( err != KErrNone )
+	            {
+	            iLog->Log(_L("DeleteTestFile returned: %d"), err);
+	            User::After( 1000000 );
+	            }
+	        else
+	            {
+                break;
+	            }
+		    }
+
         }
     return err;
     }
@@ -698,11 +713,19 @@ TInt Cmpxharvestertest::DeleteFiles( CStifItemParser& aItem )
 			}
 		else if ( mode == KTagSync )
 			{
-		    TRAP(err, iHarvester->DeleteFilesL(*files));
-	 		if ( err != KErrNone )
-	 			{
-				iLog->Log(_L("DeleteFilesL sync returned: %d"), err);
-				}
+            for( TInt i = 0; i < 5; i++ )
+                {
+                TRAP(err, iHarvester->DeleteFilesL(*files));
+                if ( err != KErrNone )
+                    {
+                    iLog->Log(_L("DeleteFilesL sync returned: %d"), err);
+                    User::After( 1000000 );
+                    }
+                else
+                    {
+                    break;
+                    }
+                }
 			}
 		else
 			{

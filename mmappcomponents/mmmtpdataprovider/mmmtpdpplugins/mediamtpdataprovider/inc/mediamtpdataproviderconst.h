@@ -35,6 +35,7 @@ enum TMmMtpNumberOfChannels
 enum TMmMtpSampleRateValue
     {
     EMTPSampleRate8K = 0x00001F40,
+    EMTPSampleRate11_025K = 0x00002B11,
     EMTPSampleRate16K = 0x00003E80,
     EMTPSampleRate22_05K = 0x00005622,
     EMTPSampleRate24K = 0x00005DC0,

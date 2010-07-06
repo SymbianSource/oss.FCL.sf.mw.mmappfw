@@ -788,16 +788,17 @@ TInt CCollectionHelperTestClass::GetSongAlbumArtistL(CStifItemParser& /*aItem*/)
     FTRACE(FPrint(_L("CCollectionHelperTest::GetSongAlbumArtistL")));
     TMPXGeneralCategory category = EMPXSong;
    // CMPXMedia* foundMedia= NULL;
-
+   TInt result(KErrNotFound);
    const CMPXMedia& foundMedia = iCachedHelper->GetL( KFileWmaSong(), category );
 
     if (foundMedia.IsSupported(KMPXMediaMusicAlbumArtist))
         {
         const TDesC& albumartist = foundMedia.ValueText( KMPXMediaMusicAlbumArtist );
+        result = KErrNone;
 	    }
    iLog->Log(_L("CCollectionHelperTestClass::GetSongAlbumArtistL done "));
 
-   return 1;
+   return result;
 }
 
 
@@ -848,7 +849,7 @@ TInt CCollectionHelperTestClass::GetAbstractAlbumArtistL(CStifItemParser& /*aIte
 	FTRACE(FPrint(_L("CCollectionHelperTest::GetAbstractAlbumArtistL")));
     TMPXGeneralCategory category = EMPXAbstractAlbum;
     const CMPXMedia& foundMedia = iCachedHelper->GetL( KAbstractalbum1(), category );   //wma test file
-
+    TInt result(0);
 
     //print out foundMedia attributes
     if (foundMedia.IsSupported(KMPXMediaMusicAlbumArtist))
@@ -859,7 +860,7 @@ TInt CCollectionHelperTestClass::GetAbstractAlbumArtistL(CStifItemParser& /*aIte
         
 
          const TDesC& albumartist = foundMedia.ValueText( KMPXMediaMusicAlbumArtist );
-
+         result++;
         }
 
 		if (foundMedia.IsSupported(KMPXMediaGeneralTitle))
@@ -871,7 +872,7 @@ TInt CCollectionHelperTestClass::GetAbstractAlbumArtistL(CStifItemParser& /*aIte
 				 const TDesC& name = foundMedia.ValueText( KMPXMediaGeneralTitle );
 				 iLog->Log(_L("CCollectionHelperTestClass::GetAbstractAlbumArtistL, ABSTRACTALBUM.name retrived"));
 				 
-	
+				 result++;
 
 		}
 		if (foundMedia.IsSupported(KMPXMediaGeneralUri))
@@ -882,10 +883,13 @@ TInt CCollectionHelperTestClass::GetAbstractAlbumArtistL(CStifItemParser& /*aIte
 				   //     albumartist = foundMedia.ValueText( KMPXMediaMusicAlbumArtist ).AllocLC(); // + data
 		     const TDesC& uri = foundMedia.ValueText( KMPXMediaGeneralUri );
 			 iLog->Log(_L("CCollectionHelperTestClass::GetAbstractAlbumArtistL, ABSTRACTALBUM.uri retrived"));
-					  
+			 result++;	  
 			}
 	iLog->Log(_L("CCollectionHelperTestClass::GetAbstractAlbumArtistL done"));
-	return 1;
+	if(result == 3)
+		return KErrNone;
+	else
+	    return KErrNotFound;
 	}
 
 
@@ -990,7 +994,7 @@ TInt CCollectionHelperTestClass::GetAbstractAlbumAndSongsL(CStifItemParser& /*aI
 
    CMPXMediaArray* foundArray =
        foundMedia->Value<CMPXMediaArray>(KMPXMediaArrayContents);
-   CleanupStack::PopAndDestroy(foundMedia);
+   
 
    for (TInt j = 0; j < foundItemCount; ++j)
         {
@@ -1001,7 +1005,7 @@ TInt CCollectionHelperTestClass::GetAbstractAlbumAndSongsL(CStifItemParser& /*aI
         if (abstractalbumMedia->IsSupported(KMPXMediaGeneralTitle))
             {
 	        const TDesC& name = abstractalbumMedia->ValueText( KMPXMediaGeneralTitle );
-            iLog->Log(_L("CCollectionHelperTestClass::GetAlbumAndSongsL, found abstractalbumName = [%s]"), name );
+       //     iLog->Log(_L("CCollectionHelperTestClass::GetAlbumAndSongsL, found abstractalbumName = [%s]"), name );
 	        }
 
         if (abstractalbumMedia->IsSupported(KMPXMediaGeneralId))
@@ -1036,6 +1040,7 @@ TInt CCollectionHelperTestClass::GetAbstractAlbumAndSongsL(CStifItemParser& /*aI
         CleanupStack::PopAndDestroy(&songAttributes);
         CleanupStack::PopAndDestroy(searchMediaSong);
         CleanupStack::PopAndDestroy(abstractalbumMedia);
+        CleanupStack::PopAndDestroy(foundMedia);
 
         CleanupStack::PushL( foundSongs ); // + foundSongs
         if ( err != KErrNone )
@@ -1056,7 +1061,7 @@ TInt CCollectionHelperTestClass::GetAbstractAlbumAndSongsL(CStifItemParser& /*aI
         iLog->Log(_L("CCollectionHelperTestClass::GetAlbumAndSongsL, numOfSongsRefs=%d"), numOfSongsRefs );
         CleanupStack::PopAndDestroy( foundSongs ); // - foundSong
     }
-   return 1;
+   return err;
  }
 
 

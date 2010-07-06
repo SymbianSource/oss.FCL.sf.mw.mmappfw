@@ -47,6 +47,9 @@
 
 "..\..\init\TestFramework.ini"   -   "c:\testframework\TestFramework.ini" 
 "..\..\conf\CollectionHelperTestClass.cfg"   -   "c:\testframework\CollectionHelperTestClass.cfg"
+"..\..\data\1.alb"   -   "e:\data\sounds\digital\1.alb" 
+"..\..\data\1.mp3"   -   "e:\data\sounds\digital\1.mp3"
+"..\..\data\1.wma"   -   "e:\data\sounds\digital\1.wma"
 
 "\epoc32\release\armv5\urel\CollectionHelperTestClass.dll"   -   "c:\Sys\Bin\CollectionHelperTestClass.dll"
   

@@ -18,6 +18,7 @@
 #include <qtms.h>
 #include <tmsbuffer.h>
 #include <tmsclientsink.h>
+#include <qtmsbuffer.h>
 #include "qtmsclientsinkimpl.h"
 
 using namespace QTMS;
@@ -93,7 +94,9 @@ gint QTMSClientSinkImpl::GetSink(TMS::TMSSink*& tmssink)
 
 void QTMSClientSinkImpl::ProcessBuffer(const TMS::TMSBuffer* buffer)
     {
-    emit QTMS::QTMSClientSink::ProcessBuffer(buffer);
+    TMSBuffer* buf(const_cast<TMSBuffer*> (buffer));
+    QTMSBuffer* qtbuf(reinterpret_cast<QTMSBuffer*> (buf));
+    emit QTMSClientSink::ProcessBuffer(qtbuf);
     }
 
 // End of file

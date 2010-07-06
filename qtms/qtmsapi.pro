@@ -94,6 +94,7 @@ HEADERS += qtmsfactory.h \
 # Source
 SOURCES += qtmsfactory.cpp \
            qtmsfactoryimpl.cpp \
+           qtmsbufferimpl.cpp \
            qtmsmembuffer.cpp \
            qtmscall.cpp \
            qtmscallimpl.cpp \

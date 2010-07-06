@@ -106,7 +106,10 @@ TInt CCommonTestClass::CMPXPluginInfoImplementationUid(CStifItemParser& /*aItem*
     
     TInt err = KErrNone;
     
+    iPluginInfo = new CDummyCMPXPluginInfo();
     TRAP(err,iPluginInfo->ImplementationUid());
+    delete iPluginInfo;
+    iPluginInfo = NULL;
 	
     FTRACE(FPrint(_L("CCommonTestClass::CMPXPluginInfoImplementationUid testing CMPXPluginInfo::ImplementationUid end err=%d"), err));
 	iLog->Log(_L("CCommonTestClass::CMPXPluginInfoImplementationUid testing CMPXPluginInfo::ImplementationUid end err=%d"), err);
@@ -155,7 +158,10 @@ TInt CCommonTestClass::CMPXPluginInfoFlags(CStifItemParser&)
     _LIT8(KPluginData,"Plugin Data");
     _LIT8(KPluginTag,"Plugin Tag");
     //iPluginInfo->ProcessTaggedDataL( KPluginTag,KPluginData );
+    iPluginInfo = new CDummyCMPXPluginInfo();
     TUint flag = iPluginInfo->Flags();
+    delete iPluginInfo;
+    iPluginInfo = NULL;
     
 	return err;
     }
