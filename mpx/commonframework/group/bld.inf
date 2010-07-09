@@ -23,9 +23,9 @@
 PRJ_EXPORTS
 
 // Secure backup & restore
-backup_registration.xml /epoc32/release/winscw/urel/z/private/101ffc02/backup_registration.xml
-backup_registration.xml /epoc32/release/winscw/udeb/z/private/101ffc02/backup_registration.xml
-backup_registration.xml /epoc32/data/z/private/101ffc02/backup_registration.xml
+backup_registration.xml z:/private/101ffc02/backup_registration.xml
+
+
 
 ../rom/mpxcommonframework.iby   CORE_MW_LAYER_IBY_EXPORT_PATH(mpxcommonframework.iby)
 

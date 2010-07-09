@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extracts metadata from a file
-*  Version     : %version: da1mmcf#38.1.4.2.6.1.5.3.4 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#38.1.4.2.6.1.5.3.5 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -429,6 +429,50 @@ void CMPXMetadataExtractor::SetMediaPropertiesL()
                                                 duration );      
                 
                     MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL- duration = %i", duration);  
+                    }
+                break;
+                }
+            case EMetaDataSampleRate:     
+                {                  
+                const TDesC& mimeType = iMedia->ValueText( KMPXMediaGeneralMimeType );
+                MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL, mimeType = %S", &mimeType);   
+                
+                // Verify if WMA, get the sample rate
+                if( mimeType.Compare(KWmaMimeType) == 0 || mimeType.Compare(KWmaCafMimeType) == 0 )
+                    {
+                    MPX_DEBUG1("CMPXMetadataExtractor::SetMediaPropertiesL- WMA");                         
+
+                    // Perform the sample rate conversion
+                    TLex lexer( *value );
+                    TInt32 sampleRate ( 0 );
+                    lexer.Val( sampleRate );         
+                    
+                    iMedia->SetTObjectValueL<TUint>( KMPXMediaAudioSamplerate,
+                                                      sampleRate );
+                           
+                    MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL- sample rate = %i", sampleRate);  
+                    }
+                break;
+                }
+            case EMetaDataBitRate:     
+                {                  
+                const TDesC& mimeType = iMedia->ValueText( KMPXMediaGeneralMimeType );
+                MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL, mimeType = %S", &mimeType);   
+                
+                // Verify if WMA, get the duration
+                if( mimeType.Compare(KWmaMimeType) == 0 || mimeType.Compare(KWmaCafMimeType) == 0 )
+                    {
+                    MPX_DEBUG1("CMPXMetadataExtractor::SetMediaPropertiesL- WMA");                         
+
+                    // Perform the duration conversion
+                    TLex lexer( *value );
+                    TInt32 bitRate ( 0 );
+                    lexer.Val( bitRate );   
+                
+                    iMedia->SetTObjectValueL<TUint>( KMPXMediaAudioBitrate,
+                                                     bitRate );
+                
+                    MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL- duration = %i", bitRate);  
                     }
                 break;
                 }
