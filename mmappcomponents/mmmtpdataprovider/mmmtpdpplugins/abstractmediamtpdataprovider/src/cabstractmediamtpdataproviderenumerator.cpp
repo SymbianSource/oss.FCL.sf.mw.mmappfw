@@ -227,6 +227,7 @@ void CAbstractMediaMtpDataProviderEnumerator::InitStorageL()
                     folder );  // + object
             object->SetUint( CMTPObjectMetaData::EParentHandle, KMTPHandleNoParent );
             object->SetUint( CMTPObjectMetaData::EFormatSubCode, EMTPAssociationTypeGenericFolder );
+            object->SetDesCL( CMTPObjectMetaData::EName, KPlaylistFilePath().Left( KPlaylistFilePath().Length() - 1 ) );
             PERFLOGSTART( KObjectManagerInsert );
             iObjectMgr.InsertObjectL( *object );
             PERFLOGSTOP( KObjectManagerInsert );
