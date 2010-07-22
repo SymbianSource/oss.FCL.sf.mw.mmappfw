@@ -145,8 +145,11 @@ TInt CMPXPluginMonitor::RunError(TInt aError)
     MPX_DEBUG3("CMPXPluginMonitor::RunError interface id 0x%08x, error",
                iInterfaceUid.iUid, aError);
     // Restart observer
-    iECs.NotifyOnChange(iStatus);
-    SetActive();
+    if ( !IsActive() )
+        {
+        iECs.NotifyOnChange(iStatus);
+        SetActive();
+        }
     return KErrNone;
     }
 

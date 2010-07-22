@@ -20,7 +20,6 @@
 #define CABSTRACTMEDIAMTPDATAPROVIDERENUMERATOR_H
 
 #include <e32base.h>
-#include <d32dbms.h>
 
 #include "mmmtpenumerationcallback.h"
 #include "cmmmtpdpperflog.h"
@@ -29,8 +28,6 @@
 class MMTPDataProviderFramework;
 class MMTPObjectMgr;
 class CAbstractMediaMtpDataProvider;
-class CMTPObjectMetaData;
-class CMmMtpDpMetadataAccessWrapper;
 class CMPXMediaArray;
 
 /**
@@ -77,6 +74,7 @@ private:
 
     enum TEnumState
     {
+        EEnumNone,
         EEnumPlaylist,
         EEnumAbstractAlbum,
         EEnumCount
@@ -106,13 +104,12 @@ private:
     * @param aPath current scanned file path
     */
     void AddEntryL( const TDesC& aSuid );
-
+    
     /**
-    * Add references of specified abstract media into reference db
-    * @param aAbstractMediaName, specify the abstract media of which references should be added into db
-    * @param aReferences, suid array which stored references
+    * reset Object's format sub code in object manager
     */
-    void AddReferencesL( const TDesC& aAbstractMediaName, CDesCArray& aReferences );
+    void ResetObjectFormatSubCodeL( TUint32 aStorageId );
+
 
 private:
     // Owned
@@ -128,18 +125,16 @@ private:
     /** Provides Callback mechanism for completion of enumeration*/
     CAbstractMediaMtpDataProvider& iDataProvider;
 
-    TParse iPath;
-    TEntryArray iEntries;
-    TInt iFirstUnprocessed;
     RArray<TUint> iStorages;
     TUint32 iStorageId;
-    TUint32 iParentHandle;
 
-    CMPXMediaArray* iAbstractMedias;
+    CDesCArray* iAbstractMedias;
     TInt iCount;
     TInt iCurrentIndex;
     TInt iEnumState;
-
+    
+    TInt iResetCount;
+    
 #if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
     CMmMtpDpPerfLog* iPerfLog;
 #endif

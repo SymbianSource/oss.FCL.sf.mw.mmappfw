@@ -30,7 +30,7 @@ QTMSVolumeEffect::QTMSVolumeEffect() :
 
 QTMSVolumeEffect::~QTMSVolumeEffect()
     {
-    delete iEffect;
+    delete (static_cast<TMSVolumeEffect*>(iEffect));
     }
 
 gint QTMSVolumeEffect::GetLevel(guint& level)

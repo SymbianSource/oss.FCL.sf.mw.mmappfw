@@ -51,7 +51,7 @@ public:
     * @param aCategory, indicate the category of abstract medias
     */
     IMPORT_C void GetAllAbstractMediaL( const TDesC& aStoreRoot,
-        CMPXMediaArray** aAbstractMedias,
+        CDesCArray& aAbstractMedias,
         TMPXGeneralCategory aCategory );
 
     /**
@@ -59,17 +59,9 @@ public:
     * @param aAbstractMedia, specify of which reference should be get
     * @param aReferences, return result array which stored handles of all references
     */
-    IMPORT_C void GetAllReferenceL( CMPXMedia* aAbstractMedia,
+    IMPORT_C void GetAllReferenceL( const CMTPObjectMetaData& aRefOwner,
         CDesCArray& aReferences );
 
-    /**
-    * Get an abstract media name from CMPXMedia object
-    * @param aAbstractMedia, specify the source
-    * @param aCategory, specify the category
-    * @return, name of the source, ownership transferred
-    */
-    IMPORT_C HBufC* GetAbstractMediaNameL( CMPXMedia* aAbstractMedia,
-        TMPXGeneralCategory aCategory );
     /**
     * Add object (music, video, playlist and abstract album) info to DB
     * @param aFullFileName, full file name of file
@@ -165,9 +157,10 @@ public:
 
     /**
     * Updated Music DB
+    * @param aStorageRoot, the root path of storage
     * @return void
     */
-    IMPORT_C void UpdateMusicCollectionL();
+    IMPORT_C void UpdateMusicCollectionL( const TDesC& aStorageRoot );
 
     /*
     * Called when the MTP session is initialised
@@ -229,7 +222,7 @@ private:
     MMTPDataProviderFramework& iFramework;
     RFs& iFs;    // should not remove this member data!!!
 
-    TInt iOpenCount;	// introduce to fix CollectionHelper Flush problem
+    TInt iOpenCount;    // introduce to fix CollectionHelper Flush problem
 
     CDesCArray* iAbstractMediaArray;
 

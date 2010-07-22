@@ -32,13 +32,13 @@ QTMSClientSink::~QTMSClientSink()
     delete iSink;
     }
 
-// Push mode
-gint QTMSClientSink::BufferProcessed(TMS::TMSBuffer* buffer)
+gint QTMSClientSink::BufferProcessed(QTMSBuffer* buffer)
     {
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
     if (iSink)
         {
-        status = static_cast<TMSClientSink*> (iSink)->BufferProcessed(buffer);
+        TMSBuffer* buf(reinterpret_cast<TMSBuffer*> (buffer));
+        status = static_cast<TMSClientSink*> (iSink)->BufferProcessed(buf);
         }
     return status;
     }
@@ -49,7 +49,6 @@ gint QTMSClientSink::GetType(QTMSSinkType& sinktype)
     if (iSink)
         {
         status = static_cast<TMSClientSink*> (iSink)->GetType(sinktype);
-        //status = iSink->GetType(sinktype); //virtual; should be ok
         }
     return status;
     }

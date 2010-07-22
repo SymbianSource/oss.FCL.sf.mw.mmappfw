@@ -85,7 +85,6 @@ void QTMSInbandToneImpl::InbandToneEvent(
         const TMS::TMSInbandTone& /*inbandtone*/, TMS::TMSSignalEvent event)
     {
     QTMSSignalEvent qevent;
-
     qevent.type = event.type;
     qevent.reason = event.reason;
     qevent.curr_state = event.curr_state;

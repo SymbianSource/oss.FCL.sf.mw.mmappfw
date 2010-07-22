@@ -57,13 +57,13 @@ gint QTMSDTMFImpl::PostConstruct()
     }
 
 gint QTMSDTMFImpl::AddObserver(TMS::TMSDTMFObserver& obsrvr,
-        gpointer /*user_data*/)
+        gpointer user_data)
     {
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
     if (iDtmf)
         {
-        ret = iDtmf->AddObserver(obsrvr, NULL);
+        ret = iDtmf->AddObserver(obsrvr, user_data);
         }
     return ret;
     }

@@ -225,6 +225,11 @@ TInt CHarvesterCollectionMediatorTest::CMPXCollectionMediatorDestruction( CStifI
 	 TInt err = KErrNone;
      delete iMediator;
      iMediator = NULL;
+     if(iCollectionUtility)
+    	 {
+         iCollectionUtility->Close();
+         iCollectionUtility = NULL;
+    	 }
 	 iLog->Log(_L("CHarvesterCollectionMediatorTest::CMPXCollectionMediatorDestruction testing ~CMPXCollectionMediator end err=%d"), err);
 	 return err;
  	}
@@ -253,7 +258,6 @@ TInt CHarvesterCollectionMediatorTest::CMPXCollectionMediatorNewLWithMPXCollecti
 	   {
        iLog->Log( _L("CHarvesterCollectionMediatorTest::CMPXCollectionMediatorNewLWithMPXCollection testing CMPXCollectionMediator::NewL() End") );
        }    
-    iCollectionUtility->Close();
     return err;
  	}
 
@@ -271,6 +275,7 @@ TInt CHarvesterCollectionMediatorTest::CMPXCollectionMediatorNewLC( CStifItemPar
     iMediator = CMPXCollectionMediator::NewLC( iCollectionUtility->Collection() );
     CleanupStack::Pop( iMediator );
     iCollectionUtility->Close();
+    iCollectionUtility = NULL;
     iLog->Log( _L("CHarvesterCollectionMediatorTest::CMPXCollectionMediatorNewLC testing CMPXCollectionMediator::NewLC() End") );
     return err;
  	}

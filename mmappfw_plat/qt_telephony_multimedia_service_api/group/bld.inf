@@ -50,3 +50,4 @@ PRJ_EXPORTS
 ../inc/qtmsmodemsource.h         MW_LAYER_PLATFORM_EXPORT_PATH(qtmsmodemsource.h)
 ../inc/qtmsspeakersink.h         MW_LAYER_PLATFORM_EXPORT_PATH(qtmsspeakersink.h)
 ../inc/qtmsinbandtone.h          MW_LAYER_PLATFORM_EXPORT_PATH(qtmsinbandtone.h)
+../inc/qtmswrapperexport.h       MW_LAYER_PLATFORM_EXPORT_PATH(qtmswrapperexport.h)

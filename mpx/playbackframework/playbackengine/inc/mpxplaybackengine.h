@@ -192,13 +192,6 @@ public:
     inline TProcessId LastActiveProcessId() const;
 
     /**
-     *  Retursn last inactive process id
-     *
-     *  @return process id of last inactive process
-     */
-    inline TProcessId LastInactiveProcessId() const;
-
-    /**
     *  Initializes the player with a song in the collection
     *
     *  @param aCollectionPath collection path

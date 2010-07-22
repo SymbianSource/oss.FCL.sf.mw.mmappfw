@@ -105,10 +105,6 @@ EXPORT_C CMoveObject::CMoveObject( MMTPDataProviderFramework& aFramework,
 EXPORT_C void CMoveObject::ConstructL()
     {
     iPropertyList = CMTPTypeObjectPropList::NewL();
-
-    // Set the CenRep value of MTP status,
-    // also need to do in other processors which related to MPX
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -119,7 +115,8 @@ EXPORT_C void CMoveObject::ConstructL()
 EXPORT_C void CMoveObject::ServiceL()
     {
     PRINT( _L( "MM MTP => CMoveObject::ServiceL" ) );
-
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
     MoveObjectL();
 
     PRINT( _L( "MM MTP <= CMoveObject::ServiceL" ) );
@@ -282,9 +279,9 @@ TMTPResponseCode CMoveObject::CanMoveObjectL( const TDesC& aOldName,
 //
 void CMoveObject::MoveFileL( const TDesC& aNewFileName )
     {
-    TFileName oldFileName = iObjectInfo->DesC( CMTPObjectMetaData::ESuid );
+    HBufC* oldFileName = iObjectInfo->DesC( CMTPObjectMetaData::ESuid ).AllocLC(); // + oldFileName
     PRINT2( _L( "MM MTP => CMoveObject::MoveFileL old name = %S, aNewFileName = %S" ),
-        &oldFileName,
+        oldFileName,
         &aNewFileName );
 
     if ( iStorageId == iObjectInfo->Uint( CMTPObjectMetaData::EStorageId ) )
@@ -298,7 +295,9 @@ void CMoveObject::MoveFileL( const TDesC& aNewFileName )
     TRAPD( err, SetPropertiesL( aNewFileName ) );
 
     CFileMan* fileMan = CFileMan::NewL( iFramework.Fs() );
-    err = fileMan->Move( oldFileName, aNewFileName );
+    err = fileMan->Move( *oldFileName, aNewFileName );
+	
+	CleanupStack::PopAndDestroy( oldFileName );     // - oldFileName
 
     if ( err != KErrNone )
         PRINT1( _L( "MM MTP <> CMoveObject::MoveFileL err = %d" ), err );
@@ -515,7 +514,6 @@ void CMoveObject::SetPropertiesL( const TDesC& aNewFileName )
         iObjectInfo->SetUint( CMTPObjectMetaData::EParentHandle, iNewParentHandle );
         iFramework.ObjectMgr().ModifyObjectL(*iObjectInfo);
 
-        iDpConfig.GetWrapperL().SetStorageRootL( aNewFileName );
         iDpConfig.GetWrapperL().AddObjectL( *iObjectInfo );
 
         if ( formatCode == EMTPFormatCodeAbstractAudioVideoPlaylist

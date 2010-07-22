@@ -156,15 +156,6 @@ inline TProcessId CMPXPlaybackEngine::LastActiveProcessId() const
     }
 
 // ----------------------------------------------------------------------------
-// Return last inactive process id
-// ----------------------------------------------------------------------------
-//
-inline TProcessId CMPXPlaybackEngine::LastInactiveProcessId() const
-    {
-    return iLastInactiveProcess;
-    }
-
-// ----------------------------------------------------------------------------
 // CPlaybackCallbackReflector constructor
 // ----------------------------------------------------------------------------
 //

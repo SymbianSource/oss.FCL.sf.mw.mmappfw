@@ -187,12 +187,6 @@ private:
     TBool IsTooLarge( TUint64 aObjectSize ) const;
 
     /**
-    * Check if we can store the file on the storage
-    * @return ETrue if yes, otherwise EFalse
-    */
-    TBool CanStoreFileL( TUint32 aStorageId, TInt64 aObjectSize ) const;
-
-    /**
     * Get the full path name of the object to be saved
     * @param aFileName, on entry, contains the file name of the object,
     * on return, contains the full path name of the object to be saved
@@ -208,7 +202,7 @@ private:
     /**
     * Reserve object information before SendObject
     */
-    void ReserveObjectL();
+    TInt ReserveObjectL();
 
     /**
     * Set protection status of object which could be read/write-only
@@ -227,10 +221,13 @@ private:
     void AddMediaToStoreL();
 
     /**
-    * delete the file, which transfer incompletely
+    * Rollback functions
     */
     void Rollback();
 
+    void UnreserveObjectL();
+    void RemoveObjectFromDbL();
+    void RemoveObjectFromFs();
 
 private:
     enum TMTPSendingObjectState
@@ -243,6 +240,8 @@ private:
         ESendObjectSucceed,
         ESendObjectFail
         };
+
+    typedef void ( CSendObject::*TMmMtpRollbackAction )();
 
 private:
     RFs& iFs;
@@ -282,7 +281,7 @@ private:
     // params which is needed for reserve handle
     TMTPTypeRequest iExpectedSendObjectRequest;
 
-    TBool iNoRollback;
+    RArray<TMmMtpRollbackAction> iRollbackList;
 
     TUint32 iPreviousTransactionID;
     TUint32 iPreviousOperation;

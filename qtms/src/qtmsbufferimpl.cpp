@@ -11,7 +11,7 @@
  *
  * Contributors:
  *
- * Description: QT Bindings for TMS
+ * Description: Telephony Multimedia Service
  *
  */
 
@@ -22,15 +22,15 @@
 
 using namespace QTMS;
 
-gint QTMSBufferImpl::Create(QTMSBufferType buffertype, guint size,
-        QTMSBuffer*& tmsbuffer)
+gint QTMSBufferImpl::Create(QTMSBufferType buffertype, QTMSBuffer*& buffer,
+        TMS::TMSBuffer*& tmsbuffer)
     {
-    gint ret(TMS_RESULT_INSUFFICIENT_MEMORY);
+    gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     TRACE_PRN_FN_ENT;
     switch (buffertype)
         {
         case QTMS_BUFFER_MEMORY:
-            ret = QTMSMemBuffer::Create(size, tmsbuffer);
+            ret = QTMSMemBuffer::Create(buffer, tmsbuffer);
             break;
         default:
             ret = QTMS_RESULT_BUFFER_TYPE_NOT_SUPPORTED;
@@ -41,17 +41,17 @@ gint QTMSBufferImpl::Create(QTMSBufferType buffertype, guint size,
     return ret;
     }
 
-gint QTMSBufferImpl::Delete(QTMSBuffer*& tmsbuffer)
+gint QTMSBufferImpl::Delete(QTMSBuffer*& buffer)
     {
-    gint ret(TMS_RESULT_INVALID_ARGUMENT);
+    gint ret(QTMS_RESULT_INVALID_ARGUMENT);
     TRACE_PRN_FN_ENT;
     QTMSBufferType buffertype;
-    ret = tmsbuffer->GetType(buffertype);
+    ret = buffer->GetType(buffertype);
     switch (buffertype)
         {
         case QTMS_BUFFER_MEMORY:
-            delete (QTMSMemBuffer*) (tmsbuffer);
-            tmsbuffer = NULL;
+            delete (static_cast<QTMSMemBuffer*> (buffer));
+            buffer = NULL;
             ret = QTMS_RESULT_SUCCESS;
             break;
         default:

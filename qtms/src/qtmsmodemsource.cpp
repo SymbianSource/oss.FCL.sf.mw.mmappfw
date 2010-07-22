@@ -28,7 +28,7 @@ QTMSModemSource::QTMSModemSource() :
 
 QTMSModemSource::~QTMSModemSource()
     {
-    delete iSource;
+    delete (static_cast<TMSModemSource*> (iSource));
     }
 
 gint QTMSModemSource::GetType(QTMSSourceType& sourcetype)

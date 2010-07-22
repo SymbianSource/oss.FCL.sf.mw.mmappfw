@@ -35,7 +35,7 @@
 #include "mpxharvesterengine.h"
 #include "mpxfsformatmonitor.h"
 #include "mpxmediaremovalmonitor.h"
-#include "mpxusbeventhandler.h"
+#include "mpxconnectioneventhandler.h"
 #include "mpxharvesterfilehandler.h"
 #include "mpxharvesterengineobserver.h"
 #include "mpxhvsmsg.h"
@@ -60,7 +60,7 @@ CMPXHarvesterEngine::~CMPXHarvesterEngine()
 
     delete iFormatMonitor;
     delete iMediaRemovalMonitor;
-    delete iUSBMonitor;
+    delete iConnectionMonitor;
 
     delete iFileHandler;
     iFsSession.Close();
@@ -101,8 +101,8 @@ void CMPXHarvesterEngine::ConstructL()
     iMediaRemovalMonitor = CMPXMediaRemovalMonitor::NewL(
         removableDrive, iFsSession, *this );
 
-    // USB Event monitor
-    iUSBMonitor = CMPXUsbEventHandler::NewL( *this );
+    // Connection Event monitor
+    iConnectionMonitor = CMPXConnectionEventHandler::NewL( *this );
 
 
     // File handler to handle file related events
@@ -426,7 +426,7 @@ void CMPXHarvesterEngine::CheckForSystemEvents()
     // wont be able to open the db anyways.
     //
     iFormatMonitor->PollStatus();
-    iUSBMonitor->PollStatus();
+    iConnectionMonitor->PollStatus();
     }
 
 // ---------------------------------------------------------------------------

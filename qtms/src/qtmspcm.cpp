@@ -25,7 +25,6 @@ QTMSPCMFormat::QTMSPCMFormat()
 
 QTMSPCMFormat::~QTMSPCMFormat()
     {
-    // iFormat is deleted with QTMSFormat::iFormat
     }
 
 // End of file

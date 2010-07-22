@@ -134,7 +134,7 @@ EXPORT_C CMTPTypeObjectPropDesc* CDescriptionUtility::NewRangeFormDescriptionL( 
 TUint32 CDescriptionUtility::GetGroupCode( TUint32 aPropCode )
     {
     TInt count = sizeof( KPropGroupMapTable ) / sizeof( KPropGroupMapTable[0] );
-    // TODO: if need to refine the search approach to improve performance
+
     for( TInt i = 0; i < count; i++ )
         {
         if ( aPropCode == KPropGroupMapTable[i].iPropCode )

@@ -30,9 +30,10 @@ const TInt KAdditionalStringLength = 50;
 // C++ Constructor
 // ---------------------------------------------------------------------------
 //
-CMPXHarvesterDB::CMPXHarvesterDB( TDriveNumber aDrive, RFs& aFs  ) :
+CMPXHarvesterDB::CMPXHarvesterDB( TDriveNumber aDrive, RFs& aFs, TBool aEMMC  ) :
                                   iDrive( aDrive),
-                                  iFs( aFs )
+                                  iFs( aFs ),
+                                  iEMMC( aEMMC )	  
 #ifdef __RAMDISK_PERF_ENABLE
                                   ,iRamDrive(aDrive),
                                   iUseRamDrive(EFalse)
@@ -54,9 +55,9 @@ void CMPXHarvesterDB::ConstructL()
 // Two-Phased Constructor
 // ---------------------------------------------------------------------------
 //
-CMPXHarvesterDB* CMPXHarvesterDB::NewL( TDriveNumber aDrive, RFs& aFs   )
+CMPXHarvesterDB* CMPXHarvesterDB::NewL( TDriveNumber aDrive, RFs& aFs, TBool aEMMC )
     {
-    CMPXHarvesterDB* self = new( ELeave ) CMPXHarvesterDB( aDrive, aFs );
+    CMPXHarvesterDB* self = new( ELeave ) CMPXHarvesterDB( aDrive, aFs, aEMMC );
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self );
@@ -708,7 +709,14 @@ TFileName CMPXHarvesterDB::GenerateDbName()
         fileName.Append( KHarvesterDBPath );
         TDriveUnit drive( iDrive );
         fileName.Append(drive.Name()[0]);
-        fileName.Append(KHarvesterDBName);
+    
+        //Use different name for Dbs if the system has an internal drive vs. MMC-only.
+        //Since hard-coded drive letters in the Thumbnail URIs
+        //So Dbs are not interchangeable between an internal drive system and MMC-only system.		
+        if ( iEMMC )
+           fileName.Append( KHarvesterDBNameEMMC );
+        else
+           fileName.Append( KHarvesterDBName );
         }
     else
         {
@@ -716,7 +724,10 @@ TFileName CMPXHarvesterDB::GenerateDbName()
         TDriveUnit drive( iDrive );
         fileName.Append( drive.Name() );
         fileName.Append( KHarvesterDBPath );
-        fileName.Append( KHarvesterDBName );
+        if ( iEMMC )
+           fileName.Append( KHarvesterDBNameEMMC );
+        else
+           fileName.Append( KHarvesterDBName );
 #ifdef __RAMDISK_PERF_ENABLE
         }
 #endif // __RAMDISK_PERF_ENABLE

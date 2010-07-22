@@ -50,9 +50,6 @@ public:
 private:
     QTMSVolumeEffectImpl();
     gint PostConstruct();
-
-private:
-    gpointer iUserData;
     };
 
 } //namespace QTMS

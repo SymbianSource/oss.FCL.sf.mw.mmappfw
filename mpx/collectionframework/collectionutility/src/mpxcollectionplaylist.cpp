@@ -38,7 +38,8 @@
 
 // CONSTANTS
 const TInt KIncrementalFetchSize = 400;
-const TInt KIncrementalDelay = 2000000;
+
+const TInt KIncrementalDelay = 250000;
 
 // -----------------------------------------------------------------------------
 // Two-phased constructor.
@@ -1256,6 +1257,7 @@ TBool CMPXCollectionPlaylist::DoHandleCollectionChangeMessageL(
         if( changeType == EMPXItemDeleted )
             {
             refresh = ETrue;
+            MPX_DEBUG1("CMPXCollectionPlaylist::DoHandleCollectionChangeMessageL -- current item deleted");
             }
         // Modified
         else if( changeType == EMPXItemModified )
@@ -1333,11 +1335,12 @@ TBool CMPXCollectionPlaylist::DoHandleCollectionChangeMessageL(
             }
         }
 
-    if (iAutoPlaylist && refresh)
+    // update playlist immediately when item is deleted in order to detect deletion of the last item in the playlist
+     if (iAutoPlaylist && refresh)
         {
         // For autoplaylist, affected by the event.
         // Path clip will never happen for autoplaylist
-        if (changeType == EMPXItemDeleted)
+		if ( changeType == EMPXItemDeleted )
             {
             // item deleted in the autoplaylist, update the iPath to remove the item
             // auso update iItemIndexes and iItemIndex

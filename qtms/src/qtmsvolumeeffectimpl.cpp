@@ -57,14 +57,14 @@ gint QTMSVolumeEffectImpl::PostConstruct()
     }
 
 gint QTMSVolumeEffectImpl::AddObserver(TMS::TMSEffectObserver& obsrvr,
-        gpointer /*user_data*/)
+        gpointer user_data)
     {
     gint ret(QTMS_RESULT_SUCCESS);
 
     if (iEffect)
         {
         ret = static_cast<TMSVolumeEffect*> (iEffect)->AddObserver(obsrvr,
-                NULL);
+                user_data);
         }
     return ret;
     }

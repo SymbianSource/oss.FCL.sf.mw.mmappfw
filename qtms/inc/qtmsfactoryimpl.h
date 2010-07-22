@@ -69,9 +69,6 @@ public:
     gint DeleteGlobalRouting(QTMSGlobalRouting*& globrouting);
     gint CreateDTMF(QTMSStreamType streamid, QTMSDTMF*& dtmf);
     gint DeleteDTMF(QTMSDTMF*& dtmf);
-    gint CreateRTPSession(QTMSRTPSession*& rtpsession, guint8* sdp,
-            guint mode);
-    gint DeleteRTPSession(QTMSRTPSession*& rtpsession);
     gint CreateRingTonePlayer(QTMSRingTone*& rt);
     gint DeleteRingTonePlayer(QTMSRingTone*& rt);
     gint CreateInbandTonePlayer(QTMSInbandTone*& inbandtone);

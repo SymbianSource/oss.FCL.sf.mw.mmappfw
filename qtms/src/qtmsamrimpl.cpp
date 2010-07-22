@@ -74,7 +74,6 @@ gint QTMSAMRFormatImpl::GetType(QTMSFormatType& fmttype)
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
     if (iFormat)
         {
-        //status = static_cast<TMSFormat*> (iFormat)->GetType(fmttype);
         status = iFormat->GetType(fmttype);
         }
     return status;

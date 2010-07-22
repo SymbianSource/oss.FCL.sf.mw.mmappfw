@@ -53,7 +53,7 @@ protected:
     * @param aFramework   The data provider framework
     * @param aConnection  The connection from which the request comes
     */
-    IMPORT_C CGetPartialObject( MMTPDataProviderFramework& aFramework,
+    CGetPartialObject( MMTPDataProviderFramework& aFramework,
         MMTPConnection& aConnection );
 
 protected:

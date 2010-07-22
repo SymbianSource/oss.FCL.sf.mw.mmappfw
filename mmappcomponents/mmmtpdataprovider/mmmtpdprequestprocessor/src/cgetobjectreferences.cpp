@@ -18,13 +18,26 @@
 
 #include <mtp/cmtptypearray.h>
 #include <mtp/mmtpreferencemgr.h>
-#ifdef _DEBUG
 #include <mtp/mmtpobjectmgr.h>
+#ifdef _DEBUG
 #include <mtp/tmtptypeuint128.h>
 #endif
 
 #include "cgetobjectreferences.h"
+#include "mmmtpdputility.h"
 #include "mmmtpdplogger.h"
+#include "cmmmtpdpperflog.h"
+#include "mmmtpdpconfig.h"
+#include "cmmmtpdpmetadataaccesswrapper.h"
+#include "tmmmtpdppanic.h"
+
+const TInt KMTPDriveGranularity = 5;
+
+#if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
+_LIT( KMpxQueryAbstractMediaReference, "MpxQueryAbstractMediaReference" );
+_LIT( KReferenceManagerSetReference, "ReferenceManagerSetReference" );
+_LIT( KObjectManagerHandle, "ObjectManagerHandle" );
+#endif
 
 // -----------------------------------------------------------------------------
 // Verification data for the GetReferences request
@@ -49,10 +62,11 @@ const TMTPRequestElementInfo KMTPGetObjectReferencesPolicy[] =
 //
 EXPORT_C MMmRequestProcessor* CGetObjectReferences::NewL( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
-    MMmMtpDpConfig& /*aDpConfig*/ )
+    MMmMtpDpConfig& aDpConfig )
     {
     CGetObjectReferences* self = new ( ELeave ) CGetObjectReferences( aFramework,
-        aConnection );
+        aConnection,
+        aDpConfig );
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self );
@@ -67,7 +81,9 @@ EXPORT_C MMmRequestProcessor* CGetObjectReferences::NewL( MMTPDataProviderFramew
 //
 void CGetObjectReferences::ConstructL()
     {
-    SetPSStatus();
+#if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
+    iPerfLog = CMmMtpDpPerfLog::NewL( _L( "CAbstractMediaMtpDataProviderEnumerator" ) );
+#endif
     }
 
 // -----------------------------------------------------------------------------
@@ -78,6 +94,10 @@ void CGetObjectReferences::ConstructL()
 EXPORT_C CGetObjectReferences::~CGetObjectReferences()
     {
     delete iReferences;
+
+#if defined(_DEBUG) || defined(MMMTPDP_PERFLOG)
+    delete iPerfLog;
+#endif // _DEBUG
     }
 
 // -----------------------------------------------------------------------------
@@ -86,11 +106,13 @@ EXPORT_C CGetObjectReferences::~CGetObjectReferences()
 // -----------------------------------------------------------------------------
 //
 CGetObjectReferences::CGetObjectReferences( MMTPDataProviderFramework& aFramework,
-    MMTPConnection& aConnection ) :
-    CRequestProcessor( aFramework,
-        aConnection,
-        sizeof ( KMTPGetObjectReferencesPolicy ) / sizeof( TMTPRequestElementInfo ),
-        KMTPGetObjectReferencesPolicy )
+    MMTPConnection& aConnection,
+    MMmMtpDpConfig& aDpConfig ) :
+        CRequestProcessor( aFramework,
+            aConnection,
+            sizeof ( KMTPGetObjectReferencesPolicy ) / sizeof( TMTPRequestElementInfo ),
+            KMTPGetObjectReferencesPolicy ),
+        iDpConfig( aDpConfig )
     {
     PRINT( _L( "Operation: GetObjectReferences(0x9810)" ) );
     }
@@ -103,13 +125,45 @@ CGetObjectReferences::CGetObjectReferences( MMTPDataProviderFramework& aFramewor
 void CGetObjectReferences::ServiceL()
     {
     PRINT( _L( "MM MTP => CGetObjectReferences::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus( EMtpPSStatusActive );
 
     TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
     PRINT1( _L( "MM MTP <> CGetObjectReferences::ServiceL objectHandle = 0x%x" ),
-            objectHandle );
-    MMTPReferenceMgr& referenceMgr = iFramework.ReferenceMgr();
+        objectHandle );
+
+    CMTPObjectMetaData* parentObject = iRequestChecker->GetObjectInfo( objectHandle );
+    __ASSERT_DEBUG( parentObject, Panic( EMmMTPDpObjectNull ) );
+
+    iFramework.ObjectMgr().ObjectL( objectHandle, *parentObject );
+    TUint subFormatCode = parentObject->Uint( CMTPObjectMetaData::EFormatSubCode );
+    PRINT1( _L( "MM MTP <> CGetObjectReferences::ServiceL subFormatCode = 0x%x" ),
+        subFormatCode );
+    
+    if ( MmMtpDpUtility::HasReference( parentObject->Uint( CMTPObjectMetaData::EFormatCode ) )
+        && ( subFormatCode == EMTPSubFormatCodeUnknown ) )
+        {
+        CDesCArray* references = new ( ELeave ) CDesCArrayFlat( KMTPDriveGranularity );
+        CleanupStack::PushL( references ); // + references
+
+        PERFLOGSTART( KMpxQueryAbstractMediaReference );
+        TRAP_IGNORE( iDpConfig.GetWrapperL().GetAllReferenceL( *parentObject, *references ) );
+        PERFLOGSTOP( KMpxQueryAbstractMediaReference );
+
+        // insert references into reference db
+        TPtrC parentSuid( parentObject->DesC( CMTPObjectMetaData::ESuid ) );
+        AddReferencesL( parentSuid, *references );
+        
+        CleanupStack::PopAndDestroy( references );  // - references
+
+        parentObject->SetUint( CMTPObjectMetaData::EFormatSubCode, EMTPSubFormatCodeUndefined );    // set it to something else
+        iFramework.ObjectMgr().ModifyObjectL( *parentObject );
+        }
+
+
     delete iReferences;
     iReferences = NULL;
+    MMTPReferenceMgr& referenceMgr = iFramework.ReferenceMgr();
     iReferences = referenceMgr.ReferencesLC( TMTPTypeUint32( objectHandle ) );
     CleanupStack::Pop( iReferences );
     SendDataL( *iReferences );
@@ -136,6 +190,46 @@ void CGetObjectReferences::ServiceL()
 #endif
 
     PRINT( _L( "MM MTP <= CGetObjectReferences::ServiceL" ) );
+    }
+
+// -----------------------------------------------------------------------------
+// CGetObjectReferences::AddReferencesL
+// GetObjectInfo request handler
+// -----------------------------------------------------------------------------
+//
+void CGetObjectReferences::AddReferencesL( const TDesC& aRefOwnerSuid,
+    CDesCArray& aReferences )
+    {
+    TInt count = aReferences.Count();
+    PRINT2( _L("MM MTP => CGetObjectReferences::AddReferencesL aRefOwnerSuid = %S, ref count = %d"), &aRefOwnerSuid, count );
+
+    // check if references are valid
+    TInt removeCount = 0;
+    for ( TInt i = 0; i < count; i++ )
+        {
+        TInt index = i - removeCount;
+        TPtrC temp( aReferences[index] );
+        PRINT2( _L( "MM MTP <> CGetObjectReferences::AddReferencesL ref[%d]'s name = %S" ), index, &temp );
+        PERFLOGSTART( KObjectManagerHandle );
+        TUint32 handle = iFramework.ObjectMgr().HandleL( temp );
+        PERFLOGSTOP( KObjectManagerHandle );
+        if ( handle == KMTPHandleNone ) // object doesn't exist
+            {
+            PRINT1( _L( "MM MTP <> CGetObjectReferences::AddReferencesL, [%S] doesn't existed in handle db, remove this from reference array" ), &temp );
+
+            // if handle is invalid, remove from reference array
+            aReferences.Delete( index, 1 );
+            removeCount++;
+            }
+        }
+
+    // add all references into references db
+    MMTPReferenceMgr& referenceMgr = iFramework.ReferenceMgr();
+    PERFLOGSTART( KReferenceManagerSetReference );
+    referenceMgr.SetReferencesL( aRefOwnerSuid, aReferences );
+    PERFLOGSTOP( KReferenceManagerSetReference );
+
+    PRINT( _L( "MM MTP <= CGetObjectReferences::AddReferencesL" ) );
     }
 
 // end of file

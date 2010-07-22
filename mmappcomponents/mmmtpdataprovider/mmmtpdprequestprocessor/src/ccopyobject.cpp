@@ -107,10 +107,6 @@ EXPORT_C CCopyObject::CCopyObject( MMTPDataProviderFramework& aFramework,
 EXPORT_C void CCopyObject::ConstructL()
     {
     iPropertyList = CMTPTypeObjectPropList::NewL();
-
-    // Set the CenRep value of MTP status,
-    // also need to do in other processors which related to MPX
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -122,6 +118,7 @@ EXPORT_C void CCopyObject::ServiceL()
     {
     PRINT( _L( "MM MTP => CCopyObject::ServiceL" ) );
 
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
     CopyObjectL();
 
     PRINT( _L( "MM MTP <= CCopyObject::ServiceL" ) );
@@ -453,7 +450,6 @@ void CCopyObject::SetPreviousPropertiesL()
             case EMTPObjectPropCodeNonConsumable:
                 iTargetObject->SetUint( CMTPObjectMetaData::ENonConsumable,
                     element.Uint8L( CMTPTypeObjectPropListElement::EValue ) );
-                // TODO: need to reconsider,
                 // should wait all property setting finished then insert object, or not?
                 // need to investigate if it will affect performance result
                 iFramework.ObjectMgr().ModifyObjectL( *iTargetObject );

@@ -27,6 +27,7 @@
 #include <mtp/mmtpdataproviderframework.h>
 #include <mtp/mmtpobjectmgr.h>
 #include <mtp/tmtptypeuint32.h>
+#include <e32property.h>    // for RProperty
 
 // for asf mimetype parsing
 #ifdef __WINDOWS_MEDIA
@@ -39,6 +40,7 @@
 #include "tobjectdescription.h"
 #include "mmmtpdplogger.h"
 #include "mmmtpdp_variant.hrh"
+#include "cmmmtpdpaccesssingleton.h"
 
 using namespace ContentAccess;
 
@@ -100,7 +102,8 @@ EXPORT_C TMTPFormatCode MmMtpDpUtility::FormatFromFilename( const TDesC& aFullFi
 #endif // __WINDOWS_MEDIA
             else if ( file.Ext().CompareF( KTxtExtensionODF ) == 0 )
                 {
-                HBufC8* mime = MmMtpDpUtility::OdfMimeTypeL( file.FullName() );
+                HBufC8* mime(NULL);
+                TRAP_IGNORE( mime = MmMtpDpUtility::OdfMimeTypeL( file.FullName() ) );
                 if ( mime != NULL )
                     {
                     // 3GP
@@ -498,7 +501,17 @@ HBufC8* MmMtpDpUtility::Mp4MimeTypeL( const TDesC& aFullPath )
 
     if ( mimebuf == NULL )
         {
-        User::Leave( KErrNotFound );
+        PRINT( _L( "MM MTP <> MmMtpDpUtility::Mp4MimeTypeL, mimebuf == NULL, default as video" ) );
+
+        if ( file.Ext().CompareF( KTxtExtension3GP ) == 0
+            || file.Ext().CompareF( KTxtExtension3G2 ) == 0 )
+            {
+            mimebuf = KMimeTypeVideo3gpp().Alloc();
+            }
+        else
+            {
+            mimebuf = KMimeTypeVideoMp4().Alloc();
+            }
         }
     PRINT( _L( "MM MTP <= MmMtpDpUtility::Mp4MimeTypeL" ) );
     return mimebuf;
@@ -701,4 +714,36 @@ EXPORT_C TInt MmMtpDpUtility::GetDrmStatus( const TDesC& aFullFileName )
     return drmStatus;
     }
 
+EXPORT_C void MmMtpDpUtility::SetPSStatus( TMtpPSStatus aStatus )
+    {
+    TBool changeScheduled = EFalse;
+    CMmMtpDpAccessSingleton::CancelActiveToIdleStatusChange();  // cancel any outstanding delay status change
+    
+    if ( aStatus == EMtpPSStatusReadyToSync )
+        {
+        TInt mtpStatus;
+        RProperty::Get( KMtpPSUid, KMtpPSStatus, mtpStatus );
+        
+        if ( mtpStatus == EMtpPSStatusActive )
+            {
+            CMmMtpDpAccessSingleton::ActiveToIdleStatusChange();
+            changeScheduled = ETrue;
+            }
+        }
+
+    if ( !changeScheduled )
+        DoSetPSStatus( aStatus );
+    }
+
+void MmMtpDpUtility::DoSetPSStatus( TMtpPSStatus aStatus )
+    {
+    TInt mtpStatus;
+    RProperty::Get( KMtpPSUid, KMtpPSStatus, mtpStatus );
+
+    if ( mtpStatus != aStatus )
+        {
+        TInt err = RProperty::Set( KMtpPSUid, KMtpPSStatus, aStatus );
+        PRINT3( _L("MM MTP <> CRequestProcessor::DoSetPSStatus err = %d, previous = %d, current = %d" ), err , mtpStatus, aStatus);
+        }
+    }
 // end of file

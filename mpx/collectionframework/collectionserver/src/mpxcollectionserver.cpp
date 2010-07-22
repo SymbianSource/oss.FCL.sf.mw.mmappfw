@@ -72,8 +72,8 @@ LOCAL_C void StartServerL()
     CleanupStack::PushL(server);    
     RProcess::Rendezvous(KErrNone);
     CActiveScheduler::Start();
-    CActiveScheduler::Install(NULL);
     CleanupStack::PopAndDestroy(server);
+    CActiveScheduler::Install(NULL);
     CleanupStack::PopAndDestroy(scheduler);
     }
 
@@ -117,8 +117,8 @@ CMPXCollectionServer::~CMPXCollectionServer()
 //
 void CMPXCollectionServer::ConstructL()
     {
+    StartL(KMPXCollectionServerName);    	
     iEngine = CMPXCollectionEngine::NewL();
-    StartL(KMPXCollectionServerName);
     }
  
 // ----------------------------------------------------------------------------

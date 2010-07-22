@@ -70,7 +70,6 @@ EXPORT_C MMmRequestProcessor* CSetObjectReferences::NewL( MMTPDataProviderFramew
 //
 void CSetObjectReferences::ConstructL()
     {
-    SetPSStatus();
     }
 
 // -----------------------------------------------------------------------------
@@ -89,7 +88,7 @@ EXPORT_C CSetObjectReferences::~CSetObjectReferences()
 // Standard c++ constructor
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CSetObjectReferences::CSetObjectReferences( MMTPDataProviderFramework& aFramework,
+CSetObjectReferences::CSetObjectReferences( MMTPDataProviderFramework& aFramework,
     MMTPConnection& aConnection,
     MMmMtpDpConfig& aDpConfig ) :
         CRequestProcessor( aFramework,
@@ -106,7 +105,7 @@ EXPORT_C CSetObjectReferences::CSetObjectReferences( MMTPDataProviderFramework& 
 // set references to DB
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CSetObjectReferences::DoSetObjectReferencesL( const CMTPObjectMetaData& aObject )
+void CSetObjectReferences::DoSetObjectReferencesL( const CMTPObjectMetaData& aObject )
     {
     TUint formatCode = aObject.Uint( CMTPObjectMetaData::EFormatCode );
     TBool hasReference = MmMtpDpUtility::HasReference( formatCode );
@@ -126,6 +125,9 @@ EXPORT_C void CSetObjectReferences::DoSetObjectReferencesL( const CMTPObjectMeta
 EXPORT_C void CSetObjectReferences::ServiceL()
     {
     PRINT( _L( "MM MTP => CSetObjectReferences::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
+    
     delete iReferences;
     iReferences = NULL;
     iReferences = CMTPTypeArray::NewL( EMTPTypeAUINT32 );
@@ -162,6 +164,10 @@ EXPORT_C TBool CSetObjectReferences::DoHandleResponsePhaseL()
         iFramework.ObjectMgr().ObjectL( objectHandle, *object );
         PRINT1( _L( "MM MTP <> object file name is %S" ), &(object->DesC( CMTPObjectMetaData::ESuid ) ) );
         DoSetObjectReferencesL( *object );
+        
+        // set it to something else other than EMTPSubFormatCodeUnknown to prevent being queried from MPX later in the same session
+        object->SetUint( CMTPObjectMetaData::EFormatSubCode, EMTPSubFormatCodeUndefined );
+        iFramework.ObjectMgr().ModifyObjectL( *object );
 
         CleanupStack::PopAndDestroy( object ); // - object
 

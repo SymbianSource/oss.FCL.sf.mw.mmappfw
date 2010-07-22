@@ -85,7 +85,7 @@ gint QTMSStreamImpl::RemoveObserver(TMS::TMSStreamObserver& obsrvr)
     return ret;
     }
 
-void QTMSStreamImpl::TMSStreamEvent(const TMS::TMSStream& stream,
+void QTMSStreamImpl::TMSStreamEvent(const TMS::TMSStream& /*stream*/,
         TMS::TMSSignalEvent event)
     {
     QTMSSignalEvent qevent;

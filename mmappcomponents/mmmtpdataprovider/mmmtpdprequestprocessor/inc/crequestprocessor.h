@@ -311,7 +311,6 @@ protected:
     /**
     * Set P&S Status to avoid MPX access conflict
     */
-    void SetPSStatus();
 
 private:
     /**

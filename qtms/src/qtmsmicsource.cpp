@@ -30,7 +30,7 @@ QTMSMicSource::QTMSMicSource() :
 
 QTMSMicSource::~QTMSMicSource()
     {
-    delete iSource;
+    delete (static_cast<TMSMicSource*> (iSource));
     }
 
 gint QTMSMicSource::GetType(QTMSSourceType& sourcetype)

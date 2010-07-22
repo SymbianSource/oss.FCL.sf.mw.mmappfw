@@ -1,5 +1,4 @@
-#
-# Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+# Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 # All rights reserved.
 # This component and the accompanying materials are made available
 # under the terms of "Eclipse Public License v1.0"
@@ -11,7 +10,7 @@
 #
 # Contributors:
 #
-# Description: 
+# Description:  QTMS API project description
 #
 
 TEMPLATE = lib
@@ -19,41 +18,34 @@ TARGET   = qtmsapi
 CONFIG  += dll
 DEFINES += BUILD_TMS_WRAPPER_DLL
 
-QT 			= core
+QT = core
 CONFIG -= gui
 
+DEFINES += SYMBIAN
+TARGET.CAPABILITY = All -tcb
+TARGET.EPOCALLOWDLLDATA	= 1
+TARGET.UID2 = 0x10009D8D
+TARGET.UID3 = 0x10207CA5
 
-    DEFINES += SYMBIAN
-    TARGET.CAPABILITY = All -tcb
-    TARGET.EPOCALLOWDLLDATA	= 1
-    TARGET.UID2 = 0x10009D8D
-    TARGET.UID3 = 0x10207CA5
-
-    
 BLD_INF_RULES.prj_exports += "$${LITERAL_HASH}include <platform_paths.hrh>" \
-                             "rom/qtms.iby  CORE_MW_LAYER_IBY_EXPORT_PATH(qtms.iby)" \
+                             "rom/qtms.iby CORE_MW_LAYER_IBY_EXPORT_PATH(qtms.iby)" \
                              "data/qtmsapi_stub.sis /epoc32/data/z/system/install/qtmsapi_stub.sis"
 
-                                      
 DEPENDPATH += . inc
 INCLUDEPATH += . \
                .\inc
 
-
-
-qtmsDefFiles = \
-        "$${LITERAL_HASH}ifdef WINSCW" \
-        "DEFFILE bwins/qtms.def" \
-        "$${LITERAL_HASH}else" \
-        "DEFFILE eabi/qtms.def" \
-        "$${LITERAL_HASH}endif"
-
-MMP_RULES += qtmsDefFiles
+defBlock = \
+           "$${LITERAL_HASH}if defined(EABI)" \
+           "DEFFILE  eabi/qtms.def" \
+           "$${LITERAL_HASH}else" \
+           "DEFFILE  bwins/qtms.def" \
+           "$${LITERAL_HASH}endif"
+MMP_RULES += defBlock
 
 INCLUDEPATH += $$MW_LAYER_SYSTEMINCLUDE \
                $$OS_LAYER_LIBC_SYSTEMINCLUDE \
                $$OS_LAYER_GLIB_SYSTEMINCLUDE
-
 
 LIBS +=	-ltmsfactory \
         -ltmsapi \
@@ -62,7 +54,6 @@ LIBS +=	-ltmsfactory \
         -llibgobject \
         -llibgmodule \
         -llibstdcpp
-
 
 # $$_PRO_FILE_PWD_ points to the directory of the pro file
 MOC_DIR = ./tmp
@@ -100,13 +91,11 @@ HEADERS += qtmsfactory.h \
            qtmsdtmf.h \
            qtmsinbandtone.h
 
-
-
 # Source
 SOURCES += qtmsfactory.cpp \
            qtmsfactoryimpl.cpp \
-           qtmsmembuffer.cpp \
            qtmsbufferimpl.cpp \
+           qtmsmembuffer.cpp \
            qtmscall.cpp \
            qtmscallimpl.cpp \
            qtmsstream.cpp \
@@ -152,3 +141,4 @@ SOURCES += qtmsfactory.cpp \
            qtmsinbandtoneimpl.cpp
 
 SYMBIAN_PLATFORMS = DEFAULT
+

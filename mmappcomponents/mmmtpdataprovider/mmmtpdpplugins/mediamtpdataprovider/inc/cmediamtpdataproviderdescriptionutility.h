@@ -51,6 +51,13 @@ public:
     CMTPTypeObjectPropDesc* NewSpecificPropDescL( TUint aFormatCode, TUint16 aPropCode );
 
 private:
+
+    /**
+     * Append WM Audio specific to interdpendent property description.
+     * @return None
+     */
+    void AppendWMAudioInterdepentPropDescL(CMTPTypeInterdependentPropDesc* aInterdependentPropDesc);
+
     /**
      * Construct audio wave codec property description.
      * @param aFormatCode

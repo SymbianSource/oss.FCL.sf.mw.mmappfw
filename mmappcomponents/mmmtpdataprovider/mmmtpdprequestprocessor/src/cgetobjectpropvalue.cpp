@@ -70,7 +70,6 @@ EXPORT_C CGetObjectPropValue::CGetObjectPropValue( MMTPDataProviderFramework& aF
         KMTPGetObjectPropValuePolicy ),
     iDpConfig( aDpConfig )
     {
-    SetPSStatus();
     PRINT( _L( "Operation: GetObjectPropValue(0x9803)" ) );
     }
 
@@ -96,10 +95,13 @@ EXPORT_C TMTPResponseCode CGetObjectPropValue::CheckRequestL()
             return EMTPRespCodeInvalidObjectHandle;
             }
 
-        TFileName fileName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
         TUint32 formatCode = objectInfo->Uint( CMTPObjectMetaData::EFormatCode );
 
-        PRINT3( _L( "MM MTP <> CGetObjectPropValue::CheckRequestL, handle = 0x%x, filename = %S, formatCode = 0x%x" ), objectHandle, &fileName, formatCode);
+        PRINT3( _L( "MM MTP <> CGetObjectPropValue::CheckRequestL, handle = 0x%x, filename = %S, formatCode = 0x%x" ),
+            objectHandle, 
+            &( objectInfo->DesC( CMTPObjectMetaData::ESuid ) ),
+            formatCode );
+
         const RArray<TUint>* properties = iDpConfig.GetSupportedPropertiesL( formatCode );
         TInt count = properties->Count();
 
@@ -130,6 +132,8 @@ EXPORT_C TMTPResponseCode CGetObjectPropValue::CheckRequestL()
 EXPORT_C void CGetObjectPropValue::ServiceL()
     {
     PRINT( _L( "MM MTP => CGetObjectPropValue::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus( EMtpPSStatusActive );
 
     //Get the request information
     TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
@@ -141,7 +145,6 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
     iObjectInfo = iRequestChecker->GetObjectInfo( objectHandle );
     TPtrC suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
     PRINT1( _L( "MM MTP <> CGetObjectPropValue::ServiceL object file name is %S" ), &suid );
-    TParsePtrC parse( suid );
 
     if ( iMTPTypeString != NULL )
         {
@@ -176,8 +179,7 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
         case EMTPObjectPropCodeProtectionStatus:
             {
             iMTPTypeUint16.Set( 0 );
-            iMTPTypeUint16 = MmMtpDpUtility::GetProtectionStatusL( iFramework.Fs(),
-                iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
+            iMTPTypeUint16 = MmMtpDpUtility::GetProtectionStatusL( iFramework.Fs(), suid );
             SendDataL( iMTPTypeUint16 );
             }
             break;
@@ -186,8 +188,7 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
         case EMTPObjectPropCodeObjectSize:
             {
             iMTPTypeUint64.Set( 0 );
-            iMTPTypeUint64 = MmMtpDpUtility::GetObjectSizeL( iFramework.Fs(),
-                    iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
+            iMTPTypeUint64 = MmMtpDpUtility::GetObjectSizeL( iFramework.Fs(), suid );
             SendDataL( iMTPTypeUint64 );
             }
             break;
@@ -195,11 +196,7 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
         // Filename
         case EMTPObjectPropCodeObjectFileName:
             {
-            const TDesC& suid( iObjectInfo->DesC( CMTPObjectMetaData::ESuid ) );
-            PRINT1( _L( "MM MTP <> CGetObjectPropValue::ServiceL SUID = %S" ), &suid );
-
-            TPtrC path( suid.Ptr(), suid.Length() );
-            TParsePtrC parse( path );
+            TParsePtrC parse( suid );
             iMTPTypeString = CMTPTypeString::NewL( parse.NameAndExt() );
             SendDataL( *iMTPTypeString );
             }
@@ -237,9 +234,7 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
         case EMTPObjectPropCodeDateModified:
             {
             TBuf<KMtpMaxDateTimeStringLength> timeStr;
-            MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(),
-                iObjectInfo->DesC( CMTPObjectMetaData::ESuid ),
-                timeStr );
+            MmMtpDpUtility::GetObjectDateModifiedL( iFramework.Fs(), suid, timeStr );
 
             PRINT1( _L( "MM MTP <> CGetObjectPropValue::ServiceL Date time %S" ), &timeStr );
             iMTPTypeString = CMTPTypeString::NewL( timeStr );

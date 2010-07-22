@@ -19,7 +19,6 @@
 #define QTMS_BUFFER_H
 
 #include <qtms.h>
-#include <QObject>
 
 namespace QTMS {
 
@@ -33,10 +32,14 @@ namespace QTMS {
  * @lib QTMSapi.lib
  *
  */
-class QTMSBuffer : public QObject
+class QTMSBuffer
     {
-    Q_OBJECT
 public:
+    /*
+     * Destructor
+     */
+    virtual ~QTMSBuffer() {}
+
     /**
      * Return buffer type.
      *
@@ -44,10 +47,11 @@ public:
      *      Type of the buffer object (QTMS_BUFFER_MEMORY).
      *
      * @return
-     *      QTMS_RESULT_SUCCESS if the operation was successful.
+     *      QTMS_RESULT_SUCCESS if the operation was successful otherwise
+     *      system error.
      *
      */
-    virtual gint GetType(QTMSBufferType& buftype)=0;
+    virtual gint GetType(QTMSBufferType& buftype) = 0;
 
     /**
      * Returns time stamp of the buffer so that the framework can determine
@@ -58,10 +62,11 @@ public:
      *      Time stamp in microseconds.
      *
      * @return
-     *      QTMS_RESULT_SUCCESS if the operation was successful.
+     *      QTMS_RESULT_SUCCESS if the operation was successful otherwise
+     *      system error.
      *
      */
-    virtual gint GetTimeStamp(guint64& ts)=0;
+    virtual gint GetTimeStamp(guint64& ts) = 0;
 
     /**
      * Sets the time stamp on the Buffer so that the framework can determine
@@ -72,10 +77,11 @@ public:
      *      Time stamp in microseconds.
      *
      * @return
-     *      QTMS_RESULT_SUCCESS if the operation was successful.
+     *      QTMS_RESULT_SUCCESS if the operation was successful otherwise
+     *      system error.
      *
      */
-    virtual gint SetTimeStamp(const guint64 ts) =0;
+    virtual gint SetTimeStamp(const guint64 ts) = 0;
 
     /**
      * Returns size of data in the buffer.
@@ -84,10 +90,11 @@ public:
      *      Size of data in the buffer.
      *
      * @return
-     *      QTMS_RESULT_SUCCESS if the operation was successful.
+     *      QTMS_RESULT_SUCCESS if the operation was successful otherwise
+     *      system error.
      *
      */
-    virtual gint GetDataSize(guint& size)=0;
+    virtual gint GetDataSize(guint& size) = 0;
 
     /**
      * Set size of data in the buffer after filling in by the client.
@@ -96,10 +103,11 @@ public:
      *      Size of data in the buffer.
      *
      * @return
-     *      QTMS_RESULT_SUCCESS if the operation was successful.
+     *      QTMS_RESULT_SUCCESS if the operation was successful otherwise
+     *      system error.
      *
      */
-    virtual gint SetDataSize(const guint size)=0;
+    virtual gint SetDataSize(const guint size) = 0;
 
     /**
      * Return pointer to the memory location of the data associated with this
@@ -109,10 +117,11 @@ public:
      *      Pointer to the data stored in the buffer.
      *
      * @return
-     *      QTMS_RESULT_SUCCESS if the operation was successful.
+     *      QTMS_RESULT_SUCCESS if the operation was successful otherwise
+     *      system error.
      *
      */
-    virtual gint GetDataPtr(guint8*& bufptr) =0;
+    virtual gint GetDataPtr(guint8*& bufptr) = 0;
     };
 
 } //namespace QTMS

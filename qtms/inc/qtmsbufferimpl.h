@@ -20,6 +20,11 @@
 
 #include <qtms.h>
 
+// FORWARD DECLARATION
+namespace TMS {
+class TMSBuffer;
+}
+
 namespace QTMS {
 
 // FORWARD DECLARATIONS
@@ -29,9 +34,9 @@ class QTMSBuffer;
 class QTMSBufferImpl
     {
 public:
-    static gint Create(QTMSBufferType ctype, guint size,
-            QTMSBuffer*& tmsbuffer);
-    static gint Delete(QTMSBuffer*& tmsbuffer);
+    static gint Create(QTMSBufferType ctype, QTMSBuffer*& buffer,
+            TMS::TMSBuffer*& tmsbuffer);
+    static gint Delete(QTMSBuffer*& buffer);
     };
 
 } //namespace QTMS

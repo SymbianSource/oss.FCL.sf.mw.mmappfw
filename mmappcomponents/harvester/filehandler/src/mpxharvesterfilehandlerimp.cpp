@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Handles all file related activities
-*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.5.2 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.5.4 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -46,8 +46,7 @@
 #include <caf/caferr.h>
 #include <caf/content.h>
 #include <caf/data.h>
-#include <UsbWatcherInternalPSKeys.h>
-#include <usbpersonalityids.h>
+#include <mtpprivatepskeys.h>
 
 #include "mpxharvesterfilehandlerimp.h"
 #include "mpxfolderscanner.h"
@@ -62,8 +61,8 @@
 #include "mpxbrokenlinkcleanup.h"
 
 // ============ CONSTANTS ==========
-_LIT( KDefaultScanPath, "C:\\DATA\\|E:\\" );
-_LIT( KDefaultBlockPath, "\\SYS\\|\\PRIVATE\\|\\SYSTEM\\|\\CITIES\\");
+_LIT( KDefaultScanPath, "C:\\DATA\\|E:\\|F:\\" );
+_LIT( KDefaultBlockPath, "\\SYS\\|\\PRIVATE\\|\\SYSTEM\\|\\CITIES\\|\\SOUNDS\\SIMPLE\\|\\GAMES\\|\\RESOURCE\\|\\IMAGES\\"); 
 _LIT( KDefaultContainers, ".odf|.dcf|.asf|.m4a|.mp4" );
 _LIT( KDefaultAutoScanFolder, "C:\\data\\sounds\\digital\\|E:\\sounds\\digital\\");
 const TUid KCRUIDHarvesterFeatures  = { 0x101FFCD2 };
@@ -299,14 +298,16 @@ void CMPXHarvesterFileHandlerImp::ScanL()
         }
     iCollectionUtil = MMPXCollectionUtility::NewL( NULL, KMusicPlayerUid );
     
-    // cenrep key need to be checked whether USB cable is connected in MTP/Combined Mode
+    // cenrep key need to be checked whether MTP is connected
     // to prevent refresh
-    TInt usbStatus;
-    RProperty::Get(KPSUidUsbWatcher, KUsbWatcherSelectedPersonality, usbStatus);
-       
-    if ((usbStatus == KUsbPersonalityIdMTP) || (usbStatus == KUsbPersonalityIdPCSuiteMTP))
+    TInt mtpStatus = EMtpPSStatusUninitialized;
+    RProperty::Get( KMtpPSUid, KMtpPSStatus, mtpStatus);
+        
+    MPX_DEBUG2("CMPXCollectionViewHgImp::ConstructL, mtpstatus = %d", mtpStatus);
+
+    if (mtpStatus != EMtpPSStatusUninitialized)
         {
-        MPX_DEBUG1("USB is active, Leave with KErrLocked");
+        MPX_DEBUG1("MTP is active, Leave with KErrLocked");
         // need to call back even if it leaves here
         iCollectionUtil->Collection().NotifyL( EMcMsgRefreshEnd, KErrLocked );
         //User::Leave(KErrLocked);
@@ -1736,15 +1737,8 @@ void CMPXHarvesterFileHandlerImp::ParseScanPathL()
     //
     TBuf<255> scanPath;
     TBuf<255> blockPath;
-    CRepository* cenrep(NULL);
-    TRAPD( err, cenrep = CRepository::NewL( KCRUIDHarvesterFeatures ) );
-    if( err == KErrNone )
-        {
-        cenrep->Get( KHarvesterScanPathKey, scanPath );
-        cenrep->Get( KHarvesterBlockPathKey, blockPath );
-        delete cenrep;
-        }
-    else
+    TRAPD( err, FetchPathsFromCenrepL(scanPath,blockPath) );
+    if( err )
         {
         scanPath = KDefaultScanPath;
         blockPath = KDefaultBlockPath;
@@ -1754,6 +1748,20 @@ void CMPXHarvesterFileHandlerImp::ParseScanPathL()
     MPX_DEBUG2("ParseScanPathL blockPaths: %S", &blockPath);
     ::ExtractTokensL( scanPath, iConfiguredDrivesToScan );
     ::ExtractTokensL( blockPath, iPathsToBlock );
+    }
+
+// ---------------------------------------------------------------------------
+// Fetches scan - and block - paths from cenrep 
+// ---------------------------------------------------------------------------
+//
+void CMPXHarvesterFileHandlerImp::FetchPathsFromCenrepL( TDes16& aScanPath, 
+                                                         TDes16& aBlockPath )
+    {
+    MPX_FUNC("CMPXHarvesterFileHandlerImp::FetchPathsFromCenrepL");
+    CRepository* cenrep( CRepository::NewLC( KCRUIDHarvesterFeatures ) );
+    User::LeaveIfError( cenrep->Get( KHarvesterScanPathKey, aScanPath ) );
+    User::LeaveIfError( cenrep->Get( KHarvesterBlockPathKey, aBlockPath ) );
+    CleanupStack::PopAndDestroy(cenrep);
     }
 
 // ---------------------------------------------------------------------------

@@ -28,7 +28,6 @@ QTMSILBCFormat::QTMSILBCFormat()
 
 QTMSILBCFormat::~QTMSILBCFormat()
     {
-    // iFormat is deleted with QTMSFormat::iFormat
     }
 
 gint QTMSILBCFormat::SetMode(const QTMSG711CodecMode aMode)

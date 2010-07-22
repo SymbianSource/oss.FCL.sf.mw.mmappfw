@@ -106,7 +106,7 @@ public:
     gint Stop();
 
     /**
-     * Pause ring tone playback.
+     * Pause video ring tone playback.
      *
      * @return
      *      QTMS_RESULT_SUCCESS if the operation was successful.

@@ -74,7 +74,6 @@ EXPORT_C CSetObjectPropValue::CSetObjectPropValue(
     iDpConfig( aDpConfig ),
     iFs( aFramework.Fs() )
     {
-    SetPSStatus();
     PRINT( _L( "Operation: SetObjectPropValue(0x9804)" ) );
     }
 
@@ -155,7 +154,7 @@ EXPORT_C TMTPResponseCode CSetObjectPropValue::CheckRequestL()
             return EMTPRespCodeInvalidObjectHandle;
             }
 
-        TFileName fileName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
+        TPtrC fileName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
         TUint32 formatCode = objectInfo->Uint( CMTPObjectMetaData::EFormatCode );
         PRINT3( _L( "MM MTP <> CSetObjectPropValue::CheckRequestL, handle = 0x%x, filename = %S, formatCode = 0x%x" ),
             objectHandle,
@@ -199,6 +198,9 @@ EXPORT_C TBool CSetObjectPropValue::HasDataphase() const
 EXPORT_C void CSetObjectPropValue::ServiceL()
     {
     PRINT( _L( "MM MTP => CSetObjectPropValue::ServiceL" ) );
+    
+    MmMtpDpUtility::SetPSStatus( EMtpPSStatusActive );
+    
     __ASSERT_DEBUG( iRequestChecker, Panic( EMmMTPDpRequestCheckNull ) );
     TUint32 handle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
     PRINT1( _L( "MM MTP <> CSetObjectPropValue::ServiceL handle = 0x%x" ), handle );
@@ -367,7 +369,7 @@ EXPORT_C TMTPResponseCode CSetObjectPropValue::ServiceMetaDataToWrapperL( const 
     else if ( err == KErrNotFound )
         {
         if( MmMtpDpUtility::HasMetadata( aObjectMetaData.Uint( CMTPObjectMetaData::EFormatCode ) ) )
-            SendResponseL( EMTPRespCodeAccessDenied );
+            resCode = EMTPRespCodeAccessDenied;
         }
     else
         {
