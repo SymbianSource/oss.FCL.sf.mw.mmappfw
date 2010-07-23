@@ -36,6 +36,7 @@
 #include <mpxmessagegeneraldefs.h>
 #include <mpxmessagecontainerdefs.h>
 #include <mpxmessagepluginupdatedefs.h>
+#include <mmf/common/mmfcontrollerpluginresolver.h>
 
 #include "mpxcollectionpluginhandler.h"
 #include "mpxcollectioncache.h"
@@ -316,6 +317,7 @@ void CMPXCollectionEngine::Command( TMPXCollectionCommand aCmd, TInt aData )
 EXPORT_C void CMPXCollectionEngine::GetSupportedTypesL(
                                     RPointerArray<CMPXCollectionType>& aArray )
     {
+    CleanupResetAndDestroyPushL(aArray); 
     RArray<TUid> uids;
     CleanupClosePushL(uids);
     iPluginHandler->GetPluginUids(uids);
@@ -340,6 +342,7 @@ EXPORT_C void CMPXCollectionEngine::GetSupportedTypesL(
         CleanupStack::Pop(type);
         }
     CleanupStack::PopAndDestroy(&uids);
+    CleanupStack::Pop(&aArray); 
     }
 
 // ----------------------------------------------------------------------------

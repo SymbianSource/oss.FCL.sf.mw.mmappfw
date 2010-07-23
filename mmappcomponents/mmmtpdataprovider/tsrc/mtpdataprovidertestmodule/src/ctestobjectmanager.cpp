@@ -84,6 +84,7 @@ void CTestObjectManager::GetObjectHandlesL(
         const TMTPObjectMgrQueryParams& aParams,
         RMTPObjectMgrQueryContext& aContext, RArray<TUint>& aHandles ) const
     {
+    CleanupClosePushL( aHandles ); 
     PRINTF3( ">CTestObjectManager::GetObjectHandlesL storage = 0x%x parent = 0x%x format = 0x%x", aParams.iStorageId, aParams.iParentHandle, aParams.iFormatCode );
     for ( TInt i = 0; i < iMTPObjects.Count(); i++ )
          {
@@ -103,6 +104,7 @@ void CTestObjectManager::GetObjectHandlesL(
          }
     aContext.Close();
     PRINTF0( "<CTestObjectManager::GetObjectHandlesL" );
+    CleanupStack::Pop(); 
     }
       
 void CTestObjectManager::GetObjectSuidsL( 

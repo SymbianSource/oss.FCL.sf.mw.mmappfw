@@ -644,7 +644,13 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
         case EMTPObjectPropCodeParentObject:
             {
             iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
-            iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, iObject->Uint( CMTPObjectMetaData::EParentHandle ) );
+            TUint32 parentHandle = iObject->Uint( CMTPObjectMetaData::EParentHandle );
+            // refer to 5.3.1.9 of MTP Spec 1.0
+            if ( parentHandle == KMTPHandleNoParent )
+                {
+                parentHandle = KMTPHandleNone;
+                }
+            iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, parentHandle );
             }
             break;
 

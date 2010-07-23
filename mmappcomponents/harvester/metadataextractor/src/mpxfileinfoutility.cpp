@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  This class is responsible for reading file info
-*  Version     : %version: da1mmcf#5.1.3.1.6.2.2 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: e003sa33#5.1.3.1.6.2.3 % << Don't touch! Updated by Synergy at check-out.
 *
 *  Copyright © 2005 Nokia. All rights reserved.
 */
@@ -81,8 +81,8 @@ CMPXFileInfoUtility::~CMPXFileInfoUtility()
     iMMFControllers.ResetAndDestroy();
     iMMFControllers.Close();
     
-    // delete non cached controller
-    if(iController)
+    //delete non cached Helix controller
+    if( iController && ( iCurrentControllerUid == 0x10207B65 ) )
         {
         iController->Close();
         delete iController;

@@ -174,8 +174,13 @@ void CGetObjectInfo::BuildObjectInfoL()
     // Image Bit Depth
     iObjectInfo->SetUint32L( CMTPTypeObjectInfo::EImageBitDepth, 0 );
     // Parent Object
-    iObjectInfo->SetUint32L( CMTPTypeObjectInfo::EParentObject,
-        object->Uint( CMTPObjectMetaData::EParentHandle ) );
+    TUint32 parentHandle = object->Uint( CMTPObjectMetaData::EParentHandle );
+    // refer to 5.3.1.9 of MTP Spec 1.0
+    if ( parentHandle == KMTPHandleNoParent )
+        {
+        parentHandle = KMTPHandleNone;
+        }
+    iObjectInfo->SetUint32L( CMTPTypeObjectInfo::EParentObject, parentHandle );
     // Association Type
     iObjectInfo->SetUint16L( CMTPTypeObjectInfo::EAssociationType, 0 );
     // Association Description

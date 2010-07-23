@@ -777,12 +777,14 @@ TUint32 CMediaMtpDataProvider::GetDefaultStorageIdL() const
 //
 void CMediaMtpDataProvider::InsertL( RArray<TUint>& aArray, const TUint aProperCode ) const
     {
+    CleanupClosePushL( aArray ); 
     TInt err = KErrNone;
     err = aArray.Find( aProperCode );
     if ( err == KErrNotFound )
         err = aArray.Append( aProperCode );
 
     User::LeaveIfError( err );
+    CleanupStack::Pop(); 
     }
 
 // end of file

@@ -607,6 +607,8 @@ TBool CSendObject::DoHandleResponsePhaseObjectL()
         SendResponseL( EMTPRespCodeOK );
         }
 
+    iCancelled = EFalse;
+
     PRINT1( _L( "MM MTP <= CSendObject::DoHandleResponsePhaseObjectL result = %d" ), result );
 
     return result;
@@ -1066,6 +1068,17 @@ TBool CSendObject::GetFullPathNameL( const TDesC& aFileName )
             PRINT( _L( "MM MTP <> might happen if function is called before physical file arrives" ) );
             // might happen if function is called before physical file arrives
             // do nothing
+            }
+        else if ( iObjectFormat == EMTPFormatCodeASF )
+            {
+            // happens on some buggy PC implementation, default formatcode to WMA or WMV if extension matches
+            PRINT( _L( "MM MTP <> happens on some buggy PC implementation, default formatcode to WMA or WMV if extension matches" ) );
+            if ( parser.Ext().CompareF( KTxtExtensionWMA ) == 0 )
+                iObjectFormat = EMTPFormatCodeWMA;
+            else if ( parser.Ext().CompareF( KTxtExtensionWMV ) == 0 )
+                iObjectFormat = EMTPFormatCodeWMV;
+            else
+                result = EFalse;
             }
         else
             {
