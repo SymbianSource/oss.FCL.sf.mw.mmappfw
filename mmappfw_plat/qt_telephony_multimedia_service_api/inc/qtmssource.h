@@ -20,7 +20,8 @@
 
 #include <qtms.h>
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSSource class
@@ -31,7 +32,7 @@ namespace QTMS {
  *
  */
 class QTMSSource
-    {
+{
 public:
     /**
      * Returns type of the concrete data source object implementation.
@@ -46,7 +47,7 @@ public:
      *
      */
     virtual gint GetType(QTMSSourceType& sourcetype) = 0;
-    };
+};
 
 } //namespace QTMS
 

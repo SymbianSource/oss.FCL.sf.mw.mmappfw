@@ -27,11 +27,11 @@ class QTMSSource;
 
 // TMSSourceImpl class
 class QTMSSourceImpl
-    {
+{
 public:
     static gint Create(QTMSSourceType sourcetype, QTMSSource*& tmssource);
     static gint Delete(QTMSSource*& tmssource);
-    };
+};
 
 } //namespace QTMS
 

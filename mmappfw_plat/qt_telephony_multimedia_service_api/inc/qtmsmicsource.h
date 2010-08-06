@@ -24,11 +24,13 @@
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSSource;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSMicSource class
@@ -40,7 +42,7 @@ namespace QTMS {
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSMicSource : public QObject,
                                               public QTMSSource
-    {
+{
     Q_OBJECT
 public:
     /**
@@ -70,11 +72,10 @@ protected:
 
 protected:
     TMS::TMSSource *iSource;
-    };
+};
 
 } //namespace QTMS
 
 #endif //QTMS_MIC_SOURCE_H
-
 // End of file
 

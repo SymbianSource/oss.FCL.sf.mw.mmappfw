@@ -24,43 +24,42 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSMemBuffer::QTMSMemBuffer()
-    {
+{
     iTmsBuffer = NULL;
     iOwnsBuffer = FALSE;
-    }
+}
 
 QTMSMemBuffer::~QTMSMemBuffer()
-    {
-    if (iOwnsBuffer)
-        {
+{
+    if (iOwnsBuffer) {
         free(iDataPtr);
-        }
     }
+}
 
 gint QTMSMemBuffer::Create(QTMSBuffer*& buffer, TMS::TMSBuffer*& tmsbuffer)
-    {
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     TRACE_PRN_FN_ENT;
     QTMSMemBuffer* self = new QTMSMemBuffer();
-    if (self)
-        {
+    if (self) {
         self->iTmsBuffer = tmsbuffer;
         tmsbuffer->GetDataPtr(self->iDataPtr);
         tmsbuffer->GetDataSize(self->iBufferSize);
         tmsbuffer->GetTimeStamp(self->iTimeStamp);
         self->iOwnsBuffer = FALSE;
-        }
+        ret = QTMS_RESULT_SUCCESS;
+    }
     buffer = self;
     TRACE_PRN_FN_EXT;
     return ret;
-    }
+}
 
 gint QTMSMemBuffer::GetType(QTMSBufferType& buffertype)
-    {
+{
     gint ret(TMS_RESULT_SUCCESS);
     buffertype = QTMS_BUFFER_MEMORY;
     return ret;
-    }
+}
 
 /**
  * Gets the timestamp on the Buffer so that the framework can
@@ -71,11 +70,11 @@ gint QTMSMemBuffer::GetType(QTMSBufferType& buffertype)
  *
  */
 gint QTMSMemBuffer::GetTimeStamp(guint64& ts)
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     ts = iTimeStamp;
     return ret;
-    }
+}
 
 /**
  * Sets the timestamp on the Buffer so that the framework can
@@ -86,12 +85,12 @@ gint QTMSMemBuffer::GetTimeStamp(guint64& ts)
  *
  */
 gint QTMSMemBuffer::SetTimeStamp(const guint64 ts)
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     iTimeStamp = ts;
     ret = iTmsBuffer->SetTimeStamp(ts);
     return ret;
-    }
+}
 
 /**
  * Gets the size of data in the buffer specified by the client.
@@ -100,11 +99,11 @@ gint QTMSMemBuffer::SetTimeStamp(const guint64 ts)
  *
  */
 gint QTMSMemBuffer::GetDataSize(guint& size)
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     size = iBufferSize;
     return ret;
-    }
+}
 
 /**
  * Sets the size of data in the buffer after the client fill it.
@@ -113,12 +112,12 @@ gint QTMSMemBuffer::GetDataSize(guint& size)
  *
  */
 gint QTMSMemBuffer::SetDataSize(const guint size)
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     ret = iTmsBuffer->SetDataSize(size);
     iBufferSize = size; //TODO: should realloc when new size > old size (?)
     return ret;
-    }
+}
 
 /**
  * Gets the pointer to the memory location associated with this
@@ -128,9 +127,9 @@ gint QTMSMemBuffer::SetDataSize(const guint size)
  *
  */
 gint QTMSMemBuffer::GetDataPtr(guint8*& bufptr)
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     bufptr = iDataPtr;
     return ret;
-    }
+}
 

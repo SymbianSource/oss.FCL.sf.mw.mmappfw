@@ -22,52 +22,48 @@ using namespace QTMS;
 
 QTMSFormat::QTMSFormat() :
     iFormat(NULL)
-    {
-    }
+{
+}
 
 QTMSFormat::~QTMSFormat()
-    {
+{
     delete iFormat;
-    }
+}
 
 gint QTMSFormat::GetSupportedBitRates(BitRateVector& aVector)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = iFormat->GetSupportedBitRates(aVector);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFormat::SetBitRate(const guint aBitrate)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = iFormat->SetBitRate(aBitrate);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFormat::GetBitRate(guint& aBitrate)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = iFormat->GetBitRate(aBitrate);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFormat::GetType(QTMSFormatType& fmttype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = iFormat->GetType(fmttype);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

@@ -212,12 +212,21 @@ EXPORT_C void CMPXCollectionEngine::NotifyL( TMPXCollectionBroadCastMsg aMsg,
             break;
             }
         case EMcMsgDiskInserted:        	
+            {
+            // inverting the notification order, this to get the message to 
+            // the UI faster.
             for( TInt i=0; i<count; ++i )
                 {
                 context = iContexts[i];
                 context->NotifyL( aMsg, aData );
                 }
             notify = EFalse;
+            command = EMcReOpenCollection;
+            data = aData;
+            // Clear the cache
+        	  clearCache = ETrue;
+            break;
+            }
         case EMcMsgFormatEnd:
         case EMcMsgUSBMassStorageEnd:
             {
@@ -225,7 +234,7 @@ EXPORT_C void CMPXCollectionEngine::NotifyL( TMPXCollectionBroadCastMsg aMsg,
             data = aData;
             
             // Clear the cache
-        	clearCache = ETrue;
+        	  clearCache = ETrue;
             break;
             }
         case EMcMsgUSBMTPStart:

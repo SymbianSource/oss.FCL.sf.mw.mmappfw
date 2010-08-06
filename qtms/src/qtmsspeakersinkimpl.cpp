@@ -23,47 +23,44 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSSpeakerSinkImpl::QTMSSpeakerSinkImpl()
-    {
-    }
+{
+}
 
 QTMSSpeakerSinkImpl::~QTMSSpeakerSinkImpl()
-    {
-    }
+{
+}
 
 gint QTMSSpeakerSinkImpl::Create(QTMSSink*& qsink, TMS::TMSSink*& tmssink)
-    {
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSSpeakerSinkImpl* self = new QTMSSpeakerSinkImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
-        self->iSink = tmssink;
         }
+        self->iSink = tmssink;
+    }
     qsink = self;
     return ret;
-    }
+}
 
 gint QTMSSpeakerSinkImpl::PostConstruct()
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
 gint QTMSSpeakerSinkImpl::GetSink(TMS::TMSSink*& tmssink)
-    {
+{
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
-    if (iSink)
-        {
+    if (iSink) {
         tmssink = iSink;
         ret = QTMS_RESULT_SUCCESS;
-        }
-    return ret;
     }
+    return ret;
+}
 
 // End of file

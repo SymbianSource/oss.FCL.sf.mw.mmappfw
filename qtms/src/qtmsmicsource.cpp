@@ -25,23 +25,22 @@ using namespace TMS;
 
 QTMSMicSource::QTMSMicSource() :
     iSource(NULL)
-    {
-    }
+{
+}
 
 QTMSMicSource::~QTMSMicSource()
-    {
+{
     delete (static_cast<TMSMicSource*> (iSource));
-    }
+}
 
 gint QTMSMicSource::GetType(QTMSSourceType& sourcetype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSource)
-        {
+    if (iSource) {
         //status = iSource->GetType(sourcetype);
         status = static_cast<TMSMicSource*> (iSource)->GetType(sourcetype);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

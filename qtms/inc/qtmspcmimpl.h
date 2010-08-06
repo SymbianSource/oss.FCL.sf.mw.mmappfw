@@ -22,15 +22,17 @@
 #include <qtmspcmformat.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSFormat;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSPCMFormatImpl class
-class QTMSPCMFormatImpl : public QTMSPCMFormat
-    {
+class QTMSPCMFormatImpl: public QTMSPCMFormat
+{
 public:
     static gint Create(QTMSFormat*& qformat, TMS::TMSFormat*& tmsformat);
     virtual ~QTMSPCMFormatImpl();
@@ -43,10 +45,9 @@ public:
 private:
     QTMSPCMFormatImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_PCM_FORMAT_IMPL_H
-
 // End of file

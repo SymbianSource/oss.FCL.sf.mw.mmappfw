@@ -23,11 +23,13 @@
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSRingTone;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSRingTone class
@@ -38,7 +40,7 @@ namespace QTMS {
  *
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSRingTone : public QObject
-    {
+{
     Q_OBJECT
 public:
     /**
@@ -76,7 +78,7 @@ public:
      *
      */
     gint Init(const QTMSRingToneType type = QTMS_RINGTONE_DEFAULT,
-            GString* str = NULL, GString* tts = NULL);
+        GString* str = NULL, GString* tts = NULL);
 
     /**
      * Deinit ring tone player.
@@ -134,11 +136,10 @@ protected:
 
 protected:
     TMS::TMSRingTone *iRingTone;
-    };
+};
 
 } //namespace QTMS
 
 #endif //QTMS_RINGTONE_H
-
 // End of file
 

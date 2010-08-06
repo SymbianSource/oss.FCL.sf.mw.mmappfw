@@ -24,11 +24,13 @@
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSInbandTone;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSInbandTone class
@@ -39,7 +41,7 @@ namespace QTMS {
  *
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSInbandTone : public QObject
-    {
+{
     Q_OBJECT
 public:
     /**
@@ -70,7 +72,7 @@ public:
 
     Q_SIGNALS:
     void InbandToneEvent(const QTMSInbandTone& inbandtone,
-            QTMSSignalEvent event);
+        QTMSSignalEvent event);
 
 protected:
 
@@ -81,10 +83,9 @@ protected:
 
 protected:
     TMS::TMSInbandTone* iInbandTone;
-    };
+};
 
 } //namespace QTMS
 
 #endif //__QTMS_INBAND_TONE_H__
-
 // End of file

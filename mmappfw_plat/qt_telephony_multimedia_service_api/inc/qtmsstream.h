@@ -24,11 +24,13 @@
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSStream;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // Forward declarations
 class QTMSSource;
@@ -120,7 +122,7 @@ class QTMSBuffer;
  */
 
 class QTMS_WRAPPER_DLL_EXPORT QTMSStream : public QObject
-    {
+{
     Q_OBJECT
 public:
 
@@ -517,10 +519,9 @@ protected:
 
 protected:
     TMS::TMSStream *iStream;
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_STREAM_H
-
 // End of file

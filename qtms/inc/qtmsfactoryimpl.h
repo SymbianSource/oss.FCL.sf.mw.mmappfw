@@ -22,11 +22,13 @@
 #include <qtms.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSFactory;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // FORWARD DECLARATIONS
 class QTMSCall;
@@ -43,7 +45,7 @@ class QTMSInbandTone;
 
 // CLASS DECLARATION
 class QTMSFactoryImpl
-    {
+{
 public:
     QTMSFactoryImpl();
     virtual ~QTMSFactoryImpl();
@@ -51,15 +53,12 @@ public:
     gint CreateCall(QTMSCallType ctype, QTMSCall*& QTMScall, guint ctxid);
     gint DeleteCall(QTMSCall*& QTMSct);
     gint IsCallTypeSupported(QTMSCallType ctype, gboolean& flag);
-    gint GetSupportedFormats(const QTMSStreamType strmtype,
-            FormatVector& fmtlist);
+    gint GetSupportedFormats(const QTMSStreamType strmtype, FormatVector& fmtlist);
     gint CreateFormat(QTMSFormatType fmttype, QTMSFormat*& QTMSfmt);
     gint DeleteFormat(QTMSFormat*& QTMSfmt);
-    gint CreateEffect(QTMSEffectType QTMSeffecttype,
-            QTMSEffect*& QTMSeffect);
+    gint CreateEffect(QTMSEffectType QTMSeffecttype, QTMSEffect*& QTMSeffect);
     gint DeleteEffect(QTMSEffect*& QTMSeffect);
-    gint CreateBuffer(QTMSBufferType buffertype, guint size,
-            QTMSBuffer*& QTMSbuffer);
+    gint CreateBuffer(QTMSBufferType buffertype, guint size, QTMSBuffer*& QTMSbuffer);
     gint DeleteBuffer(QTMSBuffer*& QTMSbuffer);
     gint CreateSource(QTMSSourceType srctype, QTMSSource*& QTMSsrc);
     gint DeleteSource(QTMSSource*& QTMSsrc);
@@ -76,7 +75,7 @@ public:
 
 private:
     TMS::TMSFactory *iFactory;
-    };
+};
 
 } //namespace QTMS
 

@@ -23,35 +23,33 @@
 #include <qtmsinbandtone.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSInbandTone;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSInbandImpl class
-class QTMSInbandToneImpl : public QTMSInbandTone,
-                           public TMS::TMSInbandToneObserver
-    {
+class QTMSInbandToneImpl: public QTMSInbandTone, public TMS::TMSInbandToneObserver
+{
 public:
-    static gint Create(QTMSInbandTone*& qinband,
-            TMS::TMSInbandTone*& tmsinband);
+    static gint Create(QTMSInbandTone*& qinband, TMS::TMSInbandTone*& tmsinband);
     virtual ~QTMSInbandToneImpl();
 
     gint AddObserver(TMS::TMSInbandToneObserver& obsrvr, gpointer user_data);
     gint RemoveObserver(TMS::TMSInbandToneObserver& obsrvr);
 
     //from TMS::TMSInbandToneObserver
-    void InbandToneEvent(const TMS::TMSInbandTone& inbandtone,
-            TMS::TMSSignalEvent event);
+    void InbandToneEvent(const TMS::TMSInbandTone& inbandtone, TMS::TMSSignalEvent event);
 
 private:
     QTMSInbandToneImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_DTMF_IMPL_H
-
 // End of file

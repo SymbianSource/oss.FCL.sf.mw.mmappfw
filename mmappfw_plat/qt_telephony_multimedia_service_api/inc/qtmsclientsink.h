@@ -26,11 +26,13 @@
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSSink;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSClientSink class
@@ -48,7 +50,7 @@ namespace QTMS {
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSClientSink : public QObject,
                                                public QTMSSink
-    {
+{
     Q_OBJECT
 public:
     /**
@@ -98,11 +100,10 @@ protected:
 
 protected:
     TMS::TMSSink* iSink;
-    };
+};
 
 } //namespace QTMS
 
 #endif //QTMS_CLIENT_SINK_H
-
 // End of file
 

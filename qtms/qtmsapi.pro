@@ -33,7 +33,7 @@ BLD_INF_RULES.prj_exports += "$${LITERAL_HASH}include <platform_paths.hrh>" \
 
 DEPENDPATH += . inc
 INCLUDEPATH += . \
-               .\inc
+               ./inc
 
 defBlock = \
            "$${LITERAL_HASH}if defined(EABI)" \

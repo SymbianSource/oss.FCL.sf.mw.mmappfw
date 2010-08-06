@@ -310,9 +310,9 @@ TUint32 CCopyObject::CopyFileL( const TDesC& aNewFileName )
     SetPreviousPropertiesL();
 
     CFileMan* fileMan = CFileMan::NewL( iFramework.Fs() );
+    CleanupStack::PushL( fileMan ); // + fileMan
     User::LeaveIfError( fileMan->Copy( oldFileName, aNewFileName ) );
-    delete fileMan;
-    fileMan = NULL;
+    CleanupStack::PopAndDestroy( fileMan ); // - fileMan
 
     PRINT( _L( "MM MTP <= CCopyObject::CopyFileL" ) );
     return handle;
@@ -417,8 +417,6 @@ void CCopyObject::SetPreviousPropertiesL()
     {
     PRINT( _L( "MM MTP => CCopyObject::SetPreviousPropertiesL" ) );
 
-    TMTPResponseCode respcode = EMTPRespCodeOK;
-
     iPropertyList->ResetCursor();
     const TInt count = iPropertyList->NumberOfElements();
     for ( TInt i = 0; i < count; i++ )
@@ -460,7 +458,7 @@ void CCopyObject::SetPreviousPropertiesL()
                 {
                 CMTPTypeString *stringData = CMTPTypeString::NewLC( element.StringL( CMTPTypeObjectPropListElement::EValue ) ); // + stringData
 
-                respcode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
+                iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
                     propertyCode,
                     *stringData,
                     *iTargetObject );
@@ -471,7 +469,7 @@ void CCopyObject::SetPreviousPropertiesL()
 
             default:
                 {
-                respcode = iDpConfig.PropSettingUtility()->SetSpecificObjectPropertyL( iDpConfig,
+                iDpConfig.PropSettingUtility()->SetSpecificObjectPropertyL( iDpConfig,
                     propertyCode,
                     *iTargetObject,
                     element );
@@ -480,13 +478,7 @@ void CCopyObject::SetPreviousPropertiesL()
             }
         } // end of for loop
 
-    // ignore errors
-    if ( respcode == EMTPRespCodeOK )
-        {
-        // do nothing, just to get rid of build warning
-        }
-
-    PRINT1( _L( "MM MTP <= CCopyObject::SetPreviousPropertiesL respcode = 0x%x" ), respcode );
+    PRINT( _L( "MM MTP <= CCopyObject::SetPreviousPropertiesL" ) );
     }
 
 // -----------------------------------------------------------------------------

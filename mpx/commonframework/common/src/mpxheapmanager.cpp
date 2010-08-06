@@ -80,7 +80,7 @@ RMPXHeapManager::RMPXHeapManager(const RChunk& aChunk)
     //
     // Create first free heap cell
     //
-    RMPXHeapCell* cell=new(aChunk.Base()+hmSize)RMPXHeapCell(0,iEndOffset-hmSize);
+    new(aChunk.Base()+hmSize)RMPXHeapCell(0,iEndOffset-hmSize);
     // set up free cell list header
     iFree.iNextOffset = hmSize;
     iFree.iLen = 0;

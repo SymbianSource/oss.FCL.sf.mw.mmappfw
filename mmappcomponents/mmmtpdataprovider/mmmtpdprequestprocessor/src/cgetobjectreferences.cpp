@@ -204,12 +204,10 @@ void CGetObjectReferences::AddReferencesL( const TDesC& aRefOwnerSuid,
     PRINT2( _L("MM MTP => CGetObjectReferences::AddReferencesL aRefOwnerSuid = %S, ref count = %d"), &aRefOwnerSuid, count );
 
     // check if references are valid
-    TInt removeCount = 0;
-    for ( TInt i = 0; i < count; i++ )
+    for ( TInt i = count-1; i >= 0; i-- )
         {
-        TInt index = i - removeCount;
-        TPtrC temp( aReferences[index] );
-        PRINT2( _L( "MM MTP <> CGetObjectReferences::AddReferencesL ref[%d]'s name = %S" ), index, &temp );
+        TPtrC temp( aReferences[i] );
+        PRINT2( _L( "MM MTP <> CGetObjectReferences::AddReferencesL ref[%d]'s name = %S" ), i, &temp );
         PERFLOGSTART( KObjectManagerHandle );
         TUint32 handle = iFramework.ObjectMgr().HandleL( temp );
         PERFLOGSTOP( KObjectManagerHandle );
@@ -218,8 +216,7 @@ void CGetObjectReferences::AddReferencesL( const TDesC& aRefOwnerSuid,
             PRINT1( _L( "MM MTP <> CGetObjectReferences::AddReferencesL, [%S] doesn't existed in handle db, remove this from reference array" ), &temp );
 
             // if handle is invalid, remove from reference array
-            aReferences.Delete( index, 1 );
-            removeCount++;
+            aReferences.Delete( i );
             }
         }
 

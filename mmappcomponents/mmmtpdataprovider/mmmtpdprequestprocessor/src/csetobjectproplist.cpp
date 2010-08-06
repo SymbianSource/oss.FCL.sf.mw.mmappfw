@@ -188,103 +188,105 @@ TMTPResponseCode CSetObjectPropList::SetObjectPropListL( const CMTPTypeObjectPro
         if ( protectionStatus != EMTPProtectionNoProtection )
             {
             // NOTE: P4S expects AccessDenied response instead of ObjectWriteProtected
-            return EMTPRespCodeAccessDenied; // EMTPRespCodeObjectWriteProtected;
+            responseCode = EMTPRespCodeAccessDenied; // EMTPRespCodeObjectWriteProtected;
             }
-
-        switch ( propertyCode )
+        else
             {
-            case EMTPObjectPropCodeStorageID:
-            case EMTPObjectPropCodeObjectFormat:
-            case EMTPObjectPropCodeProtectionStatus:
-            case EMTPObjectPropCodeObjectSize:
-            case EMTPObjectPropCodeParentObject:
-            case EMTPObjectPropCodePersistentUniqueObjectIdentifier:
-            case EMTPObjectPropCodeDateAdded:
-            case EMTPObjectPropCodeDateCreated:
-            case EMTPObjectPropCodeDateModified:
+            switch ( propertyCode )
                 {
-                responseCode = EMTPRespCodeAccessDenied;
-                }
-                break;
-
-            case EMTPObjectPropCodeNonConsumable:
-                object->SetUint( CMTPObjectMetaData::ENonConsumable,
-                    aPropListElement.Uint8L( CMTPTypeObjectPropListElement::EValue ) );
-                // TODO: need to reconsider,
-                // if propList comprise both non-consumable and objectFileName,
-                // ModifyObjectL would be called twice, need to investigate if it won't affect
-                // performance
-                iFramework.ObjectMgr().ModifyObjectL( *object );
-                break;
-
-            case EMTPObjectPropCodeObjectFileName:
-                {
-                TPtrC suid( object->DesC( CMTPObjectMetaData::ESuid ) );
-                TPtrC ptr( aPropListElement.StringL( CMTPTypeObjectPropListElement::EValue ) );
-                if ( KMaxFileName < ptr.Length() )
-                    responseCode = EMTPRespCodeInvalidDataset;
-                else
+                case EMTPObjectPropCodeStorageID:
+                case EMTPObjectPropCodeObjectFormat:
+                case EMTPObjectPropCodeProtectionStatus:
+                case EMTPObjectPropCodeObjectSize:
+                case EMTPObjectPropCodeParentObject:
+                case EMTPObjectPropCodePersistentUniqueObjectIdentifier:
+                case EMTPObjectPropCodeDateAdded:
+                case EMTPObjectPropCodeDateCreated:
+                case EMTPObjectPropCodeDateModified:
                     {
-                    TFileName newSuid( ptr );
-                    TInt err = MmMtpDpUtility::UpdateObjectFileName( iFramework.Fs(), suid, newSuid );
-                    PRINT1( _L( "MM MTP <> Update object file name err = %d" ), err );
-                    if ( KErrOverflow == err ) // full path name is too long
-                        {
+                    responseCode = EMTPRespCodeAccessDenied;
+                    }
+                    break;
+
+                case EMTPObjectPropCodeNonConsumable:
+                    object->SetUint( CMTPObjectMetaData::ENonConsumable,
+                        aPropListElement.Uint8L( CMTPTypeObjectPropListElement::EValue ) );
+                    // TODO: need to reconsider,
+                    // if propList comprise both non-consumable and objectFileName,
+                    // ModifyObjectL would be called twice, need to investigate if it won't affect
+                    // performance
+                    iFramework.ObjectMgr().ModifyObjectL( *object );
+                    break;
+
+                case EMTPObjectPropCodeObjectFileName:
+                    {
+                    TPtrC suid( object->DesC( CMTPObjectMetaData::ESuid ) );
+                    TPtrC ptr( aPropListElement.StringL( CMTPTypeObjectPropListElement::EValue ) );
+                    if ( KMaxFileName < ptr.Length() )
                         responseCode = EMTPRespCodeInvalidDataset;
-                        }
-                    else if ( KErrNone == err )    // TODO: ( KErrAlreadyExists == err )
-                        {
-                        TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( *object, newSuid ) ); //Update MPX DB
-
-                        PRINT1( _L( "MM MTP <> Rename MPX object file name err = %d" ), err );
-                        // it is ok if file is not found in DB, following S60 solution
-                        if ( KErrNotFound == err )
-                            {
-                            TRAP( err, iDpConfig.GetWrapperL().AddObjectL( *object ) );
-                            PRINT1( _L( "MM MTP <> Add MPX object file name err = %d" ), err );
-                            }
-
-                        object->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
-                        iFramework.ObjectMgr().ModifyObjectL( *object );
-                        }
-                    else if ( KErrInUse == err ) // object file is being used by other program
-                        {
-                        responseCode = EMTPRespCodeDeviceBusy;
-                        }
                     else
                         {
-                        responseCode = EMTPRespCodeGeneralError;
+                        TFileName newSuid( ptr );
+                        TInt err = MmMtpDpUtility::UpdateObjectFileName( iFramework.Fs(), suid, newSuid );
+                        PRINT1( _L( "MM MTP <> Update object file name err = %d" ), err );
+                        if ( KErrOverflow == err ) // full path name is too long
+                            {
+                            responseCode = EMTPRespCodeInvalidDataset;
+                            }
+                        else if ( KErrNone == err )    // TODO: ( KErrAlreadyExists == err )
+                            {
+                            TRAP( err, iDpConfig.GetWrapperL().RenameObjectL( *object, newSuid ) ); //Update MPX DB
+    
+                            PRINT1( _L( "MM MTP <> Rename MPX object file name err = %d" ), err );
+                            // it is ok if file is not found in DB, following S60 solution
+                            if ( KErrNotFound == err )
+                                {
+                                TRAP( err, iDpConfig.GetWrapperL().AddObjectL( *object ) );
+                                PRINT1( _L( "MM MTP <> Add MPX object file name err = %d" ), err );
+                                }
+
+                            object->SetDesCL( CMTPObjectMetaData::ESuid, newSuid );
+                            iFramework.ObjectMgr().ModifyObjectL( *object );
+                            }
+                        else if ( KErrInUse == err ) // object file is being used by other program
+                            {
+                            responseCode = EMTPRespCodeDeviceBusy;
+                            }
+                        else
+                            {
+                            responseCode = EMTPRespCodeGeneralError;
+                            }
                         }
                     }
+                    break;
+
+                case EMTPObjectPropCodeName:
+                case EMTPObjectPropCodeAlbumArtist:
+                    {
+                    CMTPTypeString* stringData = CMTPTypeString::NewLC(
+                        aPropListElement.StringL( CMTPTypeObjectPropListElement::EValue ) );// + stringData
+
+                    responseCode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
+                        propertyCode,
+                        *stringData,
+                        *object );
+
+                    CleanupStack::PopAndDestroy( stringData );// - stringData
+                    }
+                    break;
+
+                default:
+                    {
+                    responseCode = iDpConfig.PropSettingUtility()->SetSpecificObjectPropertyL( iDpConfig,
+                        propertyCode,
+                        *object,
+                        aPropListElement );
+                    }
+                    break;
                 }
-                break;
 
-            case EMTPObjectPropCodeName:
-            case EMTPObjectPropCodeAlbumArtist:
-                {
-                CMTPTypeString* stringData = CMTPTypeString::NewLC(
-                    aPropListElement.StringL( CMTPTypeObjectPropListElement::EValue ) );// + stringData
-
-                responseCode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
-                    propertyCode,
-                    *stringData,
-                    *object );
-
-                CleanupStack::PopAndDestroy( stringData );// - stringData
-                }
-                break;
-
-            default:
-                {
-                responseCode = iDpConfig.PropSettingUtility()->SetSpecificObjectPropertyL( iDpConfig,
-                    propertyCode,
-                    *object,
-                    aPropListElement );
-                }
-                break;
+            CleanupStack::PopAndDestroy( object ); // - object
             }
-
-        CleanupStack::PopAndDestroy( object ); // - object
         }
 
     PRINT1( _L( "MM MTP <= CSetObjectPropList::SetObjectPropListL responseCode = 0x%x" ), responseCode );

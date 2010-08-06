@@ -24,16 +24,17 @@
 #include <qtmsringtone.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSRingTone;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSRingToneImpl class
-class QTMSRingToneImpl : public QTMSRingTone,
-                         public TMS::TMSRingToneObserver
-    {
+class QTMSRingToneImpl: public QTMSRingTone, public TMS::TMSRingToneObserver
+{
 public:
     static gint Create(QTMSRingTone*& qrt, TMS::TMSRingTone*& tmsrt);
     virtual ~QTMSRingToneImpl();
@@ -47,11 +48,10 @@ public:
 private:
     QTMSRingToneImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif //QTMSRINGTONEBODYIMPL_H
-
 // End of file
 

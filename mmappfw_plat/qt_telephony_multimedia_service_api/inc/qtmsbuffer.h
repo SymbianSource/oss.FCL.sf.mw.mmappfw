@@ -20,7 +20,8 @@
 
 #include <qtms.h>
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSBuffer class
@@ -33,12 +34,14 @@ namespace QTMS {
  *
  */
 class QTMSBuffer
-    {
+{
 public:
     /*
      * Destructor
      */
-    virtual ~QTMSBuffer() {}
+    virtual ~QTMSBuffer()
+    {
+    }
 
     /**
      * Return buffer type.
@@ -122,7 +125,7 @@ public:
      *
      */
     virtual gint GetDataPtr(guint8*& bufptr) = 0;
-    };
+};
 
 } //namespace QTMS
 

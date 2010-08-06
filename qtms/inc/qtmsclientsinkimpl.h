@@ -23,17 +23,18 @@
 #include <tmsclientsinkobsrvr.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSBuffer;
 class TMSSink;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSClientSinkImpl class
-class QTMSClientSinkImpl : public QTMSClientSink,
-                           public TMS::TMSClientSinkObserver
-    {
+class QTMSClientSinkImpl: public QTMSClientSink, public TMS::TMSClientSinkObserver
+{
 public:
     static gint Create(QTMSSink*& qsink, TMS::TMSSink*& tmsclientsink);
     virtual ~QTMSClientSinkImpl();
@@ -49,10 +50,9 @@ public:
 private:
     QTMSClientSinkImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_CLIENT_SINK_IMPL_H
-
 // End of file

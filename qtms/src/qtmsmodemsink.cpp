@@ -25,23 +25,22 @@ using namespace TMS;
 
 QTMSModemSink::QTMSModemSink() :
     iSink(NULL)
-    {
-    }
+{
+}
 
 QTMSModemSink::~QTMSModemSink()
-    {
-    delete (static_cast<TMSModemSink*>(iSink));
-    }
+{
+    delete (static_cast<TMSModemSink*> (iSink));
+}
 
 gint QTMSModemSink::GetType(QTMSSinkType& sinktype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSink)
-        {
+    if (iSink) {
         //status = iSink->GetType(sinktype);
         status = static_cast<TMSModemSink*> (iSink)->GetType(sinktype);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

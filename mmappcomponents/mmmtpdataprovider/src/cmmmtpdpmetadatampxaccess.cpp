@@ -902,7 +902,7 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
             delete iSampleData;
             iSampleData = NULL;
 
-            iSampleData = HBufC8::NewL( numElements * sizeof( TUint8 ) );
+            iSampleData = HBufC8::NewL( numElements );
             TPtr8 samplePtr = iSampleData->Des();
             mtpTypeArray.ToDes( samplePtr );
             RFile sampleFile;
@@ -1522,12 +1522,6 @@ void CMmMtpDpMetadataMpxAccess::GetModifiedContentL( TInt& arrayCount,
     PRINT( _L( "MM MTP <> Modified contents are:" ) );
 
     foundMedia = FindWMPMediaLC( KMPXMediaGeneralModified, ETrue ); // + foundMedia
-
-    if ( !foundMedia->IsSupported( KMPXMediaArrayCount ) )
-        {
-        User::Leave( KErrNotSupported );
-        }
-
     foundItemCount = *foundMedia->Value<TInt>( KMPXMediaArrayCount );
 
     PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::GetModifiedContentL() found %d Media Objects" ), foundItemCount );
@@ -1600,14 +1594,14 @@ TBool CMmMtpDpMetadataMpxAccess::IsExistL( const TDesC& aSuid )
 
     CleanupStack::PopAndDestroy( &playlistAttributes ); // - playlistAttributes
     CleanupStack::PopAndDestroy( searchMedia ); // - searchMedia
+    CleanupStack::PushL( foundMedia ); // + foundMedia
 
     if ( !foundMedia->IsSupported( KMPXMediaArrayCount ) )
         User::Leave( KErrNotSupported );
 
     TInt foundItemCount = *foundMedia->Value<TInt>( KMPXMediaArrayCount );
 
-    delete foundMedia;
-    foundMedia = NULL;
+    CleanupStack::PopAndDestroy( foundMedia ); // - foundMedia
 
     PRINT1( _L( "MM MTP <= CMmMtpDpMetadataMpxAccess::IsExist foundItemCount(%d)" ), foundItemCount );
     return ( foundItemCount > 0 ? ETrue : EFalse );

@@ -23,11 +23,13 @@
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSEffect;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSVolumeEffect class
@@ -39,7 +41,7 @@ namespace QTMS {
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSVolumeEffect : public QObject,
                                                  public QTMSEffect
-    {
+{
     Q_OBJECT
 public:
     /**
@@ -98,7 +100,7 @@ public:
      */
     virtual gint GetType(QTMSEffectType& effecttype);
 
-Q_SIGNALS:
+    Q_SIGNALS:
     void EffectsEvent(const QTMSEffect& tmseffect, QTMSSignalEvent event);
 
 protected:
@@ -109,7 +111,7 @@ protected:
 
 protected:
     TMS::TMSEffect *iEffect;
-    };
+};
 
 } //namespace QTMS
 

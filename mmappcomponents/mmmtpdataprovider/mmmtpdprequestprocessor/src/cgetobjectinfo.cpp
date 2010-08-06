@@ -95,7 +95,6 @@ CGetObjectInfo::CGetObjectInfo( MMTPDataProviderFramework& aFramework,
 //
 EXPORT_C void CGetObjectInfo::ConstructL()
     {
-    CActiveScheduler::Add( this );
     }
 
 // -----------------------------------------------------------------------------
@@ -106,7 +105,7 @@ EXPORT_C void CGetObjectInfo::ConstructL()
 void CGetObjectInfo::ServiceL()
     {
     PRINT( _L( "MM MTP => CGetObjectInfo::ServiceL" ) );
-    
+
     MmMtpDpUtility::SetPSStatus(EMtpPSStatusActive);
 
     delete iObjectInfo;

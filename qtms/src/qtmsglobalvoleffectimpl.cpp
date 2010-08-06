@@ -24,68 +24,60 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSGlobalVolEffectImpl::QTMSGlobalVolEffectImpl()
-    {
-    }
+{
+}
 
 QTMSGlobalVolEffectImpl::~QTMSGlobalVolEffectImpl()
-    {
+{
     RemoveObserver(*this);
-    }
+}
 
-gint QTMSGlobalVolEffectImpl::Create(QTMSEffect*& qglobalvol,
-        TMS::TMSEffect*& tmsglobalvol)
-    {
+gint QTMSGlobalVolEffectImpl::Create(QTMSEffect*& qglobalvol, TMS::TMSEffect*& tmsglobalvol)
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSGlobalVolEffectImpl* self = new QTMSGlobalVolEffectImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
+        }
         self->iEffect = tmsglobalvol;
         ret = self->AddObserver(*self, NULL);
-        }
+    }
     qglobalvol = self;
     return ret;
-    }
+}
 
 gint QTMSGlobalVolEffectImpl::PostConstruct()
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
-gint QTMSGlobalVolEffectImpl::AddObserver(TMS::TMSEffectObserver& obsrvr,
-        gpointer user_data)
-    {
+gint QTMSGlobalVolEffectImpl::AddObserver(TMS::TMSEffectObserver& obsrvr, gpointer user_data)
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iEffect)
-        {
-        ret = static_cast<TMSGlobalVolEffect*> (iEffect)->AddObserver(obsrvr,
-                user_data);
-        }
-    return ret;
+    if (iEffect) {
+        ret = static_cast<TMSGlobalVolEffect*> (iEffect)->AddObserver(obsrvr, user_data);
     }
+    return ret;
+}
 
 gint QTMSGlobalVolEffectImpl::RemoveObserver(TMS::TMSEffectObserver& obsrvr)
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iEffect)
-        {
-        ret = static_cast<TMSGlobalVolEffect*> (iEffect)->RemoveObserver(
-                obsrvr);
-        }
-    return ret;
+    if (iEffect) {
+        ret = static_cast<TMSGlobalVolEffect*> (iEffect)->RemoveObserver(obsrvr);
     }
+    return ret;
+}
 
 void QTMSGlobalVolEffectImpl::EffectsEvent(const TMS::TMSEffect& /*tmseffect*/,
-        TMS::TMSSignalEvent event)
-    {
+    TMS::TMSSignalEvent event)
+{
     QTMSSignalEvent qevent;
 
     qevent.type = event.type;
@@ -95,8 +87,7 @@ void QTMSGlobalVolEffectImpl::EffectsEvent(const TMS::TMSEffect& /*tmseffect*/,
     qevent.event_data = event.event_data;
     qevent.user_data = event.user_data;
 
-    emit QTMS::QTMSGlobalVolEffect::EffectsEvent(static_cast<QTMSEffect&>
-            (*this), qevent);
-    }
+    emit QTMS::QTMSGlobalVolEffect::EffectsEvent(static_cast<QTMSEffect&> (*this), qevent);
+}
 
 // End of file

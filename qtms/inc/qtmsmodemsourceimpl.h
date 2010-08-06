@@ -22,15 +22,17 @@
 #include <qtmsmodemsource.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSSource;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSModemSourceImpl class
-class QTMSModemSourceImpl : public QTMSModemSource
-    {
+class QTMSModemSourceImpl: public QTMSModemSource
+{
 public:
     static gint Create(QTMSSource*& qsource, TMS::TMSSource*& tmssource);
     virtual ~QTMSModemSourceImpl();
@@ -40,10 +42,9 @@ public:
 private:
     QTMSModemSourceImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_MODEM_SOURCE_IMPL_H
-
 // End of file

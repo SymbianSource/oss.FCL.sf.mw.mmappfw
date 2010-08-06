@@ -243,10 +243,6 @@ TMTPResponseCode CRequestChecker::VerifyObjectHandleL( TUint32 aHandle,
 
     CMTPObjectMetaData* object( CMTPObjectMetaData::NewLC() );
     TBool result( iFramework.ObjectMgr().ObjectL( aHandle, *object ) );
-    iObjectArray.AppendL( object );
-    CleanupStack::Pop( object );
-    iHandles.AppendL( aHandle );
-
     // Obj handle exists
     if ( result )
         {
@@ -277,8 +273,18 @@ TMTPResponseCode CRequestChecker::VerifyObjectHandleL( TUint32 aHandle,
                 ret = EMTPRespCodeInvalidParentObject;
             }
         }
+
+    if ( result )
+        {
+        iObjectArray.AppendL( object );
+        CleanupStack::Pop( object );
+        iHandles.AppendL( aHandle );
+        }
     else
+        {
+        CleanupStack::PopAndDestroy( object );
         ret = EMTPRespCodeInvalidObjectHandle;
+        }
 
     PRINT1( _L( "MM MTP <= CRequestChecker::VerifyObjectHandleL ret = 0x%x" ), ret );
 

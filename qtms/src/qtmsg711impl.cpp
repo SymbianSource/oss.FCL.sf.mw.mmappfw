@@ -23,58 +23,53 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSG711FormatImpl::QTMSG711FormatImpl()
-    {
-    }
+{
+}
 
 QTMSG711FormatImpl::~QTMSG711FormatImpl()
-    {
-    }
+{
+}
 
-gint QTMSG711FormatImpl::Create(QTMSFormat*& qformat,
-        TMS::TMSFormat*& tmsformat)
-    {
+gint QTMSG711FormatImpl::Create(QTMSFormat*& qformat, TMS::TMSFormat*& tmsformat)
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSG711FormatImpl* self = new QTMSG711FormatImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
-        self->iFormat = tmsformat;
         }
+        self->iFormat = tmsformat;
+    }
     qformat = self;
     return ret;
-    }
+}
 
 gint QTMSG711FormatImpl::PostConstruct()
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
 gint QTMSG711FormatImpl::GetFormat(TMS::TMSFormat*& fmt)
-    {
+{
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
-    if (iFormat)
-        {
+    if (iFormat) {
         fmt = iFormat;
         ret = QTMS_RESULT_SUCCESS;
-        }
-    return ret;
     }
+    return ret;
+}
 
 gint QTMSG711FormatImpl::GetType(QTMSFormatType& fmttype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = iFormat->GetType(fmttype);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

@@ -23,31 +23,29 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSG729Format::QTMSG729Format()
-    {
-    }
+{
+}
 
 QTMSG729Format::~QTMSG729Format()
-    {
-    }
+{
+}
 
 gint QTMSG729Format::SetVADMode(const gboolean aVad)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSG729Format*> (iFormat)->SetVADMode(aVad);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSG729Format::GetVADMode(gboolean& aVad)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSG729Format*> (iFormat)->GetVADMode(aVad);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

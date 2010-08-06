@@ -22,15 +22,17 @@
 #include <qtmsamrformat.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSFormat;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // Class declaration
-class QTMSAMRFormatImpl : public QTMSAMRFormat
-    {
+class QTMSAMRFormatImpl: public QTMSAMRFormat
+{
 public:
 
     static gint Create(QTMSFormat*& qformat, TMS::TMSFormat*& tmsformat);
@@ -44,10 +46,9 @@ public:
 private:
     QTMSAMRFormatImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_AMR_FORMAT_IMPL_H
-
 // End of file

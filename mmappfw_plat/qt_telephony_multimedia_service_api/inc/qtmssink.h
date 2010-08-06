@@ -20,7 +20,8 @@
 
 #include <qtms.h>
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSSink class
@@ -31,7 +32,7 @@ namespace QTMS {
  *
  */
 class QTMSSink
-    {
+{
 public:
     /**
      * Returns type of the concrete data sink object implementation.
@@ -46,9 +47,8 @@ public:
      *
      */
     virtual gint GetType(QTMSSinkType& sinktype) = 0;
-    };
+};
 
 } //namespace QTMS
 
 #endif //QTMS_SINK_H
-

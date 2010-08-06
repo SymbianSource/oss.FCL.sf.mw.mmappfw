@@ -23,30 +23,28 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSCallImpl::QTMSCallImpl()
-    {
-    }
+{
+}
 
 QTMSCallImpl::~QTMSCallImpl()
-    {
-    }
+{
+}
 
 gint QTMSCallImpl::Create(QTMSCall*& qtmscall, TMS::TMSCall*& tmscall)
-    {
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSCallImpl* self = new QTMSCallImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
-        self->iTmsCall = tmscall;
         }
+        self->iTmsCall = tmscall;
+    }
     qtmscall = self;
     return ret;
-    }
+}
 
 gint QTMSCallImpl::PostConstruct()
     {

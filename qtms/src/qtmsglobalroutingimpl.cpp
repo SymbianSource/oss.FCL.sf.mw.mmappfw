@@ -24,68 +24,60 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSGlobalRoutingImpl::QTMSGlobalRoutingImpl()
-    {
-    }
+{
+}
 
 QTMSGlobalRoutingImpl::~QTMSGlobalRoutingImpl()
-    {
+{
     RemoveObserver(*this);
-    }
+}
 
-gint QTMSGlobalRoutingImpl::Create(QTMSGlobalRouting*& qrouting,
-        TMS::TMSGlobalRouting*& tmsrouting)
-    {
+gint QTMSGlobalRoutingImpl::Create(QTMSGlobalRouting*& qrouting, TMS::TMSGlobalRouting*& tmsrouting)
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSGlobalRoutingImpl* self = new QTMSGlobalRoutingImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
+        }
         self->iRouting = tmsrouting;
         ret = self->AddObserver(*self, NULL);
-        }
+    }
     qrouting = self;
     return ret;
-    }
+}
 
 gint QTMSGlobalRoutingImpl::PostConstruct()
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
-gint QTMSGlobalRoutingImpl::AddObserver(TMS::TMSGlobalRoutingObserver& obsrvr,
-        gpointer user_data)
-    {
+gint QTMSGlobalRoutingImpl::AddObserver(TMS::TMSGlobalRoutingObserver& obsrvr, gpointer user_data)
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iRouting)
-        {
+    if (iRouting) {
         ret = iRouting->AddObserver(obsrvr, user_data);
-        }
-    return ret;
     }
+    return ret;
+}
 
-gint QTMSGlobalRoutingImpl::RemoveObserver(
-        TMS::TMSGlobalRoutingObserver& obsrvr)
-    {
+gint QTMSGlobalRoutingImpl::RemoveObserver(TMS::TMSGlobalRoutingObserver& obsrvr)
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iRouting)
-        {
+    if (iRouting) {
         ret = iRouting->RemoveObserver(obsrvr);
-        }
-    return ret;
     }
+    return ret;
+}
 
-void QTMSGlobalRoutingImpl::GlobalRoutingEvent(
-        const TMS::TMSGlobalRouting& /*routing*/, TMS::TMSSignalEvent event,
-        TMS::TMSAudioOutput output)
-    {
+void QTMSGlobalRoutingImpl::GlobalRoutingEvent(const TMS::TMSGlobalRouting& /*routing*/,
+    TMS::TMSSignalEvent event, TMS::TMSAudioOutput output)
+{
     QTMSSignalEvent qevent;
     QTMSAudioOutput qoutput;
 
@@ -97,8 +89,8 @@ void QTMSGlobalRoutingImpl::GlobalRoutingEvent(
     qevent.user_data = event.user_data;
     qoutput = output;
 
-    emit QTMS::QTMSGlobalRouting::GlobalRoutingEvent(
-            static_cast<QTMSGlobalRouting&> (*this), qevent, qoutput);
-    }
+    emit QTMS::QTMSGlobalRouting::GlobalRoutingEvent(static_cast<QTMSGlobalRouting&> (*this),
+        qevent, qoutput);
+}
 
 // End of file

@@ -23,11 +23,13 @@
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSGlobalRouting;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSGlobalRouting class
@@ -40,7 +42,7 @@ namespace QTMS {
  *
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSGlobalRouting : public QObject
-    {
+{
     Q_OBJECT
 public:
     /**
@@ -123,7 +125,7 @@ public:
 
     Q_SIGNALS:
     void GlobalRoutingEvent(const QTMSGlobalRouting& routing,
-            QTMSSignalEvent event, QTMSAudioOutput output);
+        QTMSSignalEvent event, QTMSAudioOutput output);
 
 protected:
     /**
@@ -133,7 +135,7 @@ protected:
 
 protected:
     TMS::TMSGlobalRouting* iRouting;
-    };
+};
 
 } //namespace QTMS
 

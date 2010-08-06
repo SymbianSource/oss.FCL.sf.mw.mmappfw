@@ -21,26 +21,26 @@
 #include <qtms.h>
 
 // FORWARD DECLARATION
-namespace TMS {
+namespace TMS
+{
 class TMSBuffer;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // FORWARD DECLARATIONS
 class QTMSBuffer;
 
 // TMSBufferImpl class
 class QTMSBufferImpl
-    {
+{
 public:
-    static gint Create(QTMSBufferType ctype, QTMSBuffer*& buffer,
-            TMS::TMSBuffer*& tmsbuffer);
+    static gint Create(QTMSBufferType ctype, QTMSBuffer*& buffer, TMS::TMSBuffer*& tmsbuffer);
     static gint Delete(QTMSBuffer*& buffer);
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_BUFFER_IMPL_H
-
 // End of file

@@ -24,77 +24,69 @@ using namespace TMS;
 
 QTMSClientSource::QTMSClientSource() :
     iSource(NULL)
-    {
-    }
+{
+}
 
 QTMSClientSource::~QTMSClientSource()
-    {
+{
     delete iSource;
-    }
+}
 
 gint QTMSClientSource::SetEnqueueMode(const gboolean enable)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSource)
-        {
-        status = static_cast<TMSClientSource*> (iSource)->SetEnqueueMode(
-                enable);
-        }
-    return status;
+    if (iSource) {
+        status = static_cast<TMSClientSource*> (iSource)->SetEnqueueMode(enable);
     }
+    return status;
+}
 
 gint QTMSClientSource::GetEnqueueMode(gboolean& enable)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSource)
-        {
-        status = static_cast<TMSClientSource*> (iSource)->GetEnqueueMode(
-                enable);
-        }
-    return status;
+    if (iSource) {
+        status = static_cast<TMSClientSource*> (iSource)->GetEnqueueMode(enable);
     }
+    return status;
+}
 
 gint QTMSClientSource::Flush()
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSource)
-        {
+    if (iSource) {
         status = static_cast<TMSClientSource*> (iSource)->Flush();
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSClientSource::GetType(QTMSSourceType& sourcetype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSource)
-        {
+    if (iSource) {
         status = static_cast<TMSClientSource*> (iSource)->GetType(sourcetype);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSClientSource::BufferFilled(QTMSBuffer& buffer)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSource)
-        {
-        TMSBuffer& buf(reinterpret_cast<TMSBuffer&>(buffer));
+    if (iSource) {
+        TMSBuffer& buf(reinterpret_cast<TMSBuffer&> (buffer));
         status = static_cast<TMSClientSource*> (iSource)->BufferFilled(buf);
-        }
-    return status;
     }
+    return status;
+}
 
 // Push mode
 gint QTMSClientSource::ProcessBuffer(QTMSBuffer* buffer)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSource)
-        {
-        TMSBuffer* buf(reinterpret_cast<TMSBuffer*>(buffer));
+    if (iSource) {
+        TMSBuffer* buf(reinterpret_cast<TMSBuffer*> (buffer));
         status = static_cast<TMSClientSource*> (iSource)->ProcessBuffer(buf);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

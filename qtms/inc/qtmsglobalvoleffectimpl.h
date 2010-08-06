@@ -23,19 +23,20 @@
 #include <tmseffectobsrvr.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSEffect;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // FORWARD DECLARATIONS
 class QTMSEffect;
 
 // QTMSGlobalVolEffectImpl class
-class QTMSGlobalVolEffectImpl : public QTMSGlobalVolEffect,
-                                public TMS::TMSEffectObserver
-    {
+class QTMSGlobalVolEffectImpl: public QTMSGlobalVolEffect, public TMS::TMSEffectObserver
+{
 public:
 
     static gint Create(QTMSEffect*& qglobalvol, TMS::TMSEffect*& tmsglobalvol);
@@ -45,16 +46,14 @@ public:
     gint RemoveObserver(TMS::TMSEffectObserver& obsrvr);
 
     //from TMSEffectObserver
-    void EffectsEvent(const TMS::TMSEffect& tmseffect,
-            TMS::TMSSignalEvent event);
+    void EffectsEvent(const TMS::TMSEffect& tmseffect, TMS::TMSSignalEvent event);
 
 private:
     QTMSGlobalVolEffectImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_GLOBAL_VOLUME_EFFECT_IMPL_H
-
 // End of file

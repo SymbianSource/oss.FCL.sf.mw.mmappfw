@@ -22,15 +22,17 @@
 #include <qtmsmicsource.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSSource;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSMicSourceImpl class
-class QTMSMicSourceImpl : public QTMSMicSource
-    {
+class QTMSMicSourceImpl: public QTMSMicSource
+{
 public:
     static gint Create(QTMSSource*& qsource, TMS::TMSSource*& tmssource);
     virtual ~QTMSMicSourceImpl();
@@ -39,10 +41,9 @@ public:
 private:
     QTMSMicSourceImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_MIC_SOURCE_IMPL_H
-
 // End of file

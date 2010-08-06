@@ -23,78 +23,71 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSVolumeEffectImpl::QTMSVolumeEffectImpl()
-    {
-    }
+{
+}
 
 QTMSVolumeEffectImpl::~QTMSVolumeEffectImpl()
-    {
+{
     RemoveObserver(*this);
-    }
+}
 
 gint QTMSVolumeEffectImpl::Create(QTMSEffect*& qvol, TMS::TMSEffect*& tmsvol)
-    {
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSVolumeEffectImpl* self = new QTMSVolumeEffectImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
+        }
         self->iEffect = tmsvol;
         ret = self->AddObserver(*self, NULL);
-        }
+    }
     qvol = self;
     return ret;
-    }
+}
 
 gint QTMSVolumeEffectImpl::PostConstruct()
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
-gint QTMSVolumeEffectImpl::AddObserver(TMS::TMSEffectObserver& obsrvr,
-        gpointer user_data)
-    {
+gint QTMSVolumeEffectImpl::AddObserver(TMS::TMSEffectObserver& obsrvr, gpointer user_data)
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iEffect)
-        {
-        ret = static_cast<TMSVolumeEffect*> (iEffect)->AddObserver(obsrvr,
-                user_data);
-        }
-    return ret;
+    if (iEffect) {
+        ret = static_cast<TMSVolumeEffect*> (iEffect)->AddObserver(obsrvr, user_data);
     }
+    return ret;
+}
 
 gint QTMSVolumeEffectImpl::RemoveObserver(TMS::TMSEffectObserver& obsrvr)
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iEffect)
-        {
+    if (iEffect) {
         ret = static_cast<TMSVolumeEffect*> (iEffect)->RemoveObserver(obsrvr);
-        }
-    return ret;
     }
+    return ret;
+}
 
 gint QTMSVolumeEffectImpl::GetEffect(TMS::TMSEffect*& tmseffect)
-    {
+{
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
-    if (iEffect)
-        {
+    if (iEffect) {
         tmseffect = iEffect;
         ret = QTMS_RESULT_SUCCESS;
-        }
-    return ret;
     }
+    return ret;
+}
 
 void QTMSVolumeEffectImpl::EffectsEvent(const TMS::TMSEffect& /*tmseffect*/,
-        TMS::TMSSignalEvent event)
-    {
+    TMS::TMSSignalEvent event)
+{
     QTMSSignalEvent qevent;
 
     qevent.type = event.type;
@@ -104,8 +97,7 @@ void QTMSVolumeEffectImpl::EffectsEvent(const TMS::TMSEffect& /*tmseffect*/,
     qevent.event_data = event.event_data;
     qevent.user_data = event.user_data;
 
-    emit QTMS::QTMSVolumeEffect::EffectsEvent(
-            static_cast<QTMSEffect&> (*this), qevent);
-    }
+    emit QTMS::QTMSVolumeEffect::EffectsEvent(static_cast<QTMSEffect&> (*this), qevent);
+}
 
 // End of file
