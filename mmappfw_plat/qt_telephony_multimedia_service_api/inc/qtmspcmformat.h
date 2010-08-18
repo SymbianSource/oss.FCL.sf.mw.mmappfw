@@ -24,11 +24,13 @@
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSFormat;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSPCMFormat class
@@ -39,10 +41,9 @@ namespace QTMS {
  * @lib QTMSapi.lib
  *
  */
-class QTMS_WRAPPER_DLL_EXPORT QTMSPCMFormat : public QObject,
-                                              public QTMSFormat
-    {
-    Q_OBJECT
+class QTMS_WRAPPER_DLL_EXPORT QTMSPCMFormat: public QObject, public QTMSFormat
+{
+Q_OBJECT
 public:
     /**
      * Destructor
@@ -54,7 +55,7 @@ protected:
      * Constructor
      */
     QTMSPCMFormat();
-    };
+};
 
 } //namespace QTMS
 

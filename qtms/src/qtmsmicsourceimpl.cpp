@@ -23,46 +23,43 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSMicSourceImpl::QTMSMicSourceImpl()
-    {
-    }
+{
+}
 
 QTMSMicSourceImpl::~QTMSMicSourceImpl()
-    {
-    }
+{
+}
 
 gint QTMSMicSourceImpl::Create(QTMSSource*& qsource, TMS::TMSSource*& tmssource)
-    {
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSMicSourceImpl* self = new QTMSMicSourceImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
-        self->iSource = tmssource;
         }
+        self->iSource = tmssource;
+    }
     qsource = self;
     return ret;
-    }
+}
 
 gint QTMSMicSourceImpl::PostConstruct()
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
 gint QTMSMicSourceImpl::GetSource(TMS::TMSSource*& tmssource)
-    {
+{
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSource)
-        {
+    if (iSource) {
         tmssource = iSource;
         ret = QTMS_RESULT_SUCCESS;
-        }
-    return ret;
     }
+    return ret;
+}
 
 // End of file

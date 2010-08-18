@@ -24,50 +24,46 @@ using namespace QTMS;
 
 QTMSDTMF::QTMSDTMF(void) :
     iDtmf(NULL)
-    {
-    }
+{
+}
 
 QTMSDTMF::~QTMSDTMF(void)
-    {
+{
     delete iDtmf;
-    }
+}
 
 gint QTMSDTMF::Start()
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iDtmf)
-        {
+    if (iDtmf) {
         status = iDtmf->Start();
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSDTMF::Stop()
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iDtmf)
-        {
+    if (iDtmf) {
         status = iDtmf->Stop();
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSDTMF::SetTone(GString* string)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iDtmf)
-        {
+    if (iDtmf) {
         status = iDtmf->SetTone(string);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSDTMF::ContinueDTMFStringSending(gboolean aContinue)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iDtmf)
-        {
+    if (iDtmf) {
         status = iDtmf->ContinueDTMFStringSending(aContinue);
-        }
-    return status;
     }
+    return status;
+}

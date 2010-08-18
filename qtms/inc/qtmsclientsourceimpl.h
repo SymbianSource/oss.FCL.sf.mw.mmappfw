@@ -23,17 +23,18 @@
 #include <tmsclientsourceobsrvr.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSBuffer;
 class TMSSource;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSClientSourceImpl class
-class QTMSClientSourceImpl : public QTMSClientSource,
-                             public TMS::TMSClientSourceObserver
-    {
+class QTMSClientSourceImpl: public QTMSClientSource, public TMS::TMSClientSourceObserver
+{
 public:
 
     static gint Create(QTMSSource*& qsource, TMS::TMSSource*& tmssource);
@@ -51,10 +52,9 @@ public:
 private:
     QTMSClientSourceImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_CLIENT_SOURCE_IMPL_H
-
 // End of file

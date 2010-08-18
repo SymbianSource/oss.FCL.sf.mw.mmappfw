@@ -23,47 +23,43 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSModemSourceImpl::QTMSModemSourceImpl()
-    {
-    }
+{
+}
 
 QTMSModemSourceImpl::~QTMSModemSourceImpl()
-    {
-    }
+{
+}
 
-gint QTMSModemSourceImpl::Create(QTMSSource*& qsource,
-        TMS::TMSSource*& tmssource)
-    {
+gint QTMSModemSourceImpl::Create(QTMSSource*& qsource, TMS::TMSSource*& tmssource)
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSModemSourceImpl* self = new QTMSModemSourceImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
-        self->iSource = tmssource;
         }
+        self->iSource = tmssource;
+    }
     qsource = self;
     return ret;
-    }
+}
 
 gint QTMSModemSourceImpl::PostConstruct()
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
 gint QTMSModemSourceImpl::GetSource(TMS::TMSSource*& tmssource)
-    {
+{
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSource)
-        {
+    if (iSource) {
         tmssource = iSource;
         ret = QTMS_RESULT_SUCCESS;
-        }
-    return ret;
     }
+    return ret;
+}
 
 // End of file

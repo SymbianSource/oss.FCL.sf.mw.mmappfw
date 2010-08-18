@@ -22,11 +22,13 @@
 #include <qtmscall.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSCall;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // FORWARD DECLARATIONS
 class QTMSStream;
@@ -34,8 +36,8 @@ class QTMSDTMF;
 class QTMSRingTone;
 
 // QTMSCallImpl class
-class QTMSCallImpl : public QTMSCall
-    {
+class QTMSCallImpl: public QTMSCall
+{
 public:
     static gint Create(QTMSCall*& qtmscall, TMS::TMSCall*& tmscall);
 
@@ -51,10 +53,9 @@ private:
     // TMS::TMSCall* iTmsCall;
     QTMSCallImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_CALL_IMPL_H
-
 // End of file

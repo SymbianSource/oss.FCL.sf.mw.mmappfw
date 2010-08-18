@@ -23,7 +23,8 @@
 #include <QtCore/qglobal.h>
 #include "qtmswrapperexport.h"
 
-namespace QTMS {
+namespace QTMS
+{
 
 // FORWARD DECLARATIONS
 class QTMSCall;
@@ -61,7 +62,7 @@ class QTMSInbandTone;
  *
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSFactory : public QObject
-    {
+{
     Q_OBJECT
 public:
     /**
@@ -119,7 +120,7 @@ public:
      *
      */
     gint CreateCall(QTMSCallType ctype, QTMSCall*& QTMScall,
-            guint ctxid = DEFAULT_CALL_CONTEXT);
+        guint ctxid = DEFAULT_CALL_CONTEXT);
 
     /**
      * Deletes QTMS Call.
@@ -165,7 +166,7 @@ public:
      *
      */
     gint GetSupportedFormats(const QTMSStreamType strmtype,
-            FormatVector& fmtlist);
+        FormatVector& fmtlist);
 
     /**
      * Creates Format object of the given format type.
@@ -217,7 +218,7 @@ public:
      *
      */
     gint CreateEffect(QTMSEffectType QTMSeffecttype,
-            QTMSEffect*& qtmseffect);
+        QTMSEffect*& qtmseffect);
 
     /**
      * Deletes Effect object.
@@ -253,7 +254,7 @@ public:
      *
      */
     gint CreateBuffer(QTMSBufferType buffertype, guint size,
-            QTMSBuffer*& qtmsbuffer);
+        QTMSBuffer*& qtmsbuffer);
 
     /**
      * Deletes the Buffer object.
@@ -451,7 +452,7 @@ private:
 
 private:
     QTMSFactoryImpl* impl;
-    };
+};
 
 } //namespace QTMS
 

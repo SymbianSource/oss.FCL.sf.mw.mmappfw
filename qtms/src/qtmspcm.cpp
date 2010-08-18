@@ -20,11 +20,11 @@
 using namespace QTMS;
 
 QTMSPCMFormat::QTMSPCMFormat()
-    {
-    }
+{
+}
 
 QTMSPCMFormat::~QTMSPCMFormat()
-    {
-    }
+{
+}
 
 // End of file

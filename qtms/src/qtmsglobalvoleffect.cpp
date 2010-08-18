@@ -25,54 +25,48 @@ using namespace TMS;
 
 QTMSGlobalVolEffect::QTMSGlobalVolEffect() :
     iEffect(NULL)
-    {
-    }
+{
+}
 
 QTMSGlobalVolEffect::~QTMSGlobalVolEffect()
-    {
-    delete (static_cast<TMSGlobalVolEffect*>(iEffect));
-    }
+{
+    delete (static_cast<TMSGlobalVolEffect*> (iEffect));
+}
 
 gint QTMSGlobalVolEffect::GetLevel(guint& level)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
+    if (iEffect) {
         status = static_cast<TMSGlobalVolEffect*> (iEffect)->GetLevel(level);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSGlobalVolEffect::SetLevel(const guint level)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
+    if (iEffect) {
         status = static_cast<TMSGlobalVolEffect*> (iEffect)->SetLevel(level);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSGlobalVolEffect::GetMaxLevel(guint& level)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
-        status = static_cast<TMSGlobalVolEffect*> (iEffect)->GetMaxLevel(
-                level);
-        }
-    return status;
+    if (iEffect) {
+        status = static_cast<TMSGlobalVolEffect*> (iEffect)->GetMaxLevel(level);
     }
+    return status;
+}
 
 gint QTMSGlobalVolEffect::GetType(QTMSSourceType& sourcetype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
-        status = static_cast<TMSGlobalVolEffect*> (iEffect)->GetType(
-                sourcetype);
-        }
-    return status;
+    if (iEffect) {
+        status = static_cast<TMSGlobalVolEffect*> (iEffect)->GetType(sourcetype);
     }
+    return status;
+}
 
 // End of file

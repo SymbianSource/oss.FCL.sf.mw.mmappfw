@@ -23,23 +23,22 @@ using namespace TMS;
 
 QTMSSpeakerSink::QTMSSpeakerSink() :
     iSink(NULL)
-    {
-    }
+{
+}
 
 QTMSSpeakerSink::~QTMSSpeakerSink()
-    {
+{
     delete (static_cast<TMSSpeakerSink*> (iSink));
-    }
+}
 
 gint QTMSSpeakerSink::GetType(QTMSSinkType& sinktype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSink)
-        {
+    if (iSink) {
         //status = iSink->GetType(sinktype); //should be ok
         status = static_cast<TMSSpeakerSink*> (iSink)->GetType(sinktype);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

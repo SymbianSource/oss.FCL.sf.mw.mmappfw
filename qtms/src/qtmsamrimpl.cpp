@@ -24,59 +24,55 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSAMRFormatImpl::QTMSAMRFormatImpl()
-    {
-    }
+{
+}
 
 QTMSAMRFormatImpl::~QTMSAMRFormatImpl()
-    {
+{
     TRACE_PRN_FN_ENT;
     TRACE_PRN_FN_EXT;
-    }
+}
 
 gint QTMSAMRFormatImpl::Create(QTMSFormat*& qformat, TMS::TMSFormat*& tmsformat)
-    {
+{
     gint ret(TMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSAMRFormatImpl* self = new QTMSAMRFormatImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != TMS_RESULT_SUCCESS)
-            {
+        if (ret != TMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
-        self->iFormat = tmsformat;
         }
+        self->iFormat = tmsformat;
+    }
     qformat = self;
     return ret;
-    }
+}
 
 gint QTMSAMRFormatImpl::PostConstruct()
-    {
+{
     gint ret(TMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
 gint QTMSAMRFormatImpl::GetFormat(TMS::TMSFormat*& fmt)
-    {
+{
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
-    if (iFormat)
-        {
+    if (iFormat) {
         fmt = iFormat;
         ret = QTMS_RESULT_SUCCESS;
-        }
-    return ret;
     }
+    return ret;
+}
 
 gint QTMSAMRFormatImpl::GetType(QTMSFormatType& fmttype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = iFormat->GetType(fmttype);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

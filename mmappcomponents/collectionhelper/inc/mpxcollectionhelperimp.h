@@ -19,6 +19,9 @@
 #ifndef CMPXCOLLECTIONHELPERIMP_H
 #define CMPXCOLLECTIONHELPERIMP_H
 
+#include <thumbnailmanager.h>
+#include <thumbnailmanagerobserver.h>
+
 #include "mpxcollectionhelper.h"
 #include "mpxharvesterutilityobserver.h"
 #include "mpxmediatorobserver.h"
@@ -41,7 +44,8 @@ class CMPXCollectionMediator;
 NONSHARABLE_CLASS( CMPXCollectionHelperImp ): public CBase,
                                               public MMPXCollectionHelper,
                                               public MMPXHarvesterUtilityObserver,
-                                              public MMPXMediatorObserver
+                                              public MMPXMediatorObserver,
+                                              public MThumbnailManagerObserver
     {
 public:
 
@@ -695,6 +699,18 @@ protected: // From Base Class
     */
     void HandleFileGetMediaCompletedL( CMPXMedia* aMedia, TInt aErr );
 
+public:
+    /**
+    * From MThumbnailManagerObserver
+    */
+    void ThumbnailPreviewReady( MThumbnailData& aThumbnail, 
+                                TThumbnailRequestId aId );
+    /**
+    * From MThumbnailManagerObserver
+    */
+    void ThumbnailReady( TInt aError,
+                         MThumbnailData& aThumbnail, 
+                         TThumbnailRequestId aId );
 private:
 
     /**
@@ -702,6 +718,13 @@ private:
     * @param aMedia media item to add to the collection
     */
     void DoAddToCollectionL( CMPXMedia* aMedia );
+    
+    /**
+    * Rename the thumbnail through thumbnail manager
+    * @param aOldUri exiting uri of the song
+    * @param aNewUri new uri of the song
+    */
+    void RenameThumbnailL( const TDesC& aOldUri, const TDesC& aNewUri );
 
 protected:
 
@@ -720,7 +743,8 @@ protected: // data
     MMPXHarvesterUtility*   iHvsUtility;
     MMPXCollectionUtility*  iCollectionUtil;
     CMPXCollectionMediator* iMediator;
-
+    
+    CThumbnailManager*      iTNManager; // owned
     MMPXCollectionHelperObserver* iObserver;  // not owned
     TUid                          iMusicCollectionId;
     TBool                         iInitialized;

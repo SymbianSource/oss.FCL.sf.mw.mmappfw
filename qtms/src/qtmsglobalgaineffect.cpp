@@ -25,54 +25,48 @@ using namespace TMS;
 
 QTMSGlobalGainEffect::QTMSGlobalGainEffect() :
     iEffect(NULL)
-    {
-    }
+{
+}
 
 QTMSGlobalGainEffect::~QTMSGlobalGainEffect()
-    {
-    delete (static_cast<TMSGlobalGainEffect*>(iEffect));
-    }
+{
+    delete (static_cast<TMSGlobalGainEffect*> (iEffect));
+}
 
 gint QTMSGlobalGainEffect::GetLevel(guint& level)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
+    if (iEffect) {
         status = static_cast<TMSGlobalGainEffect*> (iEffect)->GetLevel(level);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSGlobalGainEffect::SetLevel(const guint level)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
+    if (iEffect) {
         status = static_cast<TMSGlobalGainEffect*> (iEffect)->SetLevel(level);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSGlobalGainEffect::GetMaxLevel(guint& level)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
-        status = static_cast<TMSGlobalGainEffect*> (iEffect)->GetMaxLevel(
-                level);
-        }
-    return status;
+    if (iEffect) {
+        status = static_cast<TMSGlobalGainEffect*> (iEffect)->GetMaxLevel(level);
     }
+    return status;
+}
 
 gint QTMSGlobalGainEffect::GetType(QTMSSourceType& sourcetype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
-        status = static_cast<TMSGlobalGainEffect*> (iEffect)->GetType(
-                sourcetype);
-        }
-    return status;
+    if (iEffect) {
+        status = static_cast<TMSGlobalGainEffect*> (iEffect)->GetType(sourcetype);
     }
+    return status;
+}
 
 // End of file

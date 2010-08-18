@@ -24,36 +24,35 @@
 #include <tmsglobalroutingobsrvr.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSGlobalRouting;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSGlobalRoutingImpl class
-class QTMSGlobalRoutingImpl : public QTMSGlobalRouting,
-                              public TMS::TMSGlobalRoutingObserver
-    {
+class QTMSGlobalRoutingImpl: public QTMSGlobalRouting, public TMS::TMSGlobalRoutingObserver
+{
 public:
 
-    static gint Create(QTMSGlobalRouting*& qrouting,
-            TMS::TMSGlobalRouting*& tmsrouting);
+    static gint Create(QTMSGlobalRouting*& qrouting, TMS::TMSGlobalRouting*& tmsrouting);
     virtual ~QTMSGlobalRoutingImpl();
 
     gint AddObserver(TMS::TMSGlobalRoutingObserver& obsrvr, gpointer user_data);
     gint RemoveObserver(TMS::TMSGlobalRoutingObserver& obsrvr);
 
     //from TMSGlobalRoutingObserver
-    void GlobalRoutingEvent(const TMS::TMSGlobalRouting& routing,
-            TMS::TMSSignalEvent event, TMS::TMSAudioOutput output);
+    void GlobalRoutingEvent(const TMS::TMSGlobalRouting& routing, TMS::TMSSignalEvent event,
+        TMS::TMSAudioOutput output);
 
 private:
     QTMSGlobalRoutingImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_GLOBAL_ROUTING_IMPL_H
-
 // End of file

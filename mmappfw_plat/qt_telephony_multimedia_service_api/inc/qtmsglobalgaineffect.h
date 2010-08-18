@@ -24,11 +24,13 @@
 #include <QObject>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSEffect;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSGlobalGainEffect class
@@ -42,7 +44,7 @@ namespace QTMS {
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSGlobalGainEffect : public QObject,
                                                      public QTMSEffect
-    {
+{
     Q_OBJECT
 public:
     /**
@@ -110,7 +112,7 @@ protected:
 
 protected:
     TMS::TMSEffect* iEffect;
-    };
+};
 
 } //namespace QTMS
 

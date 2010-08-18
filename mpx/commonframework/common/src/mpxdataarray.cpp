@@ -43,7 +43,7 @@ void RMPXDataItem::Reset(TUint aClientHandle)
             d->Release(aClientHandle);
             }
         // Now free the actual buffer
-        RMPXHeapManager& m=RMPXHeapManager::HeapManager(aClientHandle);
+        RMPXHeapManager::HeapManager(aClientHandle);
         iUid=0;
         iBufLen=0;
         }

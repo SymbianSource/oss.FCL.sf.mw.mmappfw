@@ -432,6 +432,7 @@ TInt32 CTestStorageMgr::FrameworkStorageId( TDriveNumber aDriveNumber ) const
  void CTestStorageMgr::GetAvailableDrivesL(
          RArray<TDriveNumber>& aDrives ) const
     {
+    CleanupClosePushL( aDrives ); 
     PRINTF0( ">CTestStorageMgr::GetAvailableDrivesL" );
     aDrives.Reset();
     for ( TUint i = 0; ( i < iMapDriveToStorage.Count() ); i++ )
@@ -443,6 +444,7 @@ TInt32 CTestStorageMgr::FrameworkStorageId( TDriveNumber aDriveNumber ) const
             }
         }
     PRINTF0( "<CTestStorageMgr::GetAvailableDrivesL" );
+    CleanupStack::Pop(); 
     }
 
 void CTestStorageMgr::GetLogicalStoragesL(

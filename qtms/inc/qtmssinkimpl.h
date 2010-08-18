@@ -20,18 +20,19 @@
 
 #include <qtms.h>
 
-namespace QTMS {
+namespace QTMS 
+{
 
 // FORWARD DECLARATIONS
 class QTMSSink;
 
 // TMSSinkImpl class
 class QTMSSinkImpl
-    {
+{
 public:
     static gint Create(QTMSSinkType sinktype, QTMSSink*& tmssink);
     static gint Delete(QTMSSink*& tmssink);
-    };
+};
 
 } //namespace QTMS
 

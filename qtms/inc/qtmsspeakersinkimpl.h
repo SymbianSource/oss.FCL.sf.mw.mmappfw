@@ -22,15 +22,17 @@
 #include <qtmsspeakersink.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSSink;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSSpeakerSinkImpl class
-class QTMSSpeakerSinkImpl : public QTMSSpeakerSink
-    {
+class QTMSSpeakerSinkImpl: public QTMSSpeakerSink
+{
 public:
     static gint Create(QTMSSink*& qsink, TMS::TMSSink*& tmssink);
     virtual ~QTMSSpeakerSinkImpl();
@@ -40,10 +42,9 @@ public:
 private:
     QTMSSpeakerSinkImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_SPEAKER_SINK_IMPL_H
-
 // End of file

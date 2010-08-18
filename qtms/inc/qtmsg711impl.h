@@ -22,15 +22,17 @@
 #include <qtmsg711format.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSFormat;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSG711FormatImpl class
-class QTMSG711FormatImpl : public QTMSG711Format
-    {
+class QTMSG711FormatImpl: public QTMSG711Format
+{
 public:
     static gint Create(QTMSFormat*& qformat, TMS::TMSFormat*& tmsformat);
     virtual ~QTMSG711FormatImpl();
@@ -43,10 +45,9 @@ public:
 private:
     QTMSG711FormatImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_G711_FORMAT_IMPL_H
-
 // End of file

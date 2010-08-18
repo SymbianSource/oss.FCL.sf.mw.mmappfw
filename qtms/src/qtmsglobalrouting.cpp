@@ -25,52 +25,48 @@ using namespace TMS;
 
 QTMSGlobalRouting::QTMSGlobalRouting() :
     iRouting(NULL)
-    {
-    }
+{
+}
 
 QTMSGlobalRouting::~QTMSGlobalRouting()
-    {
+{
     delete iRouting;
-    }
+}
 
 gint QTMSGlobalRouting::SetOutput(const QTMSAudioOutput output)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iRouting)
-        {
+    if (iRouting) {
         status = iRouting->SetOutput(output);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSGlobalRouting::GetOutput(QTMSAudioOutput& output)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iRouting)
-        {
+    if (iRouting) {
         status = iRouting->GetOutput(output);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSGlobalRouting::GetPreviousOutput(QTMSAudioOutput& output)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iRouting)
-        {
+    if (iRouting) {
         status = iRouting->GetPreviousOutput(output);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSGlobalRouting::GetAvailableOutputs(OutputVector& outputs)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iRouting)
-        {
+    if (iRouting) {
         status = iRouting->GetAvailableOutputs(outputs);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

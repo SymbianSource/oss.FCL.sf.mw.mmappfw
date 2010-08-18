@@ -24,31 +24,29 @@ using namespace QTMS;
 
 QTMSInbandTone::QTMSInbandTone(void) :
     iInbandTone(NULL)
-    {
-    }
+{
+}
 
 QTMSInbandTone::~QTMSInbandTone(void)
-    {
+{
     delete iInbandTone;
-    }
+}
 
 gint QTMSInbandTone::Start(QTMSInbandToneType inbandtonetype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iInbandTone)
-        {
+    if (iInbandTone) {
         status = iInbandTone->Start(inbandtonetype);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSInbandTone::Stop()
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iInbandTone)
-        {
+    if (iInbandTone) {
         status = iInbandTone->Stop();
-        }
-    return status;
     }
+    return status;
+}
 

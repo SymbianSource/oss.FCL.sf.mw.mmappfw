@@ -36,6 +36,7 @@
 #include <mpxmessagegeneraldefs.h>
 #include <mpxmessagecontainerdefs.h>
 #include <mpxmessagepluginupdatedefs.h>
+#include <mmf/common/mmfcontrollerpluginresolver.h>
 
 #include "mpxcollectionpluginhandler.h"
 #include "mpxcollectioncache.h"
@@ -211,12 +212,21 @@ EXPORT_C void CMPXCollectionEngine::NotifyL( TMPXCollectionBroadCastMsg aMsg,
             break;
             }
         case EMcMsgDiskInserted:        	
+            {
+            // inverting the notification order, this to get the message to 
+            // the UI faster.
             for( TInt i=0; i<count; ++i )
                 {
                 context = iContexts[i];
                 context->NotifyL( aMsg, aData );
                 }
             notify = EFalse;
+            command = EMcReOpenCollection;
+            data = aData;
+            // Clear the cache
+        	  clearCache = ETrue;
+            break;
+            }
         case EMcMsgFormatEnd:
         case EMcMsgUSBMassStorageEnd:
             {
@@ -224,7 +234,7 @@ EXPORT_C void CMPXCollectionEngine::NotifyL( TMPXCollectionBroadCastMsg aMsg,
             data = aData;
             
             // Clear the cache
-        	clearCache = ETrue;
+        	  clearCache = ETrue;
             break;
             }
         case EMcMsgUSBMTPStart:
@@ -316,6 +326,7 @@ void CMPXCollectionEngine::Command( TMPXCollectionCommand aCmd, TInt aData )
 EXPORT_C void CMPXCollectionEngine::GetSupportedTypesL(
                                     RPointerArray<CMPXCollectionType>& aArray )
     {
+    CleanupResetAndDestroyPushL(aArray); 
     RArray<TUid> uids;
     CleanupClosePushL(uids);
     iPluginHandler->GetPluginUids(uids);
@@ -340,6 +351,7 @@ EXPORT_C void CMPXCollectionEngine::GetSupportedTypesL(
         CleanupStack::Pop(type);
         }
     CleanupStack::PopAndDestroy(&uids);
+    CleanupStack::Pop(&aArray); 
     }
 
 // ----------------------------------------------------------------------------

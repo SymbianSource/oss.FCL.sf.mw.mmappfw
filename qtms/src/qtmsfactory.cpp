@@ -24,243 +24,217 @@
 using namespace QTMS;
 
 QTMSFactory::QTMSFactory()
-    {
+{
     impl = new QTMSFactoryImpl();
-    }
+}
 
 QTMSFactory::~QTMSFactory()
-    {
+{
     delete impl;
-    }
+}
 
 gint QTMSFactory::CreateFactory(QTMSFactory*& tmsfactory, QTMSVer& /*ver*/)
-    {
+{
     QTMSFactory* self = new QTMSFactory();
     tmsfactory = self;
     return QTMS_RESULT_SUCCESS;
-    }
+}
 
-gint QTMSFactory::CreateCall(QTMSCallType ctype, QTMSCall*& tmscall,
-        guint ctxid)
-    {
+gint QTMSFactory::CreateCall(QTMSCallType ctype, QTMSCall*& tmscall, guint ctxid)
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->CreateCall(ctype, tmscall, ctxid);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::DeleteCall(QTMSCall*& tmscall)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->DeleteCall(tmscall);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::IsCallTypeSupported(QTMSCallType ctype, gboolean& flag)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->IsCallTypeSupported(ctype, flag);
-        }
-    return status;
     }
+    return status;
+}
 
-gint QTMSFactory::GetSupportedFormats(const QTMSStreamType strmtype,
-        FormatVector& fmtlist)
-    {
+gint QTMSFactory::GetSupportedFormats(const QTMSStreamType strmtype, FormatVector& fmtlist)
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->GetSupportedFormats(strmtype, fmtlist);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::CreateFormat(QTMSFormatType qfmttype, QTMSFormat*& qfmt)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->CreateFormat(qfmttype, qfmt);
-        }
+    }
     return status;
 
-    }
+}
 
 gint QTMSFactory::DeleteFormat(QTMSFormat*& qfmt)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->DeleteFormat(qfmt);
-        }
-    return status;
     }
+    return status;
+}
 
-gint QTMSFactory::CreateEffect(QTMSEffectType tmseffecttype,
-        QTMSEffect*& tmseffect)
-    {
+gint QTMSFactory::CreateEffect(QTMSEffectType tmseffecttype, QTMSEffect*& tmseffect)
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->CreateEffect(tmseffecttype, tmseffect);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::DeleteEffect(QTMSEffect*& qtmseffect)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         impl->DeleteEffect(qtmseffect);
-        }
-    return status;
     }
+    return status;
+}
 
-gint QTMSFactory::CreateBuffer(QTMSBufferType buffertype, guint size,
-        QTMSBuffer*& qbuffer)
-    {
+gint QTMSFactory::CreateBuffer(QTMSBufferType buffertype, guint size, QTMSBuffer*& qbuffer)
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->CreateBuffer(buffertype, size, qbuffer);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::DeleteBuffer(QTMSBuffer*& qbuffer)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->DeleteBuffer(qbuffer);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::CreateSource(QTMSSourceType srctype, QTMSSource*& qtmssrc)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->CreateSource(srctype, qtmssrc);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::DeleteSource(QTMSSource*& qtmssrc)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->DeleteSource(qtmssrc);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::CreateSink(QTMSSinkType sinktype, QTMSSink*& qtmssink)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->CreateSink(sinktype, qtmssink);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::DeleteSink(QTMSSink*& qtmssink)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->DeleteSink(qtmssink);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::CreateGlobalRouting(QTMSGlobalRouting*& globalrouting)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->CreateGlobalRouting(globalrouting);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::DeleteGlobalRouting(QTMSGlobalRouting*& globrouting)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->DeleteGlobalRouting(globrouting);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::CreateDTMF(QTMSStreamType streamtype, QTMSDTMF*& dtmf)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->CreateDTMF(streamtype, dtmf);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::DeleteDTMF(QTMSDTMF*& dtmf)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->DeleteDTMF(dtmf);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::CreateRingTonePlayer(QTMSRingTone*& rt)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->CreateRingTonePlayer(rt);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::DeleteRingTonePlayer(QTMSRingTone*& rt)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->DeleteRingTonePlayer(rt);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::CreateInbandTonePlayer(QTMSInbandTone*& inbandtone)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->CreateInbandTonePlayer(inbandtone);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSFactory::DeleteInbandTonePlayer(QTMSInbandTone*& inbandtone)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (impl)
-        {
+    if (impl) {
         status = impl->DeleteInbandTonePlayer(inbandtone);
-        }
-    return status;
     }
+    return status;
+}

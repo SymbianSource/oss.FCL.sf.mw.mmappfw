@@ -48,3 +48,5 @@ deffile ../eabi/
 deffile ../bwinscw/ 
 #endif
 
+SMPSAFE
+

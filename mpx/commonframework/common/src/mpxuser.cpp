@@ -256,6 +256,7 @@ EXPORT_C void MPXUser::MergeAttributeL(
     const TArray<TMPXAttribute>& aSrc,
     RArray<TMPXAttribute>& aDest)
     {
+    CleanupClosePushL(aDest);
     aDest.Reset();
     for (TInt i = 0; i < aSrc.Count(); i++)
         {
@@ -271,6 +272,7 @@ EXPORT_C void MPXUser::MergeAttributeL(
             d = TMPXAttribute(d.ContentId(), d.AttributeId() | s.AttributeId());
             }
         }
+    CleanupStack::Pop();
     }
 
 // ----------------------------------------------------------------------------
@@ -384,6 +386,7 @@ EXPORT_C TInt MPXUser::CompareOrderedUidArrays(
 //
 EXPORT_C void MPXUser::InternalizeL(RArray<TMPXItemId>& aArray, RReadStream& aStream)
     {
+    CleanupClosePushL(aArray);
     TInt n=aStream.ReadInt32L();
     for (TInt i=0;i<n;++i)
         {
@@ -391,6 +394,7 @@ EXPORT_C void MPXUser::InternalizeL(RArray<TMPXItemId>& aArray, RReadStream& aSt
         TUint32 id2(aStream.ReadUint32L());
         aArray.AppendL(TMPXItemId(id1,id2));
         }
+    CleanupStack::Pop();
     }
 
 // ----------------------------------------------------------------------------

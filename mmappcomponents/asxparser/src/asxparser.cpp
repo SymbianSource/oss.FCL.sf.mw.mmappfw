@@ -15,7 +15,7 @@
 *
 */
 
-// Version : %version: 10.1.5.1.2 %
+// Version : %version: 10.1.5.1.3 %
 
 
 
@@ -421,7 +421,7 @@ void CAsxParser::HandleFileParsingL( RFile& aFile )
 {
     iVersion = KErrNotFound;
 
-    TInt size;
+    TInt size = 0;
     User::LeaveIfError( aFile.Size( size ) );
 
     if ( size > KMaxAsxFileSize )

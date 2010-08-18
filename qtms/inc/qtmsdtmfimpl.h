@@ -24,16 +24,17 @@
 #include <qtmsdtmf.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSDTMF;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSDTMFImpl class
-class QTMSDTMFImpl : public QTMSDTMF,
-                     public TMS::TMSDTMFObserver
-    {
+class QTMSDTMFImpl: public QTMSDTMF, public TMS::TMSDTMFObserver
+{
 public:
     static gint Create(QTMSDTMF*& qdtmf, TMS::TMSDTMF*& tmsdtmf);
     virtual ~QTMSDTMFImpl();
@@ -47,10 +48,9 @@ public:
 private:
     QTMSDTMFImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_DTMF_IMPL_H
-
 // End of file

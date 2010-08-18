@@ -23,78 +23,71 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSGainEffectImpl::QTMSGainEffectImpl()
-    {
-    }
+{
+}
 
 QTMSGainEffectImpl::~QTMSGainEffectImpl()
-    {
+{
     RemoveObserver(*this);
-    }
+}
 
 gint QTMSGainEffectImpl::Create(QTMSEffect*& qgain, TMS::TMSEffect*& tmsgain)
-    {
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSGainEffectImpl* self = new QTMSGainEffectImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
+        }
         self->iEffect = tmsgain;
         ret = self->AddObserver(*self, NULL);
-        }
+    }
     qgain = self;
     return ret;
-    }
+}
 
 gint QTMSGainEffectImpl::PostConstruct()
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
-gint QTMSGainEffectImpl::AddObserver(TMS::TMSEffectObserver& obsrvr,
-        gpointer user_data)
-    {
+gint QTMSGainEffectImpl::AddObserver(TMS::TMSEffectObserver& obsrvr, gpointer user_data)
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iEffect)
-        {
-        ret = static_cast<TMSGainEffect*> (iEffect)->AddObserver(obsrvr,
-                user_data);
-        }
-    return ret;
+    if (iEffect) {
+        ret = static_cast<TMSGainEffect*> (iEffect)->AddObserver(obsrvr, user_data);
     }
+    return ret;
+}
 
 gint QTMSGainEffectImpl::RemoveObserver(TMS::TMSEffectObserver& obsrvr)
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iEffect)
-        {
+    if (iEffect) {
         ret = static_cast<TMSGainEffect*> (iEffect)->RemoveObserver(obsrvr);
-        }
-    return ret;
     }
+    return ret;
+}
 
 gint QTMSGainEffectImpl::GetEffect(TMS::TMSEffect*& tmseffect)
-    {
+{
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
-    if (iEffect)
-        {
+    if (iEffect) {
         tmseffect = iEffect;
         ret = QTMS_RESULT_SUCCESS;
-        }
-    return ret;
     }
+    return ret;
+}
 
 void QTMSGainEffectImpl::EffectsEvent(const TMS::TMSEffect& /*tmseffect*/,
-        TMS::TMSSignalEvent event)
-    {
+    TMS::TMSSignalEvent event)
+{
     QTMSSignalEvent qevent;
 
     qevent.type = event.type;
@@ -104,8 +97,7 @@ void QTMSGainEffectImpl::EffectsEvent(const TMS::TMSEffect& /*tmseffect*/,
     qevent.event_data = event.event_data;
     qevent.user_data = event.user_data;
 
-    emit QTMS::QTMSGainEffect::EffectsEvent(static_cast<QTMSEffect&> (*this),
-            qevent);
-    }
+    emit QTMS::QTMSGainEffect::EffectsEvent(static_cast<QTMSEffect&> (*this), qevent);
+}
 
 // End of file

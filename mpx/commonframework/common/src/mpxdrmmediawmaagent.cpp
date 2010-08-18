@@ -705,6 +705,8 @@ TInt CMPXDrmMediaWmaAgent::GetWmdrmTimeL(
                     User::LeaveIfError( lex.Val( dateInt ) );
                     --dateInt;
                     // convert back to buffer
+                    // coverity[size_error]
+                    // coverity[buffer_alloc]
                     HBufC* datebuf = HBufC::NewLC( KMPXWmaDrmMaxTimeBufSize );
                     TPtr datebufPtr = datebuf->Des();
 

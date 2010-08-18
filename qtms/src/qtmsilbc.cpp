@@ -23,71 +23,65 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSILBCFormat::QTMSILBCFormat()
-    {
-    }
+{
+}
 
 QTMSILBCFormat::~QTMSILBCFormat()
-    {
-    }
+{
+}
 
 gint QTMSILBCFormat::SetMode(const QTMSG711CodecMode aMode)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSILBCFormat*> (iFormat)->SetMode(aMode);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSILBCFormat::GetMode(QTMSG711CodecMode& aMode)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSILBCFormat*> (iFormat)->GetMode(aMode);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSILBCFormat::SetCNG(const gboolean aCng)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSILBCFormat*> (iFormat)->SetCNG(aCng);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSILBCFormat::GetCNG(gboolean& aCng)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSILBCFormat*> (iFormat)->GetCNG(aCng);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSILBCFormat::SetVADMode(const gboolean aVad)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSILBCFormat*> (iFormat)->SetVADMode(aVad);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSILBCFormat::GetVADMode(gboolean& aVad)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSILBCFormat*> (iFormat)->GetVADMode(aVad);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

@@ -21,7 +21,8 @@
 #include <qtms.h>
 #include <QObject>
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSEffect class
@@ -33,7 +34,7 @@ namespace QTMS {
  *
  */
 class QTMSEffect
-    {
+{
 public:
     /**
      * Return effect type.
@@ -46,10 +47,9 @@ public:
      *
      */
     virtual gint GetType(QTMSEffectType& effecttype) = 0;
-    };
+};
 
 } //namespace QTMS
 
 #endif //QTMS_EFFECT_H
-
 // End of file

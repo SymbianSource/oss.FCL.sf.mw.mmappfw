@@ -22,15 +22,17 @@
 #include <qtmsilbcformat.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSFormat;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSILBCFormatImpl class
-class QTMSILBCFormatImpl : public QTMSILBCFormat
-    {
+class QTMSILBCFormatImpl: public QTMSILBCFormat
+{
 public:
     static gint Create(QTMSFormat*& qformat, TMS::TMSFormat*& tmsformat);
     virtual ~QTMSILBCFormatImpl();
@@ -43,10 +45,9 @@ public:
 private:
     QTMSILBCFormatImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_ILBC_FORMAT_IMPL_H
-
 // End of file

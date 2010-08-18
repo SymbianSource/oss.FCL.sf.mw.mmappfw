@@ -23,38 +23,36 @@
 #include <tmseffectobsrvr.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSEffect;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // FORWARD DECLARATIONS
 class QTMSEffect;
 
 // QTMSGlobalGainEffectImpl class
-class QTMSGlobalGainEffectImpl : public QTMSGlobalGainEffect,
-                                 public TMS::TMSEffectObserver
-    {
+class QTMSGlobalGainEffectImpl: public QTMSGlobalGainEffect, public TMS::TMSEffectObserver
+{
 public:
-    static gint Create(QTMSEffect*& qglobalgain,
-            TMS::TMSEffect*& tmsglobalgain);
+    static gint Create(QTMSEffect*& qglobalgain, TMS::TMSEffect*& tmsglobalgain);
     virtual ~QTMSGlobalGainEffectImpl();
 
     gint AddObserver(TMS::TMSEffectObserver& obsrvr, gpointer user_data);
     gint RemoveObserver(TMS::TMSEffectObserver& obsrvr);
 
     //from TMSEffectObserver
-    void EffectsEvent(const TMS::TMSEffect& tmseffect,
-            TMS::TMSSignalEvent event);
+    void EffectsEvent(const TMS::TMSEffect& tmseffect, TMS::TMSSignalEvent event);
 
 private:
     QTMSGlobalGainEffectImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_GLOBAL_GAIN_EFFECT_IMPL_H
-
 // End of file

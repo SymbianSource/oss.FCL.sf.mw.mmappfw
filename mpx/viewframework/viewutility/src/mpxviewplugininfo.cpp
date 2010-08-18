@@ -189,6 +189,7 @@ void CMPXViewPluginInfo::ExtractPluginUidsL(
     const TDesC8& aData,
     RArray<TUid>& aArray )
     {
+    CleanupClosePushL(aArray);
     aArray.Reset();
 
     TInt nextPos( 0 );
@@ -205,6 +206,7 @@ void CMPXViewPluginInfo::ExtractPluginUidsL(
             aArray.AppendL( TUid::Uid( pluginUid ) );
             }
         } while ( KErrNotFound != nextPos );
+    CleanupStack::Pop(); 
     }
 
 // ---------------------------------------------------------------------------

@@ -148,17 +148,11 @@ EXPORT_C TMTPResponseCode CSetObjectPropValue::CheckRequestL()
 
         TUint32 objectHandle = Request().Uint32( TMTPTypeRequest::ERequestParameter1 );
         CMTPObjectMetaData* objectInfo = iRequestChecker->GetObjectInfo( objectHandle );
-        if ( objectInfo == NULL )
-            {
-            PRINT( _L("MM MTP <> CSetObjectPropValue::CheckRequestL, objectInfo is NULL" ) );
-            return EMTPRespCodeInvalidObjectHandle;
-            }
 
-        TPtrC fileName = objectInfo->DesC( CMTPObjectMetaData::ESuid );
         TUint32 formatCode = objectInfo->Uint( CMTPObjectMetaData::EFormatCode );
         PRINT3( _L( "MM MTP <> CSetObjectPropValue::CheckRequestL, handle = 0x%x, filename = %S, formatCode = 0x%x" ),
             objectHandle,
-            &fileName,
+            &(objectInfo->DesC( CMTPObjectMetaData::ESuid )),
             formatCode );
         const RArray<TUint>* properties = iDpConfig.GetSupportedPropertiesL( formatCode );
         TInt count = properties->Count();

@@ -21,14 +21,16 @@
 
 
 void QTMSEffect::Construct(QTMSEffectImpl* impl)
-    {
+{
     QTMSeffectimpl = impl;
-    }
+}
 
 QTMSEffect::QTMSEffect(void)
-    {
-    }
+{
+	
+}
 
  QTMSEffect::~QTMSEffect(void)
-    {
-    }
+{
+	
+}

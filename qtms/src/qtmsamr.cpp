@@ -20,11 +20,11 @@
 using namespace QTMS;
 
 QTMSAMRFormat::QTMSAMRFormat()
-    {
-    }
+{
+}
 
 QTMSAMRFormat::~QTMSAMRFormat()
-    {
-    }
+{
+}
 
 // End of file

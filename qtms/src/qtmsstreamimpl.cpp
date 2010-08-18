@@ -25,69 +25,62 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSStreamImpl::QTMSStreamImpl()
-    {
-    }
+{
+}
 
 QTMSStreamImpl::~QTMSStreamImpl()
-    {
+{
     RemoveObserver(*this);
-    }
+}
 
-gint QTMSStreamImpl::Create(QTMSCallType callType, QTMSStreamType stype,
-        QTMSStream*& qstrm, TMS::TMSStream*& tmsstrm)
-    {
+gint QTMSStreamImpl::Create(QTMSCallType callType, QTMSStreamType stype, QTMSStream*& qstrm,
+    TMS::TMSStream*& tmsstrm)
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSStreamImpl* self = new QTMSStreamImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct(callType, stype, *self);
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
+        }
         self->iStream = tmsstrm;
         self->AddObserver(*self, NULL);
-        }
+    }
     qstrm = self;
     return ret;
-    }
+}
 
-gint QTMSStreamImpl::PostConstruct(QTMSCallType /*callType*/,
-        QTMSStreamType /*stype*/, QTMSStream& /*parent*/)
-    {
+gint QTMSStreamImpl::PostConstruct(QTMSCallType /*callType*/, QTMSStreamType /*stype*/, QTMSStream& /*parent*/)
+{
     gint status(QTMS_RESULT_SUCCESS);
     return status;
-    }
+}
 
-gint QTMSStreamImpl::AddObserver(TMS::TMSStreamObserver& obsrvr,
-        gpointer user_data)
-    {
+gint QTMSStreamImpl::AddObserver(TMS::TMSStreamObserver& obsrvr, gpointer user_data)
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iStream)
-        {
+    if (iStream) {
         iStream->AddObserver(obsrvr, user_data);
-        }
+    }
 
     return ret;
-    }
+}
 
 gint QTMSStreamImpl::RemoveObserver(TMS::TMSStreamObserver& obsrvr)
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iStream)
-        {
+    if (iStream) {
         ret = iStream->RemoveObserver(obsrvr);
-        }
-
-    return ret;
     }
 
-void QTMSStreamImpl::TMSStreamEvent(const TMS::TMSStream& /*stream*/,
-        TMS::TMSSignalEvent event)
-    {
+    return ret;
+}
+
+void QTMSStreamImpl::TMSStreamEvent(const TMS::TMSStream& /*stream*/, TMS::TMSSignalEvent event)
+{
     QTMSSignalEvent qevent;
 
     qevent.type = event.type;
@@ -97,6 +90,5 @@ void QTMSStreamImpl::TMSStreamEvent(const TMS::TMSStream& /*stream*/,
     qevent.event_data = event.event_data;
     qevent.user_data = event.user_data;
 
-    emit QTMS::QTMSStream::TMSStreamEvent(static_cast<QTMSStream&> (*this),
-            qevent);
-    }
+    emit QTMS::QTMSStream::TMSStreamEvent(static_cast<QTMSStream&> (*this), qevent);
+}

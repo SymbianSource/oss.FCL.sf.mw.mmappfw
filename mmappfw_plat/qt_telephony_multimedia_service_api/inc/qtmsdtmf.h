@@ -23,11 +23,13 @@
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSDTMF;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSDTMFclass
@@ -39,7 +41,7 @@ namespace QTMS {
  *
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSDTMF : public QObject
-    {
+{
     Q_OBJECT
 public:
     /**
@@ -113,10 +115,9 @@ protected:
 
 protected:
     TMS::TMSDTMF* iDtmf;
-    };
+};
 
 } //namespace QTMS
 
 #endif //__QTMS_DTMF_H__
-
 // End of file

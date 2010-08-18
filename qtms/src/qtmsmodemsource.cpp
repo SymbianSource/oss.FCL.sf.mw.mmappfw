@@ -23,23 +23,22 @@ using namespace TMS;
 
 QTMSModemSource::QTMSModemSource() :
     iSource(NULL)
-    {
-    }
+{
+}
 
 QTMSModemSource::~QTMSModemSource()
-    {
+{
     delete (static_cast<TMSModemSource*> (iSource));
-    }
+}
 
 gint QTMSModemSource::GetType(QTMSSourceType& sourcetype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSource)
-        {
+    if (iSource) {
         //status = iSource->GetType(sourcetype);
         status = static_cast<TMSModemSource*> (iSource)->GetType(sourcetype);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

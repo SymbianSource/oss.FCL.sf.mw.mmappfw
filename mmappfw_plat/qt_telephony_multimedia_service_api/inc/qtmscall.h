@@ -23,11 +23,13 @@
 #include "qtmswrapperexport.h"
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSCall;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // FORWARD DECLARATIONS
 class QTMSStream;
@@ -65,7 +67,7 @@ class QTMSStream;
  *
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSCall : public QObject
-    {
+{
     Q_OBJECT
 public:
     /**
@@ -147,11 +149,10 @@ protected:
 
 protected:
     TMS::TMSCall* iTmsCall;
-    };
+};
 
 } //namespace QTMS
 
 #endif //QTMS_CALL_H
-
 // End of file
 

@@ -25,52 +25,48 @@ using namespace TMS;
 
 QTMSGainEffect::QTMSGainEffect() :
     iEffect(NULL)
-    {
-    }
+{
+}
 
 QTMSGainEffect::~QTMSGainEffect()
-    {
+{
     delete iEffect;
-    }
+}
 
 gint QTMSGainEffect::GetLevel(guint& level)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
+    if (iEffect) {
         status = static_cast<TMSGainEffect*> (iEffect)->GetLevel(level);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSGainEffect::SetLevel(const guint level)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
+    if (iEffect) {
         status = static_cast<TMSGainEffect*> (iEffect)->SetLevel(level);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSGainEffect::GetMaxLevel(guint& level)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
+    if (iEffect) {
         status = static_cast<TMSGainEffect*> (iEffect)->GetMaxLevel(level);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSGainEffect::GetType(QTMSSourceType& sourcetype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iEffect)
-        {
+    if (iEffect) {
         status = static_cast<TMSGainEffect*> (iEffect)->GetType(sourcetype);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

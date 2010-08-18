@@ -23,58 +23,53 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSILBCFormatImpl::QTMSILBCFormatImpl()
-    {
-    }
+{
+}
 
 QTMSILBCFormatImpl::~QTMSILBCFormatImpl()
-    {
-    }
+{
+}
 
-gint QTMSILBCFormatImpl::Create(QTMSFormat*& qformat,
-        TMS::TMSFormat*& tmsformat)
-    {
+gint QTMSILBCFormatImpl::Create(QTMSFormat*& qformat, TMS::TMSFormat*& tmsformat)
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSILBCFormatImpl* self = new QTMSILBCFormatImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
-        self->iFormat = tmsformat;
         }
+        self->iFormat = tmsformat;
+    }
     qformat = self;
     return ret;
-    }
+}
 
 gint QTMSILBCFormatImpl::PostConstruct()
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
 gint QTMSILBCFormatImpl::GetFormat(TMS::TMSFormat*& fmt)
-    {
+{
     gint ret(QTMS_RESULT_UNINITIALIZED_OBJECT);
 
-    if (iFormat)
-        {
+    if (iFormat) {
         fmt = iFormat;
         ret = QTMS_RESULT_SUCCESS;
-        }
-    return ret;
     }
+    return ret;
+}
 
 gint QTMSILBCFormatImpl::GetType(QTMSFormatType& fmttype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = iFormat->GetType(fmttype);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

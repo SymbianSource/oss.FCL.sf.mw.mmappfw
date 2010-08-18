@@ -243,73 +243,33 @@ void CMPXPlaybackMediaHelper::HandleCollectionMediaL(
     {
     MPX_FUNC_EX("CMPXPlaybackMediaHelper::HandleCollectionMediaL");
     MPX_DEBUG2("CMPXPlaybackMediaHelper::HandleCollectionMediaL(): error %d", aError);
-
-    // First check if media attributes supported, if not, need to retrieve
-    // from playback plugin
-    TBool mediaOk( ETrue );
-    // Note: The following block is for uPnP remote playlist which does not contain
-    // metadata in the remote playlist. However, uPnP update to gurantee that titles
-    // are available in the collection plugin. If KMPXMediaColDetailMediaNotAvailable
-    // returned, UI can at least update title anyway anyway.
-    //
-    // We could not call MediaFromPluginL before the plugin initiliazed. uPnP made
-    // changes so that it will call back media after the new track is initialized.
-    // So we don't need call plugin API MediaL.
-    /*if ( KErrNone == aError )
-        { // media object is ok
-        if ( aMedia.IsSupported( KMPXMediaColDetailMediaNotAvailable ))
-            {
-            TBool mediaNotSupported(
-                    aMedia.ValueTObjectL<TBool>( KMPXMediaColDetailMediaNotAvailable ));
-            MPX_DEBUG2("HandleCollectionMediaL media not inCollection %d",
-                        mediaNotSupported);
-            if ( mediaNotSupported)
-                { // It must be uPnP remote playlist, media request can only be
-                  // sent to plugin at initialising, playing & pause state
-                mediaOk = EFalse;
-                // need to create a copy of buf since that will be delete when
-                // this task is completed
-                const TDesC8& data( iTaskQueue->BufData() );
-                CBufBase* buf( MPXUser::CreateBufferLC( data.Size() ));
-                buf->Write( 0, data );
-                iEngine.MediaFromPluginL(
-                         static_cast<MMPXPlaybackEngineObserver*>(
-                                                    iTaskQueue->Callback() ),
-                         buf );
-                CleanupStack::Pop( buf );
-                } //otherwise, just send uri to clients.
-            }
-        }*/
-
-    if ( mediaOk || aError )
+    MPX_DEBUG2("CMPXPlaybackMediaHelper::HandleCollectionMediaL task %d",
+               iTaskQueue->Task());
+               
+    if ( iTaskQueue->Param() )
         {
-        MPX_DEBUG2("CMPXPlaybackMediaHelper::HandleCollectionMediaL task %d",
-                   iTaskQueue->Task());
-
-        if ( iTaskQueue->Param() )
-            {
-            // Broadcast
-            CMPXMessage* msg( CMPXMessage::NewL() );
-            CleanupStack::PushL( msg );
-            msg->SetTObjectValueL<TMPXMessageId>( KMPXMessageGeneralId,
-                                                  KMPXMessagePbMediaChanged );
-            msg->SetCObjectValueL<CMPXMedia>( KMPXMessagePbMedia,
-                                              const_cast<CMPXMedia*>( &aMedia ));
-            CMPXClientList* clientList(
-                static_cast<CMPXClientList*>( iTaskQueue->Callback() ));
-            clientList->SendMsg(msg, KErrNone);
-            CleanupStack::PopAndDestroy( msg );
-            }
-        else
-            {
-            // Callback
-            MPX_DEBUG2("CMPXPlaybackMediaHelper::HandleCollectionMediaL task cb 0x%08x",
-                       iTaskQueue->Callback());
-            MMPXPlaybackEngineObserver* callback(
-                static_cast<MMPXPlaybackEngineObserver*>( iTaskQueue->Callback() ));
-            callback->HandleMedia( aMedia, aError );
-            }
+        // Broadcast
+        CMPXMessage* msg( CMPXMessage::NewL() );
+        CleanupStack::PushL( msg );
+        msg->SetTObjectValueL<TMPXMessageId>( KMPXMessageGeneralId,
+                                              KMPXMessagePbMediaChanged );
+        msg->SetCObjectValueL<CMPXMedia>( KMPXMessagePbMedia,
+                                          const_cast<CMPXMedia*>( &aMedia ));
+        CMPXClientList* clientList(
+            static_cast<CMPXClientList*>( iTaskQueue->Callback() ));
+        clientList->SendMsg(msg, KErrNone);
+        CleanupStack::PopAndDestroy( msg );
         }
+    else
+        {
+        // Callback
+        MPX_DEBUG2("CMPXPlaybackMediaHelper::HandleCollectionMediaL task cb 0x%08x",
+                   iTaskQueue->Callback());
+        MMPXPlaybackEngineObserver* callback(
+            static_cast<MMPXPlaybackEngineObserver*>( iTaskQueue->Callback() ));
+        callback->HandleMedia( aMedia, aError );
+        }
+        
     MPX_DEBUG1("CMPXPlaybackMediaHelper::HandleCollectionMediaL complete task");
     iTaskQueue->CompleteTask();
     }

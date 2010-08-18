@@ -24,19 +24,20 @@
 #include <QObject>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSStream;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSStreamImpl class
-class QTMSStreamImpl : public QTMSStream,
-                       public TMS::TMSStreamObserver
-    {
+class QTMSStreamImpl: public QTMSStream, public TMS::TMSStreamObserver
+{
 public:
-    static gint Create(QTMSCallType callType, QTMSStreamType stype,
-            QTMSStream*& qstrm, TMS::TMSStream*& tmsstrm);
+    static gint Create(QTMSCallType callType, QTMSStreamType stype, QTMSStream*& qstrm,
+        TMS::TMSStream*& tmsstrm);
 
     virtual ~QTMSStreamImpl();
 
@@ -45,21 +46,18 @@ public:
     gint RemoveObserver(TMS::TMSStreamObserver& obsrvr);
 
     // From TMSStreamObserver
-    void TMSStreamEvent(const TMS::TMSStream& stream,
-            TMS::TMSSignalEvent event);
+    void TMSStreamEvent(const TMS::TMSStream& stream, TMS::TMSSignalEvent event);
 
 protected:
     QTMSStreamImpl();
 
-    gint PostConstruct(QTMSCallType callType, QTMSStreamType stype,
-            QTMSStream& parent);
+    gint PostConstruct(QTMSCallType callType, QTMSStreamType stype, QTMSStream& parent);
 
     gint CreateQueue(const gint aNumSlots);
     void ReceiveMsgQHandlerEventsL();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_STREAM_IMPL_H
-
 // End of file

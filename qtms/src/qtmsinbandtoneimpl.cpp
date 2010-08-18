@@ -24,66 +24,60 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSInbandToneImpl::QTMSInbandToneImpl()
-    {
-    }
+{
+}
 
 QTMSInbandToneImpl::~QTMSInbandToneImpl()
-    {
+{
     RemoveObserver(*this);
-    }
+}
 
-gint QTMSInbandToneImpl::Create(QTMSInbandTone*& qinband,
-        TMS::TMSInbandTone*& tmsinband)
-    {
+gint QTMSInbandToneImpl::Create(QTMSInbandTone*& qinband, TMS::TMSInbandTone*& tmsinband)
+{
     gint ret(QTMS_RESULT_INSUFFICIENT_MEMORY);
     QTMSInbandToneImpl* self = new QTMSInbandToneImpl();
-    if (self)
-        {
+    if (self) {
         ret = self->PostConstruct();
-        if (ret != QTMS_RESULT_SUCCESS)
-            {
+        if (ret != QTMS_RESULT_SUCCESS) {
             delete self;
             self = NULL;
-            }
+        }
         self->iInbandTone = tmsinband;
         self->AddObserver(*self, NULL);
-        }
+    }
     qinband = self;
     return ret;
-    }
+}
 
 gint QTMSInbandToneImpl::PostConstruct()
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
     return ret;
-    }
+}
 
-gint QTMSInbandToneImpl::AddObserver(TMS::TMSInbandToneObserver& obsrvr,
-        gpointer user_data)
-    {
+gint QTMSInbandToneImpl::AddObserver(TMS::TMSInbandToneObserver& obsrvr, gpointer user_data)
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iInbandTone)
-        {
+    if (iInbandTone) {
         ret = iInbandTone->AddObserver(obsrvr, user_data);
-        }
-    return ret;
     }
+    return ret;
+}
 
 gint QTMSInbandToneImpl::RemoveObserver(TMS::TMSInbandToneObserver& obsrvr)
-    {
+{
     gint ret(QTMS_RESULT_SUCCESS);
 
-    if (iInbandTone)
-        {
+    if (iInbandTone) {
         ret = iInbandTone->RemoveObserver(obsrvr);
-        }
-    return ret;
     }
+    return ret;
+}
 
-void QTMSInbandToneImpl::InbandToneEvent(
-        const TMS::TMSInbandTone& /*inbandtone*/, TMS::TMSSignalEvent event)
-    {
+void QTMSInbandToneImpl::InbandToneEvent(const TMS::TMSInbandTone& /*inbandtone*/,
+    TMS::TMSSignalEvent event)
+{
     QTMSSignalEvent qevent;
     qevent.type = event.type;
     qevent.reason = event.reason;
@@ -92,8 +86,7 @@ void QTMSInbandToneImpl::InbandToneEvent(
     qevent.event_data = event.event_data;
     qevent.user_data = event.user_data;
 
-    emit QTMS::QTMSInbandTone::InbandToneEvent(
-            static_cast<QTMSInbandTone&> (*this), qevent);
-    }
+    emit QTMS::QTMSInbandTone::InbandToneEvent(static_cast<QTMSInbandTone&> (*this), qevent);
+}
 
 // End of file

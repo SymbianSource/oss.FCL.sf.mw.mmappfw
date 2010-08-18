@@ -427,6 +427,7 @@ void CMPXPluginInfo::ExtractSupportedUidsL(const TDesC8& aData)
 EXPORT_C void CMPXPluginInfo::ExtractUidsFromTextL( const TDesC8& aData,
                                                     RArray<TUid>& aArray )
     {
+    CleanupClosePushL(aArray);
     aArray.Reset();
     const TUint8* p = aData.Ptr();
     TInt startPos(0);
@@ -461,6 +462,7 @@ EXPORT_C void CMPXPluginInfo::ExtractUidsFromTextL( const TDesC8& aData,
         TaggedDataParser::ConvertText8ToTIntL(element, val);
         aArray.AppendL(TUid::Uid(val));
         }
+    CleanupStack::Pop();
     }
 
 // ---------------------------------------------------------------------------

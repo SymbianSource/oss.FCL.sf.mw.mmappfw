@@ -24,16 +24,17 @@
 #include <tmseffectobsrvr.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSEffect;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSVolumeEffectImpl class
-class QTMSVolumeEffectImpl : public QTMSVolumeEffect,
-                             public TMS::TMSEffectObserver
-    {
+class QTMSVolumeEffectImpl: public QTMSVolumeEffect, public TMS::TMSEffectObserver
+{
 public:
     static gint Create(QTMSEffect*& qvol, TMS::TMSEffect*& tmsvol);
     virtual ~QTMSVolumeEffectImpl();
@@ -44,16 +45,14 @@ public:
     gint GetEffect(TMS::TMSEffect*& tmseffect);
 
     //From TMSEffectObserver
-    void EffectsEvent(const TMS::TMSEffect& tmseffect,
-            TMS::TMSSignalEvent event);
+    void EffectsEvent(const TMS::TMSEffect& tmseffect, TMS::TMSSignalEvent event);
 
 private:
     QTMSVolumeEffectImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_VOLUME_EFFECT_IMPL_H
-
 // End of file

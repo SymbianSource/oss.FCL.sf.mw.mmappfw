@@ -205,8 +205,15 @@ EXPORT_C void CGetObjectPropValue::ServiceL()
         // Parent
         case EMTPObjectPropCodeParentObject:
             {
-            iMTPTypeUint32.Set( 0 );
-            iMTPTypeUint32 = iObjectInfo->Uint( CMTPObjectMetaData::EParentHandle );
+            iMTPTypeUint32.Set( KMTPHandleNone );
+
+            TUint32 parentHandle = iObjectInfo->Uint( CMTPObjectMetaData::EParentHandle );
+            // refer to 5.3.1.9 of MTP Spec 1.0
+            if ( parentHandle != KMTPHandleNoParent )
+                {
+                iMTPTypeUint32.Set( parentHandle );
+                }
+
             SendDataL( iMTPTypeUint32 );
             }
             break;

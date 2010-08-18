@@ -21,11 +21,13 @@
 #include <qtms.h>
 #include "qtmswrapperexport.h"
 
-namespace TMS {
+namespace TMS
+{
 class TMSFormat;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 /**
  * QTMSFormat class
@@ -49,7 +51,7 @@ namespace QTMS {
  *
  */
 class QTMS_WRAPPER_DLL_EXPORT QTMSFormat
-    {
+{
 public:
     /**
      * Destructor
@@ -126,7 +128,7 @@ protected:
 
 protected:
     TMS::TMSFormat* iFormat;
-    };
+};
 
 } //namespace QTMS
 

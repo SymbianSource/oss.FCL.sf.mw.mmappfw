@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extended collection helper with an internal caching array
-*  Version     : %version: da1mmcf#27.1.12.3.2 % 
+*  Version     : %version: e003sa33#27.1.12.3.4 % 
 *
 */
 
@@ -395,6 +395,11 @@ void CMPXCollectionCachedHelper::SetL( CMPXMedia*& aMedia )
     // Not found in the array
     if( !media )
         {
+        // If the catched count is more than KCacheCount, commit it to database.
+        if( count >= KCacheCount )
+            {
+            Commit();
+            }
         CMPXMedia* copy = CMPXMedia::NewL( *aMedia );
         CleanupStack::PushL( copy );
         iCache->AppendL( copy );  // ownership x-fer

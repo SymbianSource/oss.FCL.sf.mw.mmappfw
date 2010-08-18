@@ -23,72 +23,66 @@ using namespace QTMS;
 
 QTMSRingTone::QTMSRingTone() :
     iRingTone(NULL)
-    {
-    }
+{
+}
 
 QTMSRingTone::~QTMSRingTone()
-    {
+{
     delete iRingTone;
-    }
+}
 
 gint QTMSRingTone::Init(const QTMSRingToneType type, GString* str, GString* tts)
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iRingTone)
-        {
+    if (iRingTone) {
         status = iRingTone->Init(type, str, tts);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSRingTone::Deinit()
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iRingTone)
-        {
+    if (iRingTone) {
         status = iRingTone->Deinit();
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSRingTone::Play()
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iRingTone)
-        {
+    if (iRingTone) {
         status = iRingTone->Play();
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSRingTone::Stop()
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iRingTone)
-        {
+    if (iRingTone) {
         status = iRingTone->Stop();
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSRingTone::Pause()
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iRingTone)
-        {
+    if (iRingTone) {
         status = iRingTone->Pause();
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSRingTone::Mute()
-    {
+{
     gint status(TMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iRingTone)
-        {
+    if (iRingTone) {
         status = iRingTone->Mute();
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

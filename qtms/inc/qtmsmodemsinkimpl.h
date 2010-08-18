@@ -23,15 +23,17 @@
 #include <qtmssink.h>
 
 // FORWARD DECLARATIONS
-namespace TMS {
+namespace TMS
+{
 class TMSSink;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSModemSinkImpl class
-class QTMSModemSinkImpl : public QTMSModemSink
-    {
+class QTMSModemSinkImpl: public QTMSModemSink
+{
 public:
     static gint Create(QTMSSink*& qsink, TMS::TMSSink*& tmssink);
     virtual ~QTMSModemSinkImpl();
@@ -41,10 +43,9 @@ public:
 private:
     QTMSModemSinkImpl();
     gint PostConstruct();
-    };
+};
 
 } //namespace QTMS
 
 #endif // QTMS_MODEM_SINK_IMPL_H
-
 // End of file

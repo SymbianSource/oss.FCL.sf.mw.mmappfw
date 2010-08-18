@@ -89,6 +89,8 @@ void CMmMtpDpMetadataVideoAccess::ConstructL()
     User::LeaveIfError( iDbsSession.Connect() );
 
     TInt err = DriveInfo::GetDefaultDrive( DriveInfo::EDefaultPhoneMemory, iStoreNum );
+    PRINT1( _L( "MM MTP <> CMmMtpDpMetadataVideoAccess::ConstructL, EDefaultPhoneMemory err = %d" ), err );
+    User::LeaveIfError( err );
 
     err = OpenDatabase();
 
@@ -153,13 +155,15 @@ TInt CMmMtpDpMetadataVideoAccess::OpenDatabase()
             }
         }
 
-    TBuf<KStorageRootMaxLength> storeRoot;
-    err = PathInfo::GetRootPath( storeRoot, iStoreNum );
-    iRfs.SetSessionPath( storeRoot );
-
     if ( err == KErrNone )
         {
         iDbOpened = ETrue;
+        }
+
+    TBuf<KStorageRootMaxLength> storeRoot;
+    if( PathInfo::GetRootPath( storeRoot, iStoreNum ) == KErrNone )
+        {
+        iRfs.SetSessionPath( storeRoot );
         }
 
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataVideoAccess::OpenDatabase" ) );
@@ -349,12 +353,14 @@ void CMmMtpDpMetadataVideoAccess::CleanupDbIfNecessaryL()
 
     for ( iRecordSet.FirstL(); iRecordSet.AtRow(); iRecordSet.NextL() )
         {
+#ifdef _DEBUG
         HBufC* data = ReadLongTextL( KMtpVideoLocation );
-        CleanupStack::PushL( data );
 
         PRINT1( _L( "MM MTP <> CleanupDbIfNecessaryL removing %S from database" ), data );
+        delete data;
+        data = NULL;
+#endif
         iRecordSet.DeleteL();
-        CleanupStack::PopAndDestroy( data );
         }
 
     delete iColSet;
@@ -474,6 +480,8 @@ void CMmMtpDpMetadataVideoAccess::ExecuteQueryL( const TDesC& aSelectThese,
     //__ASSERT_DEBUG(!iColSet, _MTP_PANIC(KMtpPrtPncCat, ENullPointer)); // Must have iColSet == NULL
 
     // Make sure any quotes in the aMatchCriteria are doubled...
+    // coverity[incorrect_multiplication]
+    // coverity[buffer_alloc]
     HBufC* matchText = HBufC::NewLC( 2 * aMatchCriteria.Length() );
     TPtr pMatchText( matchText->Des() );
     TInt srcLen = aMatchCriteria.Length();
@@ -706,9 +714,8 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
         OpenDatabaseL();
 
     // File Path
-    HBufC* suid = aObjectMetaData.DesC( CMTPObjectMetaData::ESuid ).AllocLC();  // + suid
-    SetRecordL( *suid, ERecordRead );
-    CleanupStack::PopAndDestroy( suid ); // - suid
+    const TDesC& suid = aObjectMetaData.DesC( CMTPObjectMetaData::ESuid );
+    SetRecordL( suid, ERecordRead );
 
     HBufC* data = NULL;
     TDbColNo num;
@@ -779,16 +786,14 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
             {
             PRINT( _L( "MM MTP <> EMTPObjectPropCodeDescription-MD" ) );
             data = ReadLongTextL( KMtpVideoComment );
+            CleanupStack::PushL( data ); // + data
 
             TInt len = data->Length();
             PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::GetObjectMetadataValue len = %d" ),len );
-            if ( len != 0 )
-                {
-                for ( TInt i = 0; i < len; i++ )
-                    ( ( CMTPTypeArray& ) aNewData ).AppendUintL( ( *data )[i] );
-                }
+            for ( TInt i = 0; i < len; i++ )
+                ( ( CMTPTypeArray& ) aNewData ).AppendUintL( ( *data )[i] );
 
-            delete data;
+            CleanupStack::PopAndDestroy( data ); // - data
             data = NULL;
             }
             break;
@@ -1025,6 +1030,7 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
     // Pack the info to aNewData
     if ( data )
         {
+        CleanupStack::PushL( data ); // + data
 #ifdef _DEBUG
         if ( data->Length() > KMtpMaxStringDescLength )   // Have to concatenate for MTP
             {
@@ -1040,8 +1046,7 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
             {
             User::Leave( KErrArgument );
             }
-        delete data;
-        data = NULL;
+        CleanupStack::PopAndDestroy( data ); // - data
         }
 
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataVideoAccess::GetObjectMetadataValue" ) );

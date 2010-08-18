@@ -233,6 +233,7 @@ EXPORT_C void CRequestProcessor::HandleEventL( const TMTPTypeEvent& aEvent )
     {
     TUint16 eventCode = aEvent.Uint16( TMTPTypeEvent::EEventCode );
     iCancelled = ( eventCode == EMTPEventCodeCancelTransaction );
+    PRINT1( _L("CRequestProcessor::HandleEventL, eventCode = %d"), eventCode);
     }
 
 // -----------------------------------------------------------------------------

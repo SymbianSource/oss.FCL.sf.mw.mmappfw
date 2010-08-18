@@ -22,91 +22,83 @@ using namespace QTMS;
 using namespace TMS;
 
 QTMSG711Format::QTMSG711Format()
-    {
-    }
+{
+}
 
 QTMSG711Format::~QTMSG711Format()
-    {
-    }
+{
+}
 
 gint QTMSG711Format::SetMode(const QTMSG711CodecMode aMode)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSG711Format*> (iFormat)->SetMode(aMode);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSG711Format::GetMode(QTMSG711CodecMode& aMode)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSG711Format*> (iFormat)->GetMode(aMode);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSG711Format::SetCNG(const gboolean aCng)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSG711Format*> (iFormat)->SetCNG(aCng);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSG711Format::GetCNG(gboolean& aCng)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSG711Format*> (iFormat)->GetCNG(aCng);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSG711Format::SetPlc(const gboolean aPlc)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSG711Format*> (iFormat)->SetPlc(aPlc);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSG711Format::GetPlc(gboolean& aPlc)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSG711Format*> (iFormat)->GetPlc(aPlc);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSG711Format::SetVADMode(const gboolean aVad)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSG711Format*> (iFormat)->SetVADMode(aVad);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSG711Format::GetVADMode(gboolean& aVad)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iFormat)
-        {
+    if (iFormat) {
         status = static_cast<TMSG711Format*> (iFormat)->GetVADMode(aVad);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file

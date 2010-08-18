@@ -21,15 +21,17 @@
 #include <qtmsbuffer.h>
 
 // FORWARD DECLARATION
-namespace TMS {
+namespace TMS
+{
 class TMSBuffer;
 }
 
-namespace QTMS {
+namespace QTMS
+{
 
 // QTMSMemBuffer class
-class QTMSMemBuffer : public QTMSBuffer
-    {
+class QTMSMemBuffer: public QTMSBuffer
+{
 public:
     virtual ~QTMSMemBuffer();
 
@@ -108,7 +110,7 @@ private:
     guint64 iTimeStamp;
     guint8* iDataPtr;
     gboolean iOwnsBuffer;
-    };
+};
 
 } //namespace QTMS
 

@@ -24,33 +24,31 @@ using namespace TMS;
 
 QTMSClientSink::QTMSClientSink() :
     iSink(NULL)
-    {
-    }
+{
+}
 
 QTMSClientSink::~QTMSClientSink()
-    {
+{
     delete iSink;
-    }
+}
 
 gint QTMSClientSink::BufferProcessed(QTMSBuffer* buffer)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSink)
-        {
+    if (iSink) {
         TMSBuffer* buf(reinterpret_cast<TMSBuffer*> (buffer));
         status = static_cast<TMSClientSink*> (iSink)->BufferProcessed(buf);
-        }
-    return status;
     }
+    return status;
+}
 
 gint QTMSClientSink::GetType(QTMSSinkType& sinktype)
-    {
+{
     gint status(QTMS_RESULT_UNINITIALIZED_OBJECT);
-    if (iSink)
-        {
+    if (iSink) {
         status = static_cast<TMSClientSink*> (iSink)->GetType(sinktype);
-        }
-    return status;
     }
+    return status;
+}
 
 // End of file
