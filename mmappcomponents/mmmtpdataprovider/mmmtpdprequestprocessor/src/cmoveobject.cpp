@@ -292,15 +292,15 @@ void CMoveObject::MoveFileL( const TDesC& aNewFileName )
     // Move the file first no matter if it will fail in Get/SetPreviousPropertiesL
     // Already trapped inside
     GetPreviousPropertiesL( *iObjectInfo );
-    TRAPD( err, SetPropertiesL( aNewFileName ) );
+    TRAP_IGNORE( SetPropertiesL( aNewFileName ) );
 
     CFileMan* fileMan = CFileMan::NewL( iFramework.Fs() );
-    err = fileMan->Move( *oldFileName, aNewFileName );
-	
-	CleanupStack::PopAndDestroy( oldFileName );     // - oldFileName
-
-    if ( err != KErrNone )
-        PRINT1( _L( "MM MTP <> CMoveObject::MoveFileL err = %d" ), err );
+    CleanupStack::PushL( fileMan ); // + fileMan
+    TInt err = fileMan->Move( *oldFileName, aNewFileName );
+    PRINT1( _L( "MM MTP <> CMoveObject::MoveFileL err = %d" ), err );
+    User::LeaveIfError( err );
+    CleanupStack::PopAndDestroy( fileMan ); // - fileMan
+    CleanupStack::PopAndDestroy( oldFileName );     // - oldFileName
 
     PRINT( _L( "MM MTP <= CMoveObject::MoveFileL" ) );
     }
@@ -408,8 +408,6 @@ void CMoveObject::SetPreviousPropertiesL()
     {
     PRINT( _L( "MM MTP => CMoveObject::SetPreviousPropertiesL" ) );
 
-    TMTPResponseCode respcode = EMTPRespCodeOK;
-
     iPropertyList->ResetCursor();
     const TInt count = iPropertyList->NumberOfElements();
     for ( TInt i = 0; i < count; i++ )
@@ -449,7 +447,7 @@ void CMoveObject::SetPreviousPropertiesL()
                 {
                 CMTPTypeString *stringData = CMTPTypeString::NewLC( element.StringL( CMTPTypeObjectPropListElement::EValue ) ); // + stringData
 
-                respcode = iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
+                iDpConfig.PropSettingUtility()->SetMetaDataToWrapper( iDpConfig,
                     propertyCode,
                     *stringData,
                     *iObjectInfo );
@@ -460,7 +458,7 @@ void CMoveObject::SetPreviousPropertiesL()
 
             default:
                 {
-                respcode = iDpConfig.PropSettingUtility()->SetSpecificObjectPropertyL( iDpConfig,
+                iDpConfig.PropSettingUtility()->SetSpecificObjectPropertyL( iDpConfig,
                     propertyCode,
                     *iObjectInfo,
                     element );
@@ -469,13 +467,7 @@ void CMoveObject::SetPreviousPropertiesL()
             }
         } // end of for loop
 
-    // ignore errors
-    if ( respcode == EMTPRespCodeOK )
-        {
-        // do nothing, just to get rid of build warning
-        }
-
-    PRINT1( _L( "MM MTP <= CMoveObject::SetPreviousPropertiesL respcode = 0x%x" ), respcode );
+    PRINT( _L( "MM MTP <= CMoveObject::SetPreviousPropertiesL" ) );
     }
 
 // -----------------------------------------------------------------------------

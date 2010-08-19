@@ -500,29 +500,11 @@ TInt CGetObjectPropList::ServiceAllPropertiesL( TUint32 aHandle )
         properties = iDpConfig.GetSupportedPropertiesL( formatCode );
 
     const TInt count = properties->Count();
-
-    TInt err = KErrNone;
-    TBool successQuery = EFalse;
     for ( TInt i = 0; i < count; i++ )
         {
-        // no need to do the trap anymore, this is being handle internally in Media DP's ServiceSpecificObjectPropertyL,
-        // also, this base class should not know too much of different handling between different formats
-        err = ServiceOneObjectPropertyL( aHandle, (*properties)[i] );
-        if ( err == KErrNone )
-            successQuery = ETrue;
-        if ( err == KErrNotSupported || err == KErrNotFound )  // Skip
-            err = KErrNone;
-        if ( err != KErrNone )
-            break;
+        ServiceOneObjectPropertyL( aHandle, (*properties)[i] );
         }
-
-    // In PC Suite combined mode, a file that was found at the beginning could be deleted by PC Suite protocol
-    // Need to fail it here.
-    if ( successQuery == EFalse )
-        err = KErrNotFound;
-
-    PRINT1( _L( "MM MTP <= CGetObjectPropList::ServiceAllPropertiesL err = %d" ), err );
-    return err;
+    return KErrNone;
     }
 
 // -----------------------------------------------------------------------------
@@ -626,17 +608,10 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
         // Filename
         case EMTPObjectPropCodeObjectFileName:
             {
-#ifdef  _DEBUG
-            HBufC* log = iObject->DesC( CMTPObjectMetaData::ESuid ).Alloc();
-            PRINT1( _L( "MM MTP <> CGetObjectPropList::ServiceOneObjectPropertyL FileName = %S" ), log );
-            delete log;
-            log = NULL;
-#endif // _DEBUG
             TParsePtrC parse( iObject->DesC( CMTPObjectMetaData::ESuid ) );
-            textData = CMTPTypeString::NewLC( parse.NameAndExt() );    // + textData
+            PRINT1( _L( "MM MTP <> CGetObjectPropList::ServiceOneObjectPropertyL FileName = %S" ), &parse.FullName() );
             iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode) );
-            iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, textData->StringChars() );
-            CleanupStack::PopAndDestroy( textData );    // - textData
+            iPropertyElement->SetStringL( CMTPTypeObjectPropListElement::EValue, parse.NameAndExt() );
             }
             break;
 
@@ -644,7 +619,13 @@ TInt CGetObjectPropList::ServiceOneObjectPropertyL( TUint32 aHandle,
         case EMTPObjectPropCodeParentObject:
             {
             iPropertyElement = &( iPropertyList->ReservePropElemL( aHandle, aPropCode ) );
-            iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, iObject->Uint( CMTPObjectMetaData::EParentHandle ) );
+            TUint32 parentHandle = iObject->Uint( CMTPObjectMetaData::EParentHandle );
+            // refer to 5.3.1.9 of MTP Spec 1.0
+            if ( parentHandle == KMTPHandleNoParent )
+                {
+                parentHandle = KMTPHandleNone;
+                }
+            iPropertyElement->SetUint32L( CMTPTypeObjectPropListElement::EValue, parentHandle );
             }
             break;
 

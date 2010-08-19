@@ -25,6 +25,7 @@
 #include <mpxcollectionutility.h>
 #include <mpxharvesterutility.h>
 #include <mpxmediageneraldefs.h>
+#include <mpxmediamusicdefs.h>
 #include <mpxmediacontainerdefs.h>
 #include <mpxuser.h>
 #include <mpxcollectionplugin.hrh>
@@ -45,6 +46,7 @@
 // ---------------------------------------------------------------------------
 //
 CMPXCollectionHelperImp::CMPXCollectionHelperImp()
+    : iTNManager(NULL)
     {
     }
 
@@ -59,7 +61,7 @@ void CMPXCollectionHelperImp::ConstructL()
     iCollectionUtil = MMPXCollectionUtility::NewL();
     iMediator = CMPXCollectionMediator::NewL( iCollectionUtil->Collection(),
                                               this );
-
+    
     RArray<TUid> ary;
     CleanupClosePushL( ary );
     ary.AppendL( TUid::Uid(EMPXCollectionPluginMusic) );
@@ -111,6 +113,8 @@ CMPXCollectionHelperImp::~CMPXCollectionHelperImp()
         iCollectionUtil->Close();
         }
     delete iMediator;
+    
+    delete iTNManager;
     }
 
 
@@ -416,10 +420,27 @@ void CMPXCollectionHelperImp::RenameL( const TDesC& aOldUri,
     RArray<TMPXAttribute> attributes;
     CleanupClosePushL( attributes );
     attributes.AppendL(KMPXMediaGeneralId);
+    attributes.AppendL(KMPXMediaMusicAlbumArtFileName);
 
     CMPXMedia* media = GetL(aOldUri, attributes.Array(), aItemCat);
     CleanupStack::PopAndDestroy(&attributes);
     CleanupStack::PushL(media);
+
+    const TDesC& fileName(media->ValueText(KMPXMediaMusicAlbumArtFileName));
+    
+    // the songs have embedded albumart.
+    if(fileName.CompareF(aOldUri) == 0)
+        {
+        // change the Art filename to the new Uri
+        media->SetTextValueL(KMPXMediaMusicAlbumArtFileName, aNewUri);
+        
+        // Rename the thumbnail
+        TRAPD(err, RenameThumbnailL(aOldUri, aNewUri));
+        if(KErrNone != err)
+            {
+            MPX_DEBUG2("Thumbnail renames failed. Err: %d", err);
+            }
+        }
 
     // change file path to the new file path
     media->SetTextValueL(KMPXMediaGeneralUri, aNewUri);
@@ -735,4 +756,41 @@ void CMPXCollectionHelperImp::Close()
     delete this;
     }
 
+// ---------------------------------------------------------------------------
+// Rename the thumbnail through TNM
+// ---------------------------------------------------------------------------
+//
+void CMPXCollectionHelperImp::RenameThumbnailL( const TDesC& aOldUri, 
+                                         const TDesC& aNewUri )
+    {
+    MPX_FUNC("CMPXCollectionHelperImp::RenameThumbnailL");
+    
+    // Create Thumbnail Manager instance when use first time.
+    if(NULL == iTNManager)
+        {      
+        iTNManager = CThumbnailManager::NewL( *this ); 
+        }
+    
+    // Rename thumbnail
+    iTNManager->RenameThumbnailsL(aOldUri, aNewUri, 0);
+    }
+
+// ---------------------------------------------------------------------------
+// CMPXDbAbstractAlbum::ThumbnailReady
+// Callback but not used here
+// ---------------------------------------------------------------------------
+void CMPXCollectionHelperImp::ThumbnailPreviewReady(
+        MThumbnailData& /*aThumbnail*/, TThumbnailRequestId /*aId*/ )
+    {
+    }
+
+
+// ---------------------------------------------------------------------------
+// CMPXDbAbstractAlbum::ThumbnailReady
+// Callback but not used here
+// ---------------------------------------------------------------------------
+void CMPXCollectionHelperImp::ThumbnailReady( TInt /*aError*/,
+        MThumbnailData& /*aThumbnail*/, TThumbnailRequestId /*aId*/ )
+    {
+    }
 // End of file
