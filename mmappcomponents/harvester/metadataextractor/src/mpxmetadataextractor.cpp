@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extracts metadata from a file
-*  Version     : %version: da1mmcf#38.1.4.2.6.1.5.3.6 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#38.1.4.2.6.1.5.3.8 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -251,6 +251,10 @@ void CMPXMetadataExtractor::SetDefaultL( CMPXMedia& aMediaProp )
     // URL
     aMediaProp.SetTextValueL( KMPXMediaMusicURL,
                               KNullDesC );
+    // AlbumArtist
+    aMediaProp.SetTextValueL( KMPXMediaMusicAlbumArtist,
+                              KNullDesC );
+    
     }
 
 // ---------------------------------------------------------------------------
@@ -470,6 +474,18 @@ void CMPXMetadataExtractor::SetMediaPropertiesL()
                                                      bitRate );
 
                     MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL- duration = %i", bitRate);
+                    }
+                break;
+                }
+            case EMetaDataAlbumArtist:
+                {
+                TPtr valptr = value->Des();
+                valptr.Trim();
+                TInt vallen = value->Length();
+                if (vallen>0)
+                    {
+                    FindAndReplaceForbiddenChars(valptr, vallen);
+                    iMedia->SetTextValueL(KMPXMediaMusicAlbumArtist, *value);
                     }
                 break;
                 }
@@ -923,7 +939,20 @@ void CMPXMetadataExtractor::DoCreateMediaL()
         {
         TDataType dataType;
         TUid dummyUid(KNullUid);
-        iAppArc.AppForDocument(iFileName, dummyUid, dataType);
+        // File handle based mime type recogniton required , because AppArc does 
+        // not have All Files capa required for files in private folders 
+        TDataRecognitionResult result;
+        RFs fs;
+		RFile rFile;
+        User::LeaveIfError(fs.Connect());
+		CleanupClosePushL(fs);
+        User::LeaveIfError(fs.ShareProtected());
+        User::LeaveIfError(rFile.Open(fs, iFileName, EFileShareReadersOrWriters));
+		CleanupClosePushL(rFile);
+        User::LeaveIfError(iAppArc.RecognizeData(rFile, result)); 
+        CleanupStack::PopAndDestroy(&rFile);
+        CleanupStack::PopAndDestroy(&fs);
+        dataType = result.iDataType;
         iMedia->SetTextValueL( KMPXMediaGeneralMimeType,dataType.Des() );
         }
 
