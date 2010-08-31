@@ -211,7 +211,7 @@ private: // new functions
     *
     * @return TInt64 estimated file size
     */
-    TInt64 CalculateInitalDummyDBSizeL( TVolumeInfo aVol, TInt aOrigDbSize );
+    TInt64 CalculateInitalDummyDBSizeL( TVolumeInfo& aVol, TInt aOrigDbSize );
 
     /**
     * Remove dummy file

@@ -15,7 +15,7 @@
 *
 */
 
-// Version : %version: e003sa33#10.1.6 %
+// Version : %version: 10.1.5.1.4 %
 
 
 
@@ -26,11 +26,11 @@
 #include <utf.h>
 #include <asxparser.h>
 
-#include <xmlengdomimplementation.h>
-#include <xmlengdomparser.h>
-#include <xmlengdocument.h>
-#include <xmlengelement.h>
-#include <xmlengnodelist.h>
+#include <xml/dom/xmlengdomimplementation.h>
+#include <xml/dom/xmlengdomparser.h>
+#include <xml/dom/xmlengdocument.h>
+#include <xml/dom/xmlengelement.h>
+#include <xml/dom/xmlengnodelist.h>
 
 #include "AsxParser_debug.h"
 
@@ -421,7 +421,7 @@ void CAsxParser::HandleFileParsingL( RFile& aFile )
 {
     iVersion = KErrNotFound;
 
-    TInt size;
+    TInt size = 0;
     User::LeaveIfError( aFile.Size( size ) );
 
     if ( size > KMaxAsxFileSize )

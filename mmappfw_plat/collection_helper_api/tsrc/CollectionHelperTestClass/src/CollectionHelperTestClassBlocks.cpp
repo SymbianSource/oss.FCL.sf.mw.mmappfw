@@ -138,19 +138,19 @@ TInt CCollectionHelperTestClass::RunMethodL(
         ENTRY( "AddSong", CCollectionHelperTestClass::AddSongL ),
         ENTRY( "RemoveSong", CCollectionHelperTestClass::RemoveSongL ),
         ENTRY( "AddAbstractAlbum", CCollectionHelperTestClass::AddAbstractAlbumL ),
-       ENTRY( "RemoveAbstractAlbum", CCollectionHelperTestClass::RemoveAbstractAlbumL ),
+        ENTRY( "RemoveAbstractAlbum", CCollectionHelperTestClass::RemoveAbstractAlbumL ),
         ENTRY( "SetAbstractAlbum", CCollectionHelperTestClass::SetAbstractAlbumL ),
         ENTRY( "SetSongAlbumArtist", CCollectionHelperTestClass::SetSongAlbumArtistL ),
         ENTRY( "GetSongAlbumArtist", CCollectionHelperTestClass::GetSongAlbumArtistL ),
-ENTRY( "SetAbstractAlbumArtist", CCollectionHelperTestClass::SetAbstractAlbumArtistL ),
-ENTRY( "GetAbstractAlbumArtist", CCollectionHelperTestClass::GetAbstractAlbumArtistL ),
-ENTRY( "UpdateAbstractAlbumName", CCollectionHelperTestClass::UpdateAbstractAlbumNameL ),
-  ENTRY("GetAbstractAlbumAndSongs",CCollectionHelperTestClass::GetAbstractAlbumAndSongsL),
+        ENTRY( "SetAbstractAlbumArtist", CCollectionHelperTestClass::SetAbstractAlbumArtistL ),
+        ENTRY( "GetAbstractAlbumArtist", CCollectionHelperTestClass::GetAbstractAlbumArtistL ),
+        ENTRY( "UpdateAbstractAlbumName", CCollectionHelperTestClass::UpdateAbstractAlbumNameL ),
+        ENTRY("GetAbstractAlbumAndSongs",CCollectionHelperTestClass::GetAbstractAlbumAndSongsL),
         ENTRY( "RenameAbstractAlbum", CCollectionHelperTestClass::RenameAbstractAlbumL ),
         ENTRY( "CloseUiHelper", CCollectionHelperTestClass::CloseUiHelperL ),
         ENTRY( "CloseHelper", CCollectionHelperTestClass::CloseHelperL ),
         ENTRY( "CloseCachedHelper", CCollectionHelperTestClass::CloseCachedHelperL ),        
-		};
+        };
 
     const TInt count = sizeof( KFunctions ) / 
                         sizeof( TStifFunctionInfo );

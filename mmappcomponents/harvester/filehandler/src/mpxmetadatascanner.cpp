@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Active object to extract metadata 
-*  Version     : %version: da1mmcf#16.2.3.1.6 % 
+*  Version     : %version: da1mmcf#16.2.3.1.5.2.1 % 
 *
 */
 

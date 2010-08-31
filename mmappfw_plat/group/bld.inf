@@ -13,13 +13,13 @@
 *
 * Description:  Includes all the Domain API specific bld.inf files, which 
 *                export files.
-*  Version     : %version: 1.1.4.1.3.3.5.1.1 %
+*  Version     : %version: da1ido#1.1.4.1.3.3.8 %
 *
 */
 
 
 #include <bldvariant.hrh>
-#include "../../inc/mmappfwbldvariant.hrh"
+#include "../inc/mmappfwbldvariant.hrh"
 
 #include "../collection_helper_api/group/bld.inf"
 #include "../harvester_collection_mediator_api/group/bld.inf"
@@ -46,3 +46,4 @@
 #endif
 #include "../playback_helper_api/group/bld.inf"
 #include "../videoplaylist_utility_api/group/bld.inf"
+#include "../qt_telephony_multimedia_service_api/group/bld.inf"

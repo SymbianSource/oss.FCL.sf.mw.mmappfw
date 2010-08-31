@@ -34,14 +34,8 @@
 
 ; Install files
 "\epoc32\release\armv5\udeb\mpxplaybackutilitytest.dll" - "!:\Sys\Bin\mpxplaybackutilitytest.dll"
+"\epoc32\release\armv5\udeb\testvideoplaybackplugin.dll" - "!:\Sys\Bin\testvideoplaybackplugin.dll"
+"\epoc32\data\z\resource\plugins\testvideoplaybackplugin.rsc" - "!:\resource\plugins\testvideoplaybackplugin.rsc"
+
 "..\..\init\TestFramework.ini" - "c:\testframework\TestFramework.ini" 
 "..\..\conf\mpxplaybackutilitytest.cfg" - "c:\testframework\mpxplaybackutilitytest.cfg"
-
-"..\..\data\mmc\Battle_160x100_30kbps.rm"   -   "f:\testing\data\Battle_160x100_30kbps.rm"
-"..\..\data\mmc\20k_H263_WB_176x144_15fps.3gp"   -   "f:\testing\data\20k_H263_WB_176x144_15fps.3gp"
-"..\..\data\mmc\30k_MPEG4_AAC_8Khz_176x144_15fps_30secs.mp4"   -   "f:\testing\data\30k_MPEG4_AAC_8Khz_176x144_15fps_30secs.mp4"
-"..\..\data\mmc\80k_H264_AAC16M22_176x144_15fps.3gp"   -   "f:\testing\data\80k_H264_AAC16M22_176x144_15fps.3gp"
-"..\..\data\mmc\DivX_MP3_256x112_30fps_300Kbps.avi"   -   "f:\testing\data\DivX_MP3_256x112_30fps_300Kbps.avi"
-"..\..\data\mmc\honey_im_home_horror_ad.avi"   -   "f:\testing\data\honey_im_home_horror_ad.avi"
-"..\..\data\mmc\MPEG4_VBR_176x144_15fps.3gp"   -   "f:\testing\data\MPEG4_VBR_176x144_15fps.3gp"
-"..\..\data\mmc\XVID_176x144_15fps_261Kbps.avi"   -   "f:\testing\data\XVID_176x144_15fps_261Kbps.avi"

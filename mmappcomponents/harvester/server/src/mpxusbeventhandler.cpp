@@ -191,9 +191,9 @@ void CMPXUsbEventHandler::DoHandlePSEventL( TUid /*aUid*/, TInt /*aKey*/ )
 		
         if (value == EMtpPSStatusActive)
             {
-                MPX_DEBUG1("CMPXUsbEventHandler::DoHandlePSEvent - MTP Start");
-                iObserver.HandleSystemEventL( EUSBMTPStartEvent, removableDrive );
-                iState = KUsbPersonalityIdMTP;
+            MPX_DEBUG1("CMPXUsbEventHandler::DoHandlePSEvent - MTP Start");
+            iObserver.HandleSystemEventL( EUSBMTPStartEvent, removableDrive );
+            iState = KUsbPersonalityIdMTP;
             }
         else if( value != EMtpPSStatusReadyToSync )
             {

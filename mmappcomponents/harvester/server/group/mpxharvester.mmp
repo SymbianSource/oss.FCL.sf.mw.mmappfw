@@ -62,3 +62,6 @@ LIBRARY                 mpxplaybackutility.lib
 LIBRARY                 usbman.lib
 LIBRARY                 PlatformEnv.lib
 LIBRARY                 disknotifyhandler.lib
+
+SMPSAFE
+

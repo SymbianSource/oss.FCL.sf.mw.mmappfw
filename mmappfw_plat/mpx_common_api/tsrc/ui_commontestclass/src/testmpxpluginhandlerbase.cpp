@@ -24,7 +24,6 @@
 
 // Begin MPXPluginHandlerBase testing implementation (mpxpluginhandlerbase.h)============================
 const TUid KMPXPPluginHandlerBaseUid = {0x12345};
-
 const TUid KMPXPlaybackInterfaceUid = {0x101FFC05};
 class CDummyMpxPluginHandler : public CMPXPluginHandlerBase,
                                public MMPXPluginHandlerObserver
@@ -602,7 +601,7 @@ TInt CCommonTestClass::MpxPluginHandlerBasePluginFlagsL(CStifItemParser& /*aItem
 
     CDummyMpxPluginHandler pluginHandler;
     
-    //TInt index = pluginHandler.IndexOf(KMPXPPluginHandlerBaseUid);    
+    //TInt index = pluginHandler.IndexOf(KMPXPPluginHandlerBaseUid);
     TRAPD( err, pluginHandler.PluginFlagsL(KMPXPPluginHandlerBaseUid));
     // Using the invalid id (KMPXPPluginHandlerBaseUid), so it is right if the 
     // return err is KErrNotFound.

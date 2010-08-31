@@ -600,8 +600,7 @@ void CAudioFetcherDialog::HandleListBoxEventL( CEikListBox* /*aListBox*/,
     
     switch ( aEventType )
         {
-    	case EEventItemClicked:      // fallthrough
-        case EEventItemSingleClicked:   
+        case EEventItemSingleClicked:   // fallthrough
         case EEventEnterKeyPressed:
             {
             TBool closeDialog = HandleListSelectionL();

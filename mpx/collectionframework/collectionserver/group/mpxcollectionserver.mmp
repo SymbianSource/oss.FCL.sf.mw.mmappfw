@@ -49,3 +49,5 @@ LIBRARY          efsrv.lib
 LIBRARY          mpxcollectionengine.lib 
 LIBRARY          mpxcommon.lib
 
+SMPSAFE
+

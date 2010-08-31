@@ -388,16 +388,16 @@ TInt Cmpxharvestertest::CopyTestFile( CStifItemParser& aItem )
 
 		for( TInt i = 0; i < 5; i++ )
 		    {
-	    err = iFileMan->Copy(KFrom, KTo);
- 		if ( err != KErrNone )
- 			{
-			iLog->Log(_L("CopyTestFile returned: %d"), err);
+            err = iFileMan->Copy(KFrom, KTo);
+	        if ( err != KErrNone )
+	            {
+	            iLog->Log(_L("CopyTestFile returned: %d"), err);
 	            User::After( 1000000 );
 	            }
 	        else
 	            {
-			break;
-			}
+                break;
+	            }
 		    }
         }
     return err;
@@ -422,17 +422,18 @@ TInt Cmpxharvestertest::DeleteTestFile( CStifItemParser& aItem )
 
 		for( TInt i = 0; i < 5; i++ )
 		    {
-	    err = iFileMan->Delete(KFrom);
- 		if ( err != KErrNone )
- 			{
-			iLog->Log(_L("DeleteTestFile returned: %d"), err);
+            err = iFileMan->Delete(KFrom);
+	        if ( err != KErrNone )
+	            {
+	            iLog->Log(_L("DeleteTestFile returned: %d"), err);
 	            User::After( 1000000 );
 	            }
 	        else
 	            {
-			break;
-			}
+                break;
+	            }
 		    }
+
         }
     return err;
     }
@@ -714,17 +715,17 @@ TInt Cmpxharvestertest::DeleteFiles( CStifItemParser& aItem )
 			{
             for( TInt i = 0; i < 5; i++ )
                 {
-		    TRAP(err, iHarvester->DeleteFilesL(*files));
-	 		if ( err != KErrNone )
-	 			{
-				iLog->Log(_L("DeleteFilesL sync returned: %d"), err);
+                TRAP(err, iHarvester->DeleteFilesL(*files));
+                if ( err != KErrNone )
+                    {
+                    iLog->Log(_L("DeleteFilesL sync returned: %d"), err);
                     User::After( 1000000 );
                     }
                 else
                     {
                     break;
                     }
-				}
+                }
 			}
 		else
 			{

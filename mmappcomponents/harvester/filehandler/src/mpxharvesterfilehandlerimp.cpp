@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Handles all file related activities
-*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.1.9 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#72.1.14.2.4.1.4.1.2.5.4 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -343,11 +343,12 @@ void CMPXHarvesterFileHandlerImp::ScanL()
                 // Remove current drive from the scanned drives list
                 TParse fileNameParser;
                 User::LeaveIfError(fileNameParser.Set(iFilteredDrivesToScan[index],NULL,NULL));
-                TPtrC driveName(fileNameParser.Drive());
+                TFileName driveName(fileNameParser.Drive());
                 TInt driveNumber = TDriveUnit( driveName );
                 if (currentDriveNumber == driveNumber)
                     {
                     iFilteredDrivesToScan.Remove(index);
+                    iFilteredOutOfDisk = ETrue;
                     count--;
                     }
                 else
@@ -356,7 +357,6 @@ void CMPXHarvesterFileHandlerImp::ScanL()
                     }
                 }
             iDBManager->CloseDatabase(static_cast<TDriveNumber>(currentDriveNumber));
-            iFilteredOutOfDisk = ETrue;
             }
         }
 

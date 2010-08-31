@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extended collection helper with an internal caching array
-*  Version     : %version: e003sa33#27.1.12.1.3 % 
+*  Version     : %version: da1mmcf#27.1.12.3.5 % 
 *
 */
 
@@ -43,8 +43,16 @@
 #include "mpxcollectionhelpercommon.h"
 #include <mpxmetadataextractor.h>
 
+#include <MetaDataUtility.h>        // for SetMissingMetadataL
+#include <MetaDataFieldContainer.h> // for SetMissingMetadataL
+
 // CONSTANTS
 const TInt KCacheCount = 10;
+
+_LIT( K3GPFileExt, ".3gp" );
+_LIT( K3G2FileExt, ".3g2" );
+_LIT( KODFFileExt, ".odf" );
+_LIT( KO4AFileExt, ".o4a" );
 
 // ======== MEMBER FUNCTIONS ========
 
@@ -884,6 +892,9 @@ void CMPXCollectionCachedHelper::Commit()
                 {
                 case EAdd:
                     {
+                    TRAP( error, SetMissingMetadataL( media ) );    // doing this only before initial add
+                    MPX_DEBUG2( "CMPXCollectionCachedHelper::Commit, SetMissingMetadataL, err = %d", error );
+
                     TRAP(error,
                         CMPXCollectionHelperImp::AddL( media );
                         );
@@ -1186,6 +1197,114 @@ void CMPXCollectionCachedHelper::DoAppendMTPL( CMPXMedia& aSrc,
         {
         TUint16 val = aSrc.ValueTObjectL<TUint16>(KMPXMediaMTPDrmStatus);
         aDestination.SetTObjectValueL( KMPXMediaMTPDrmStatus, val );
+        }
+    }
+
+// ---------------------------------------------------------------------------
+// Attempt to set missing Metadata info in specific case
+// ---------------------------------------------------------------------------
+// 
+void CMPXCollectionCachedHelper::SetMissingMetadataL(CMPXMedia* aMedia)
+    {
+    MPX_FUNC("CMPXCollectionCachedHelper::SetMissingMetadataL");
+    
+    const TDesC& path = aMedia->ValueText(KMPXMediaGeneralUri);
+    TParsePtrC parse( path );
+
+    // only do this for file that might not be natively supported by PC
+    if ( ( parse.Ext().CompareF(K3GPFileExt) == 0 )
+        || ( parse.Ext().CompareF(K3G2FileExt) == 0 )
+        || ( parse.Ext().CompareF(KODFFileExt) == 0 )
+        || ( parse.Ext().CompareF(KO4AFileExt) == 0 ) )
+        {
+        TBool isTitleMissing = EFalse;
+        TBool isArtistMissing = EFalse;
+        TBool isAlbumMissing = EFalse;
+
+        if ( aMedia->ValueText( KMPXMediaGeneralTitle ).Length() == 0 )
+            isTitleMissing = ETrue;
+    
+        if ( aMedia->ValueText( KMPXMediaMusicArtist ).Length() == 0 )
+            isArtistMissing = ETrue;
+    
+        if ( aMedia->ValueText( KMPXMediaMusicAlbum ).Length() == 0 )
+            isAlbumMissing = ETrue;
+
+        MPX_DEBUG4("CMPXCollectionCachedHelper::SetMissingMetadataL, isTitleMissing = %d, isArtistMissing = %d, isAlbumMissing = %d", isTitleMissing, isArtistMissing, isAlbumMissing);
+
+        // only do this if one of the following is missing:
+        // - Title
+        // - Artist
+        // - Album
+        // but can easily be extended to support any category field like: composer, genre
+        if ( isTitleMissing || isArtistMissing || isAlbumMissing )
+            {
+            // metadataextractor should be used instead, but not until CreateMediaL can be called without add/TN of the embedded art
+            // CR is needed to add parameter (TBool aAlbumArtNeeded = ETrue)  // ETrue by default, for all existing caller
+            // for now use MDU instead
+            CMetaDataUtility* metadataUtility = CMetaDataUtility::NewL();
+            
+            CleanupStack::PushL( metadataUtility );
+            metadataUtility->OpenFileL( path );
+            
+            MPX_DEBUG1( "CMPXCollectionCachedHelper::SetMissingMetadataL, CMetaDataUtility::OpenFileL succeed" );
+            
+            const CMetaDataFieldContainer& metaCont = metadataUtility->MetaDataFieldsL();
+        
+            for ( TInt i = 0; i < metaCont.Count(); i++ )
+                {
+                TMetaDataFieldId fieldType;
+                TMPXAttributeData attribute;
+            
+                metaCont.FieldIdAt( i, fieldType );  // get the field type
+                
+                switch ( fieldType )
+                    {
+                    case EMetaDataSongTitle:    // fall through
+                    case EMetaDataArtist:       // fall through
+                    case EMetaDataAlbum:
+                        {
+                        if ( ( isTitleMissing && ( fieldType == EMetaDataSongTitle ) )
+                            || ( isArtistMissing && ( fieldType == EMetaDataArtist ) )
+                            || ( isAlbumMissing && ( fieldType == EMetaDataAlbum ) ) )
+                            {
+                            HBufC* value = metaCont.At( i, fieldType ).AllocL();
+                            CleanupStack::PushL( value );
+                            
+                            TPtr valptr = value->Des();
+                            valptr.Trim();
+
+                            // replace '\t' as ' '
+                            for ( TInt i = 0; i < value->Length(); i++ )
+                                {
+                                if ( valptr[i] == TText( '\t' ) )
+                                    valptr[i] = TText( ' ' );
+                                }
+                            
+                            if ( fieldType == EMetaDataSongTitle )
+                                attribute = KMPXMediaGeneralTitle;
+                            else if ( fieldType == EMetaDataArtist )
+                                attribute = KMPXMediaMusicArtist;
+                            else
+                                attribute = KMPXMediaMusicAlbum;
+
+                            MPX_DEBUG3( "fieldType = %d, value = %S", fieldType, &valptr );
+                            aMedia->SetTextValueL( attribute , *value );
+                            CleanupStack::PopAndDestroy( value );                                
+                            }
+                        }
+
+                        break;
+
+                    default:
+
+                        break;
+                    }
+                }
+
+            metadataUtility->ResetL();
+            CleanupStack::PopAndDestroy( metadataUtility );
+            }
         }
     }
             

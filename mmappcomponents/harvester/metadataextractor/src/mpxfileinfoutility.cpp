@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  This class is responsible for reading file info
-*  Version     : %version: e003sa33#5.1.3.1.10 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: e003sa33#5.1.3.1.6.2.3 % << Don't touch! Updated by Synergy at check-out.
 *
 *  Copyright © 2005 Nokia. All rights reserved.
 */

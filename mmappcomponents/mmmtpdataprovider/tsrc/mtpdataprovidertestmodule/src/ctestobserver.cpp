@@ -737,6 +737,7 @@ const TDesC8& CTestObserver::DesC8Value( MMTPDataProviderConfig::TParameter aPar
 
 void CTestObserver::GetArrayValue( MMTPDataProviderConfig::TParameter aParam, RArray<TUint>& aArray ) const
     {
+    CleanupClosePushL( aArray ); 
     PRINTF1( ">CTestObserver::GetArrayValue aParam = %d", aParam );
     switch (aParam)
         {
@@ -751,4 +752,5 @@ void CTestObserver::GetArrayValue( MMTPDataProviderConfig::TParameter aParam, RA
             User::Leave( KErrArgument );
         }
     PRINTF0( "<CTestObserver::GetArrayValue" );
+    CleanupStack::Pop(); 
     }

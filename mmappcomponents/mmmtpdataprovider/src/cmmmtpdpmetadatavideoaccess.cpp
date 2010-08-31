@@ -480,6 +480,8 @@ void CMmMtpDpMetadataVideoAccess::ExecuteQueryL( const TDesC& aSelectThese,
     //__ASSERT_DEBUG(!iColSet, _MTP_PANIC(KMtpPrtPncCat, ENullPointer)); // Must have iColSet == NULL
 
     // Make sure any quotes in the aMatchCriteria are doubled...
+    // coverity[incorrect_multiplication]
+    // coverity[buffer_alloc]
     HBufC* matchText = HBufC::NewLC( 2 * aMatchCriteria.Length() );
     TPtr pMatchText( matchText->Des() );
     TInt srcLen = aMatchCriteria.Length();
