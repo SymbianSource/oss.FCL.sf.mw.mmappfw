@@ -49,8 +49,5 @@ LIBRARY          mpxcommon.lib
 #ifdef RD_TSP_CLIENT_MAPPER
 LIBRARY          tspclientmapper.lib
 #endif
-
-SMPSAFE
-
 // End of file
 

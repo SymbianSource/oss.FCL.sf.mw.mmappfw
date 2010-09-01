@@ -37,9 +37,9 @@
 #include "mpxcollectionplaylist.h"
 
 // CONSTANTS
-const TInt KIncrementalFetchSize = 1000;
-const TInt KIncrementalDelayNone = 0;
-const TInt KIncrementalDelay = 100000;  // 100 ms
+const TInt KIncrementalFetchSize = 400;
+
+const TInt KIncrementalDelay = 250000;
 
 // -----------------------------------------------------------------------------
 // Two-phased constructor.
@@ -1412,11 +1412,13 @@ void CMPXCollectionPlaylist::DoIncrementalOpenL()
     RArray<TMPXAttribute> attrs;
     CleanupClosePushL( attrs );
     TArray<TMPXAttribute> ary = attrs.Array();
-
-    iIncOpenUtil->SetDelay( KIncrementalDelayNone );
-    iIncOpenUtil->StartL( *copy, ary, KIncrementalFetchSize, iPath->Index() ,
-                          CMPXCollectionOpenUtility::EFetchDown );
-    iIncOpenUtil->SetDelay( KIncrementalDelay );
+    
+    // Start the utility, 2 second delays so we don't flood the collection
+    // Have some delay as playlists are often destroyed! 
+    //
+    iIncOpenUtil->SetDelay( KIncrementalDelay ); 
+    iIncOpenUtil->StartL( *copy, ary, KIncrementalFetchSize, iPath->Index() , 
+                          CMPXCollectionOpenUtility::EFetchNormal );
     CleanupStack::PopAndDestroy( &attrs );
     CleanupStack::PopAndDestroy( copy );
     }

@@ -618,12 +618,6 @@ private:
     * @param aDestination destination media to copt attributes to
     */
     void DoAppendMTPL( CMPXMedia& aSrc, CMPXMedia& aDestination );
-    
-    /**
-    * Attempt to set missing Metadata info in specific case
-    * @param aMedia media object to be checked and adding the info if needed
-    */
-    void SetMissingMetadataL(CMPXMedia* aMedia);
 
 #ifdef RD_MPX_COLLECTION_CACHE
 

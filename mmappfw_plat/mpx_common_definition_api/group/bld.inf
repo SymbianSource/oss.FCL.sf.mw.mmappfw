@@ -36,5 +36,4 @@ PRJ_EXPORTS
 ../inc/mpxmessage2.h                             MW_LAYER_PLATFORM_EXPORT_PATH(mpxmessage2.h)              
 ../inc/mpxpathconfiguration.hrh                  MW_LAYER_PLATFORM_EXPORT_PATH(mpxpathconfiguration.hrh)   
 ../inc/mpxprivatecrkeys.h                        MW_LAYER_PLATFORM_EXPORT_PATH(mpxprivatecrkeys.h)         
-../inc/mpxsearchcriteria.h                       MW_LAYER_PLATFORM_EXPORT_PATH(mpxsearchcriteria.h)
-../inc/EqualizerConstants.h                      MW_LAYER_PLATFORM_EXPORT_PATH(EqualizerConstants.h)
+../inc/mpxsearchcriteria.h                       MW_LAYER_PLATFORM_EXPORT_PATH(mpxsearchcriteria.h)        

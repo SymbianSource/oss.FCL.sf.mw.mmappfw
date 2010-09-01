@@ -192,6 +192,14 @@ TBool CMPXFolderScanner::DoScanL()
         do
             {
             TRAP(err, iDirScan->NextL(iDir));
+            if( !iDir && !err ) 
+                {
+                // if iDir NULL and no error, there are no 
+                // more directories in the structure
+                // in this case there is no leaving functions called before
+                // returning err has to be 0
+                break;
+                }
             blocked = iObserver.IsPathBlockedL( iDirScan->FullPath() );
             if( blocked )
                 {
@@ -246,6 +254,14 @@ TBool CMPXFolderScanner::SetupNextDriveToScanL()
                 {
                 MPX_DEBUG1("CMPXFolderScanner::SetupNextDriveToScanL iDirScan->NextL()");
                 TRAP(err, iDirScan->NextL(iDir));
+                if( !iDir && !err ) 
+                    {
+                    // if iDir NULL and no error, there are no 
+                    // more directories in the structure
+                    // in this case there is no leaving functions called before
+                    // returning err has to be 0
+                    break;
+                    }
                 MPX_DEBUG2("CMPXFolderScanner::SetupNextDriveToScanL path %S", &iDirScan->FullPath());
                 blocked = iObserver.IsPathBlockedL( iDirScan->FullPath() );
                 MPX_DEBUG2("CMPXFolderScanner::SetupNextDriveToScanL path blocked %i", blocked);

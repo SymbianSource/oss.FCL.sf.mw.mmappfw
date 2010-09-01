@@ -126,7 +126,7 @@ void CAbstractMediaMtpDataProviderGetObjectPropValue::ServiceSpecificObjectPrope
 
             if( size > 0 )
                 {
-                HBufC8* sampleData = HBufC8::NewLC( size );    // + sampleData
+                HBufC8* sampleData = HBufC8::NewLC( size * sizeof(TUint8) );    // + sampleData
                 TPtr8 samplePtr = sampleData->Des();
                 User::LeaveIfError( sampleFile.Read( samplePtr ) );
                 iMTPTypeArray->SetByDesL( samplePtr );

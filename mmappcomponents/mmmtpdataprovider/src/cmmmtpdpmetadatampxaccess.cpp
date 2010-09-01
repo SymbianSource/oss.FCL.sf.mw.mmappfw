@@ -902,7 +902,7 @@ void CMmMtpDpMetadataMpxAccess::SetMetadataValueL( const TUint16 aPropCode,
             delete iSampleData;
             iSampleData = NULL;
 
-            iSampleData = HBufC8::NewL( numElements );
+            iSampleData = HBufC8::NewL( numElements * sizeof( TUint8 ) );
             TPtr8 samplePtr = iSampleData->Des();
             mtpTypeArray.ToDes( samplePtr );
             RFile sampleFile;

@@ -61,6 +61,3 @@ deffile ../eabi/
 #elif defined(WINSCW)
 deffile ../bwinscw/ 
 #endif
-
-SMPSAFE
-

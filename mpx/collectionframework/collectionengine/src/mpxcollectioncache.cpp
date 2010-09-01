@@ -28,7 +28,6 @@
 #include <mpxcollectionopenlresultdef.h>
 #include <mpxlog.h>
 #include "mpxcollectioncache.h"
-#include <mmf/common/mmfcontrollerpluginresolver.h>
 
 // CONSTANTS
 const TInt KMPXRootNodeId = 0;
@@ -590,7 +589,6 @@ TBool CMPXCollectionCacheNode::AttributeExists(
 void CMPXCollectionCacheNode::HandleChangeL( TMPXItemId aChangeItemId, 
                                 RPointerArray<CMPXCollectionCacheNode>& aArray )
     {
-    CleanupResetAndDestroyPushL(aArray); 
     // This node is affected
     // All child nodes are invalid!
     //
@@ -649,7 +647,6 @@ void CMPXCollectionCacheNode::HandleChangeL( TMPXItemId aChangeItemId,
                 } // for
             } // if iResults
         } // if no children
-    CleanupStack::Pop(&aArray); 
     }
     
 // ----------------------------------------------------------------------------
@@ -830,7 +827,6 @@ void CMPXCollectionCacheNode::DoMergeArrayL( RArray<TMPXOpenDataBlock>& aArray )
     // O(n^2) complexity here is OK, Merging keeps the number of items 
     // very small. Less than 3 items are alive at a time
     //
-    CleanupClosePushL( aArray );
     RArray<TMPXOpenDataBlock> newArray;
     CleanupClosePushL( newArray );
     
@@ -873,7 +869,6 @@ void CMPXCollectionCacheNode::DoMergeArrayL( RArray<TMPXOpenDataBlock>& aArray )
         MPX_DEBUG3("Order: %i %i", newArray[i].iOffset, newArray[i].iSize );
         }
     CleanupStack::PopAndDestroy( &newArray );
-    CleanupStack::Pop(); 
     }
                                  
 #ifdef _DEBUG

@@ -314,6 +314,8 @@ void CMoveObject::GetPreviousPropertiesL( const CMTPObjectMetaData& aObject )
     {
     PRINT( _L( "MM MTP => CMoveObject::GetPreviousPropertiesL" ) );
 
+    const TDesC& suid( aObject.DesC( CMTPObjectMetaData::ESuid ) );
+
     // same storage, not necessary to get the properties
     if ( iSameStorage )
         return;

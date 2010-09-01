@@ -539,7 +539,7 @@ EXPORT_C const TDesC& CMPXPluginHandlerBase::PluginName(
 //
 EXPORT_C const TDesC& CMPXPluginHandlerBase::PluginName(const TUid& aUid) const
     {
-    const TDesC* name;
+    const TDesC* name=&KNullDesC;
     TInt index(IndexOf(aUid));
     MPX_ASSERT(KErrNotFound!=index && index<iPluginInfoArray.Count());
     name = &iPluginInfoArray[index]->DisplayName();

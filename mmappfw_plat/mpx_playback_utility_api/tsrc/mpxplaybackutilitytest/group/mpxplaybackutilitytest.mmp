@@ -36,9 +36,7 @@ DEFFILE         mpxplaybackutilitytest.def
 
 MW_LAYER_SYSTEMINCLUDE
 
-USERINCLUDE     ../inc
-
-USERINCLUDE     ../../inc 
+USERINCLUDE     ../inc 
 
 SOURCEPATH      ../src
 
@@ -56,9 +54,7 @@ LIBRARY         stiftestinterface.lib
 LIBRARY         stiftestengine.lib 
 LIBRARY         mpxplaybackutility.lib 
 LIBRARY         mpxcommon.lib
-LIBRARY		mpxcollectionutility.lib
-LIBRARY		bafl.lib
-
+LIBRARY         mpxcollectionutility.lib
 
 LANG            SC
 

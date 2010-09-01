@@ -862,7 +862,7 @@ TInt CMPXHarvesterDatabaseManager::BlockDiskSpaceL( TDriveUnit aDrive, TInt aOri
 // CMPXHarvesterDatabaseManager::CalculateInitalDummyDBSizeL
 // ---------------------------------------------------------------------------
 //
-TInt64 CMPXHarvesterDatabaseManager::CalculateInitalDummyDBSizeL( TVolumeInfo& aVol, TInt aOrigDbSize )
+TInt64 CMPXHarvesterDatabaseManager::CalculateInitalDummyDBSizeL( TVolumeInfo aVol, TInt aOrigDbSize )
     {
     MPX_FUNC("CMPXHarvesterDatabaseManager::CalculateInitalDummyDBSizeL");
     TInt64 size;

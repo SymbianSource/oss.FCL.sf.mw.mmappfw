@@ -46,6 +46,5 @@ LIBRARY         efsrv.lib
 LIBRARY         bafl.lib
 LIBRARY         mpxcommon.lib
 
-SMPSAFE
 
 // End of File

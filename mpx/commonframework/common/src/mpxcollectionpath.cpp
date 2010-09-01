@@ -606,7 +606,6 @@ EXPORT_C TArray<TInt> CMPXCollectionPath::Selection() const
 //
 EXPORT_C void CMPXCollectionPath::SelectionL(RArray<TMPXItemId>& aIds) const
     {
-    CleanupClosePushL(aIds);
     aIds.Reset();
     TInt idCount(iIds.Count());
     TInt selCount(iSelection.Count());
@@ -618,7 +617,6 @@ EXPORT_C void CMPXCollectionPath::SelectionL(RArray<TMPXItemId>& aIds) const
             aIds.AppendL(iIds[idIndex]);
             }
         }
-    CleanupStack::Pop();
     }
 
 // -----------------------------------------------------------------------------

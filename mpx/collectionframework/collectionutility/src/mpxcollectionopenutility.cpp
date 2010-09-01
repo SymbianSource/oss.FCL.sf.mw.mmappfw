@@ -221,8 +221,8 @@ EXPORT_C void CMPXCollectionOpenUtility::Stop()
 EXPORT_C void CMPXCollectionOpenUtility::SetDirection( TDirection aDirection )
     {
     iFetchDirection = aDirection;
-
-    if( iFetchStep == EFetchItems || iFetchStep == EFetchCommand || iFetchStep == EFetchCount )
+    
+    if( iFetchStep == EFetchItems || iFetchStep == EFetchCommand )
         {
         TBool skipFirst = iFetchStep == EFetchCommand ? ETrue : EFalse;
         
@@ -602,8 +602,10 @@ void CMPXCollectionOpenUtility::DoHandleFetchItemsL( const CMPXMedia& aEntries,
     MPX_DEBUG1("CMPXCollectionOpenUtility::DoHandleFetchItemsL <---" ); 
     // Task is done, and compact the list
     //
+    TInt curOffset(0);
     if( iIncrementalChunks.Count() )
         {
+        curOffset = iIncrementalChunks[0].iOffset;
         iIncrementalChunks.Remove(0);
         DoCompactTaskListL( aEntries );
         }
@@ -649,9 +651,12 @@ void CMPXCollectionOpenUtility::DoHandleFetchItemsL( const CMPXMedia& aEntries,
         iFetchStep = EFetchNone;
         }
 
-    // Callback to observer
+    // Callback to observer with some treshold to avoid over redrawing
+    // Playlists need every handle open to update the path
     //
-    if( iObs )
+    if( iObs && 
+        (Abs<TInt>(aIndex-curOffset) < iFetchInfo.iSize ||
+        iFirstOpen || iMode == KMcModePlaylist || complete ) )
         {
         iFirstOpen = EFalse;
         MPX_DEBUG1("CMPXCollectionOpenUtility::DoHandleFetchItemsL callback" ); 

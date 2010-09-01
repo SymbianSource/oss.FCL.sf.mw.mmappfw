@@ -25,7 +25,6 @@
 
 // CONSTANTS
 const TInt KMPXErrDiedTimeout = 2000000;
-
 // Time to wait before resume after call has ended.
 const TInt KMPXResumeWaitTime = 3000000; // 3.0s
 

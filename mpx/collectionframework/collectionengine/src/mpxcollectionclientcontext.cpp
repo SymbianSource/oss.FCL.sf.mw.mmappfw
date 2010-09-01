@@ -2483,10 +2483,7 @@ void CMPXCollectionClientContext::DoPluginOpenL()
             {
             iCacheMedia = AttributesCacheableL( iBrowsePath->OpenAttributes(), *iBrowsePath );
             }
-        if( iBrowsePath )
-            {
-            plugin->OpenL(*iBrowsePath, iBrowsePath->OpenAttributes(), iFilter);
-            }
+        plugin->OpenL(*iBrowsePath, iBrowsePath->OpenAttributes(), iFilter);
         }
     }
 

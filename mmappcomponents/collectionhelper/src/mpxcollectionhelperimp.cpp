@@ -549,19 +549,25 @@ CMPXMedia* CMPXCollectionHelperImp::GetL( const TDesC& aFile,
 
     CMPXMedia* foundMedia(NULL);
 
-    if ( ary && ary->Count() )
+    switch ( ary && ary->Count() )  //lint !e961
         {
-        foundMedia = CMPXMedia::NewL(*ary->AtL(0));
-        CleanupStack::PushL(foundMedia);
-        foundMedia->SetTObjectValueL<TUid>( KMPXMediaGeneralCollectionId, TUid::Uid(col) );
-        CleanupStack::Pop(foundMedia);
+        case 0:
+            User::Leave(KErrNotFound);
+        case 1:
+            {
+            foundMedia = CMPXMedia::NewL(*ary->AtL(0));
+            CleanupStack::PushL(foundMedia);
+            foundMedia->SetTObjectValueL<TUid>(
+                KMPXMediaGeneralCollectionId, TUid::Uid(col) );
+            CleanupStack::Pop(foundMedia);
+            break;
+            }
+        default:
+            User::Leave(KErrCorrupt);
         }
-    else
-        {
-        User::Leave(KErrNotFound);    
-        }
-    
+
     CleanupStack::PopAndDestroy(result);
+
     return foundMedia;
     }
 

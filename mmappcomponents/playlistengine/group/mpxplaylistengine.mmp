@@ -51,6 +51,4 @@ LIBRARY   SysLangUtil.lib
 LIBRARY   charconv.lib
 LIBRARY   mpxcommon.lib
 
-SMPSAFE
-
 // End of File
