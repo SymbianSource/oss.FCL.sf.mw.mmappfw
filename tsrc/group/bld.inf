@@ -30,7 +30,7 @@ PRJ_TESTMMPFILES
 #include "../../mmappfw_plat/collection_helper_api/tsrc/group/bld.inf"
 #include "../../mmappfw_plat/harvester_utility_api/tsrc/group/bld.inf"
 #include "../../mmappfw_plat/media_player_settings_engine_api/tsrc/group/bld.inf"
-#include "../../mmappfw_plat/mpx_base_view_plugins_api/tsrc/group/bld.inf"
+//#include "../../mmappfw_plat/mpx_base_view_plugins_api/tsrc/group/bld.inf"
 #include "../../mmappfw_plat/mpx_collection_utility_api/tsrc/group/bld.inf"
 #include "../../mmappfw_plat/mpx_common_api/tsrc/group/bld.inf"
 #include "../../mmappfw_plat/mpx_playback_utility_api/tsrc/group/bld.inf"

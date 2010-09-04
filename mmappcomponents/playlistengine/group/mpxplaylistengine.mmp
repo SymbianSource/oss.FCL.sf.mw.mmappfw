@@ -47,7 +47,7 @@ LIBRARY   efsrv.lib
 LIBRARY   estor.lib
 LIBRARY   bafl.lib
 LIBRARY   apmime.lib
-LIBRARY   SysLangUtil.lib
+LIBRARY   syslangutil.lib
 LIBRARY   charconv.lib
 LIBRARY   mpxcommon.lib
 

@@ -99,6 +99,11 @@ private: // New Functions
     */
     void DoScanCompleteL( TInt aErr );
 
+    /**
+    * Execute asynchronous reading RDir
+    */
+    void ReadDirEntry();
+
 private:
 
     /**
@@ -118,6 +123,88 @@ private:
 
 private: // data
 
+    /**
+     * An entry delegates a scanning folder
+     */
+    class CDirQueueEntry : public CBase
+        {
+        public:
+
+            /**
+             * Push a scanning folder into a directory queue
+             * @param aDirQueue directory queue
+             * @param aDirEntry entry delegates a scanning folder
+             */
+            static void PushL( RPointerArray< CDirQueueEntry >& aDirQueue,
+                               CDirQueueEntry* aDirEntry );
+
+            /**
+             * Pop and destroy a scanning folder from a directory queue
+             * @param aDirQueue directory queue
+             */
+            static void PopAndDestroy( RPointerArray< CDirQueueEntry >& aDirQueue );
+
+            /**
+             * Two-phased constructor
+             * @param aFullPath full path of this folder
+             */
+            static CDirQueueEntry* NewL( const TDesC& aFullPath );
+
+            /**
+             * Virtual destructor
+             */
+            virtual ~CDirQueueEntry();
+
+            /**
+             * Get next entry of this folder
+             * @return next entry of this folder,
+             *         NULL if no next entry
+             */
+            const TEntry* NextEntry();
+
+            /**
+             * Reset the position of the EntryArray
+             */
+            void ResetPosition();
+
+        private:
+
+            /**
+             * Private constructor
+             */
+            CDirQueueEntry();
+
+            /**
+             * 2nd phase constructor
+             * @param full path of this folder
+             */
+            void ConstructL( const TDesC& aFullPath );
+
+        public: //data
+
+            /**
+             * Full path of this folder
+             * Owned
+             */
+            HBufC* iFullPath;
+
+            /**
+             * Current position of EntryArray
+             */
+            TInt iPos;
+
+            /**
+             * RDir object of this folder
+             * Owned
+             */
+            RDir iDir;
+
+            /**
+             * EntryArray of this folder
+             */
+            TEntryArray iEntryArray;
+        };
+
     MMPXFileAdditionObserver&     iObserver; 
     MMPXFileScanStateObserver&    iStateObserver; 
     
@@ -130,9 +217,9 @@ private: // data
     TBool                         iScanning;
     
     // Scanner objects
-    CDirScan*                     iDirScan;
-    CDir*                         iDir;
-    TInt                          iCount;
+    RPointerArray< CDirQueueEntry > iDirQueue; // Owned
+    CDirQueueEntry*                 iCurDirQueueEntry; // Not Owned
+    HBufC*                          iCurFullPath; // Not Owned
     };
 
 #endif // CMPXFOLDERSCANNER_H

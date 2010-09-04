@@ -48,8 +48,8 @@ LIBRARY         inetprotutil.lib apgrfx.lib apmime.lib estor.lib
 LIBRARY         mpxcollectionutility.lib  mpxcommon.lib
 LIBRARY         centralrepository.lib
 #ifdef __ACCESSORY_FW
-LIBRARY         accClient.lib           // Accessory client
-LIBRARY         telephonyaudiorouting.lib
+LIBRARY         accclient.lib           // Accessory client
+LIBRARY         TelephonyAudioRouting.lib
 #else
 LIBRARY         dsclient.lib            // Dos services
 #endif // __ACCESSORY_FW

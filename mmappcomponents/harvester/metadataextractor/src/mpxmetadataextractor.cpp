@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extracts metadata from a file
-*  Version     : %version: da1mmcf#38.1.4.2.6.1.5.3.8 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#38.1.4.2.6.1.5.3.9 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -460,12 +460,12 @@ void CMPXMetadataExtractor::SetMediaPropertiesL()
                 const TDesC& mimeType = iMedia->ValueText( KMPXMediaGeneralMimeType );
                 MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL, mimeType = %S", &mimeType);
 
-                // Verify if WMA, get the duration
+                // Verify if WMA, get the bit rate
                 if( mimeType.Compare(KWmaMimeType) == 0 || mimeType.Compare(KWmaCafMimeType) == 0 )
                     {
                     MPX_DEBUG1("CMPXMetadataExtractor::SetMediaPropertiesL- WMA");
 
-                    // Perform the duration conversion
+                    // Perform the bit rate conversion
                     TLex lexer( *value );
                     TInt32 bitRate ( 0 );
                     lexer.Val( bitRate );
@@ -473,7 +473,7 @@ void CMPXMetadataExtractor::SetMediaPropertiesL()
                     iMedia->SetTObjectValueL<TUint>( KMPXMediaAudioBitrate,
                                                      bitRate );
 
-                    MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL- duration = %i", bitRate);
+                    MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL- bit rate = %i", bitRate);
                     }
                 break;
                 }
@@ -549,13 +549,17 @@ void CMPXMetadataExtractor::SetExtMediaPropertiesL()
                 MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL, file info util error %i", err2);
                 if( KErrNone == err2 )
                     {
+                    // Get duration prior getting sample and bit rates
+                    // MMF blocks for accumulating audio data to calculate duration
+					// but MMF does not block for calculating sample rate or bit rate 
+                    TInt64 duration = (TInt64) iFileInfoUtil->Duration().Int64() / 1000; // ms
+                    iMedia->SetTObjectValueL<TInt32>( KMPXMediaGeneralDuration,
+                                                    duration );
+                                                    
                     iMedia->SetTObjectValueL<TUint>( KMPXMediaAudioBitrate,
                                                    iFileInfoUtil->BitRate() );
                     iMedia->SetTObjectValueL<TUint>( KMPXMediaAudioSamplerate,
                                                    iFileInfoUtil->SampleRate() );
-                    TInt64 duration = (TInt64) iFileInfoUtil->Duration().Int64() / 1000; // ms
-                    iMedia->SetTObjectValueL<TInt32>( KMPXMediaGeneralDuration,
-                                                    duration );
 
                     MPX_DEBUG2("CMPXMetadataExtractor::SetExtMediaPropertiesL -- duration %i", duration);
                     }

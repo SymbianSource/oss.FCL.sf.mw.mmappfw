@@ -53,7 +53,7 @@ LIBRARY                 mmfcontrollerframework.lib
 LIBRARY                 mmfstandardcustomcommands.lib 
 LIBRARY                 mpxcommon.lib
 
-LIBRARY                 SysUtil.lib
+LIBRARY                 sysutil.lib
 LIBRARY                 thumbnailmanager.lib
 
 #if defined(ARMCC)

@@ -572,8 +572,10 @@ protected:
     
     /**
     * Commits the transactions still left in the caching array
+    * for abstractAlbum, it would be left in cache if aCacheAbstractAlbum is set to ETrue
+    * @param aCacheAbstractAlbum whether abstractAlbum is to be cached
     */
-    void Commit();
+    void Commit(TBool aCacheAbstractAlbum = EFalse);
 
 private: 
     

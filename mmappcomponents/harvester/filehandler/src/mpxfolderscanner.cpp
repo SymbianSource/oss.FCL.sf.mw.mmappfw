@@ -24,6 +24,7 @@
 
 // CONSTANTS
 const TInt KFileNumBreakCount = 5;
+_LIT( KTxtBackSlash, "\\" );
 
 // ======== LOCAL FUNCTIONS ========
 
@@ -60,7 +61,7 @@ CMPXFolderScanner::CMPXFolderScanner( MMPXFileAdditionObserver& aObserver,
 //
 void CMPXFolderScanner::ConstructL()
     {
-    iDirScan = CDirScan::NewL(iFs);
+
     }
 
 // ---------------------------------------------------------------------------
@@ -88,10 +89,7 @@ CMPXFolderScanner* CMPXFolderScanner::NewL( MMPXFileAdditionObserver& aObserver,
 CMPXFolderScanner::~CMPXFolderScanner()
     {
     Cancel();
-    
-    delete iDirScan;
-    delete iDir;
-    
+    iDirQueue.ResetAndDestroy();
     iDrivesToScan.Close();
     }
     
@@ -106,6 +104,7 @@ void CMPXFolderScanner::ScanL( RArray<TPath>& aDrives )
     // Copy all the other drives we want to scan
     //
     TInt count( aDrives.Count() );
+    MPX_DEBUG2("CMPXFolderScanner::ScanL aDrives %d",count);
     for( TInt i=0; i<count; ++i )
         {
         // Check if we are already scanning this drive
@@ -125,11 +124,10 @@ void CMPXFolderScanner::ScanL( RArray<TPath>& aDrives )
         if( !SetupNextDriveToScanL() )
             {
             // Kick off the scanning
-            iStatus = KRequestPending;
-            SetActive();
-            TRequestStatus* status = &iStatus;
-            User::RequestComplete( status, KErrNone );
-            
+            iCurDirQueueEntry = iDirQueue[ 0 ];
+            iCurFullPath = iCurDirQueueEntry->iFullPath;
+            ReadDirEntry();
+
             // We've started scanning
             iScanning = ETrue;
             }
@@ -143,6 +141,17 @@ void CMPXFolderScanner::ScanL( RArray<TPath>& aDrives )
     }
 
 // ---------------------------------------------------------------------------
+// Reads dir entries asynchronously
+// ---------------------------------------------------------------------------
+//
+void CMPXFolderScanner::ReadDirEntry()
+    {
+    ASSERT( !IsActive() );
+    iCurDirQueueEntry->iDir.Read( iCurDirQueueEntry->iEntryArray, iStatus );
+    SetActive();
+    }
+
+// ---------------------------------------------------------------------------
 // Continue Scanning for more files
 // ---------------------------------------------------------------------------
 //
@@ -150,68 +159,83 @@ TBool CMPXFolderScanner::DoScanL()
     {
     MPX_DEBUG1("CMPXFolderScanner::DoScanL <---");
     TBool done (EFalse);
-    
-    // Check each file in each directory
-    TInt numFiles( iDir->Count() );
-    while( iCount < numFiles )
-        {
-        TEntry entry = (*iDir)[iCount];
+    TBool blocked ( EFalse );
 
-        // Construct the full path and file name
-        TParse fullEntry;
-        TPtrC dirPath(iDirScan->FullPath());
-        fullEntry.Set(entry.iName, &dirPath, NULL);
-        
-        TPtrC fullname = fullEntry.FullName();
-        TInt index = iObserver.IsMediaFileL( fullname );
-        if( KErrNotFound != index )
+    // read successfully
+    if ( iStatus == KErrNone || iStatus == KErrEof )
+        {
+        TBuf<KMaxFileName> buffer;
+        const TEntry* entry = NULL;
+        TInt numEntries( iCurDirQueueEntry->iEntryArray.Count() );
+
+        // process the entry one by one
+        while ( iCurDirQueueEntry->iPos < numEntries )
             {
-            iObserver.HandleFileAdditionL( fullname, index );
-            }
-        
-        // Break if we have scanned enough files
-        //
-        ++iCount;
-        if( iCount%KFileNumBreakCount == 0 )
-            {
-            return EFalse;
+            entry = iCurDirQueueEntry->NextEntry();
+            buffer.Zero();
+
+            // Generates the full name of the entry
+            buffer.Append( *iCurFullPath );
+            buffer.Append( entry->iName );
+
+            if ( entry->IsDir() ) // entry is a directory
+                {
+                buffer.Append( KTxtBackSlash );
+
+                blocked = iObserver.IsPathBlockedL( buffer );
+
+                if ( !blocked )
+                    {
+                    CDirQueueEntry* newEntry = CDirQueueEntry::NewL( buffer );
+                    TInt err = newEntry->iDir.Open( iFs,
+                                                    buffer,
+                                             KEntryAttNormal | KEntryAttDir );
+                    if ( err == KErrNone )
+                        {
+                        CDirQueueEntry::PushL( iDirQueue, newEntry );
+                        }
+                    else
+                        {
+                        delete newEntry;
+                        }
+                    }
+                }
+            else // entry is a file
+                {
+                TInt index = iObserver.IsMediaFileL( buffer );
+                if( KErrNotFound != index )
+                    {
+                    iObserver.HandleFileAdditionL( buffer, index );
+                    }
+                }
+            if ( iCurDirQueueEntry->iPos % KFileNumBreakCount == 0 )
+                {
+                return done;
+                }
             }
         }
-    
-    // All files from this directory scanned, so move onto next
-    //
-    TInt err( KErrNone );
-    TBool blocked (EFalse);
-    if( iCount == numFiles )
+
+    // this dir has other entries to read
+    if ( iStatus == KErrNone )
         {
-        // Get next Folder
-        //
-        iCount = 0;          
-        delete iDir;
-        iDir = NULL;
-        do
+        iCurDirQueueEntry->ResetPosition();
+        ReadDirEntry();
+        }
+
+    // there is nothing to read or some error has occured during reading,
+    // try to move to next dir
+    else
+        {
+        CDirQueueEntry::PopAndDestroy( iDirQueue );
+        if ( iDirQueue.Count() || !SetupNextDriveToScanL() )
             {
-            TRAP(err, iDirScan->NextL(iDir));
-            blocked = iObserver.IsPathBlockedL( iDirScan->FullPath() );
-            if( blocked )
-                {
-                delete iDir;
-                iDir = NULL;
-                }
-            if( err == KErrNotReady )
-                {
-                delete iDir;
-                iDir = NULL;
-                break;
-                }
+            iCurDirQueueEntry = iDirQueue[ 0 ];
+            iCurFullPath = iCurDirQueueEntry->iFullPath;
+            ReadDirEntry();
             }
-        while ( err == KErrPathNotFound || blocked );  
-        
-        // No more directories to scan on this drive
-        //
-        if( !iDir )
+        else // there is nothing to scan
             {
-            done = SetupNextDriveToScanL();  
+            done = ETrue;
             }
         }
         
@@ -230,46 +254,44 @@ TBool CMPXFolderScanner::SetupNextDriveToScanL()
     TBool done(EFalse);
     TBool blocked(EFalse);
     // Scan next drive
-    while( iDir == NULL && !done )
+    while( iDrivesToScan.Count() && !iDirQueue.Count() )
         {
-        if( !iDrivesToScan.Count() )
+        TPath path = iDrivesToScan[0];
+
+        MPX_DEBUG1( "CMPXFolderScanner::SetupNextDriveToScanL path blocked?" );
+        blocked = iObserver.IsPathBlockedL( path );
+        MPX_DEBUG2( "CMPXFolderScanner::SetupNextDriveToScanL path blocked %i",
+                    blocked );
+
+        // If there was something to scan
+        if( !blocked )
             {
-            // No more drives or folders that we are interested in
-            done = ETrue;
-            }
-        else
-            {
-            iDirScan->SetScanDataL(iDrivesToScan[0], KEntryAttNormal, ESortNone);
-            iCount = 0;
-            TInt err(KErrNone);
-            do
+            CDirQueueEntry* newEntry = CDirQueueEntry::NewL( path );
+            TInt err = newEntry->iDir.Open( iFs,
+                                            path,
+                                            KEntryAttNormal | KEntryAttDir );
+            if ( err == KErrNone )
                 {
-                MPX_DEBUG1("CMPXFolderScanner::SetupNextDriveToScanL iDirScan->NextL()");
-                TRAP(err, iDirScan->NextL(iDir));
-                MPX_DEBUG2("CMPXFolderScanner::SetupNextDriveToScanL path %S", &iDirScan->FullPath());
-                blocked = iObserver.IsPathBlockedL( iDirScan->FullPath() );
-                MPX_DEBUG2("CMPXFolderScanner::SetupNextDriveToScanL path blocked %i", blocked);
-                if( blocked )
-                    {
-                    delete iDir;
-                    iDir = NULL;
-                    }
-                }
-            while (err == KErrPathNotFound || blocked );  
-            
-            // If there was something to scan
-            //
-            if( iDir != NULL )
-                {
+                CDirQueueEntry::PushL( iDirQueue, newEntry );
                 // Inform Observer of the new drive that we are scanning
-                iObserver.HandleOpenDriveL( ::ExtractDrive(iDrivesToScan[0]), 
+                iObserver.HandleOpenDriveL( ::ExtractDrive(iDrivesToScan[0]),
                                             iDrivesToScan[0] );
                 }
-                
-            // Remove the 0th element
-            iDrivesToScan.Remove(0); 
-            iDrivesToScan.Compress();
+            else
+                {
+                delete newEntry;
+                }
             }
+
+        // Remove the 0th element
+        iDrivesToScan.Remove(0);
+        iDrivesToScan.Compress();
+
+        }
+
+    if ( !iDirQueue.Count() )
+        {
+        done = ETrue;
         }
     
     
@@ -287,13 +309,11 @@ void CMPXFolderScanner::DoScanCompleteL( TInt aErr )
     
     // Reset all arrays and data
     iDrivesToScan.Reset();
-    
+    iDirQueue.ResetAndDestroy();
+
     // All done!
     iScanning = EFalse;
-    
-    delete iDir;
-    iDir = NULL;
-    
+
     // Callback to observer
     iStateObserver.HandleScanStateCompleteL( MMPXFileScanStateObserver::EScanFiles, 
                                               aErr );
@@ -319,7 +339,7 @@ void CMPXFolderScanner::RunL()
         {
         DoScanCompleteL( err );
         }
-    else // if( !done )
+    else if ( iCurDirQueueEntry->iPos ) // if( !done )
         {
         MPX_DEBUG1("CMPXFolderScanner::RunL -- Run again");
         iStatus = KRequestPending;
@@ -353,4 +373,92 @@ TInt CMPXFolderScanner::RunError(TInt aError)
     TRAP_IGNORE( DoScanCompleteL( aError ) );
     
     return KErrNone;
-    }        
+    }
+
+// ---------------------------------------------------------------------------
+// Two Phased Constructor
+// ---------------------------------------------------------------------------
+//
+CMPXFolderScanner::CDirQueueEntry* CMPXFolderScanner::CDirQueueEntry::NewL(
+                                                    const TDesC& aFullPath )
+    {
+    CDirQueueEntry* self = new ( ELeave ) CDirQueueEntry;
+    CleanupStack::PushL( self );
+    self->ConstructL( aFullPath );
+    CleanupStack::Pop( self );
+    return self;
+    }
+
+// ---------------------------------------------------------------------------
+// Destructor
+// ---------------------------------------------------------------------------
+//
+CMPXFolderScanner::CDirQueueEntry::~CDirQueueEntry()
+    {
+    iDir.Close();
+    delete iFullPath;
+    }
+
+// ---------------------------------------------------------------------------
+// Push a dir entry into a dir entry queue
+// ---------------------------------------------------------------------------
+//
+void CMPXFolderScanner::CDirQueueEntry::PushL(
+                                     RPointerArray<CDirQueueEntry>& aDirQueue,
+                                     CDirQueueEntry* aDirEntry )
+    {
+    aDirQueue.AppendL( aDirEntry );
+    }
+
+// ---------------------------------------------------------------------------
+// Pop and destroy a dir entry from a dir entry queue
+// ---------------------------------------------------------------------------
+//
+void CMPXFolderScanner::CDirQueueEntry::PopAndDestroy(
+                                  RPointerArray< CDirQueueEntry >& aDirQueue )
+    {
+    CDirQueueEntry* entry = aDirQueue[ 0 ];
+    delete entry;
+    aDirQueue.Remove( 0 );
+    }
+
+// ---------------------------------------------------------------------------
+// CMPXFolderScanner::CDirQueueEntry::NextEntry
+// ---------------------------------------------------------------------------
+//
+const TEntry* CMPXFolderScanner::CDirQueueEntry::NextEntry()
+    {
+    const TEntry* entry = NULL;
+    if ( iPos >= 0 && iPos < iEntryArray.Count() )
+        {
+        entry = &iEntryArray[ iPos++ ];
+        }
+    return entry;
+    }
+
+// ---------------------------------------------------------------------------
+// Reset the current position of entry array
+// ---------------------------------------------------------------------------
+//
+void CMPXFolderScanner::CDirQueueEntry::ResetPosition()
+    {
+    iPos = 0;
+    }
+
+// ---------------------------------------------------------------------------
+// Constructor
+// ---------------------------------------------------------------------------
+//
+CMPXFolderScanner::CDirQueueEntry::CDirQueueEntry()
+    {
+    // Do nothing
+    }
+
+// ---------------------------------------------------------------------------
+// 2nd Phase Contructor
+// ---------------------------------------------------------------------------
+//
+void CMPXFolderScanner::CDirQueueEntry::ConstructL( const TDesC& aFullPath )
+    {
+    iFullPath = aFullPath.AllocL();
+    }

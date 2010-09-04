@@ -173,10 +173,15 @@ void CMPXPlaybackSession::DispatchMessageL( const RMessage2& aMessage, TInt& aMs
             }
         case EPbsGetAsyncBuffer:
             {
+            //In case of other application leaving, causing us to leave
+            //we could have a task that does not get removed from the top of the queue
+            //but the data for that task has been deleted.
+            //When the task runs again, there will be no data causing a panic - leave if this occurs
+            User::LeaveIfNull(iAsyncBuffer);                         
             aMessage.WriteL(0,iAsyncBuffer->Ptr(0));
             delete iAsyncBuffer;
-            iAsyncBuffer = NULL;
-            break;
+            iAsyncBuffer = NULL;       
+            break;                            
             }
         case EPbsInitFromCollection:
             {

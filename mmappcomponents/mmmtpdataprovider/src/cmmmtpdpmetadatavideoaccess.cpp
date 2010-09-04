@@ -40,7 +40,7 @@
 #include "mmmtpvideodbdefs.h"
 #include "tobjectdescription.h"
 
-const TInt KStorageRootMaxLength = 10;
+_LIT( KMTPNoBackupFolder, "nobackup\\" );
 
 #ifdef _DEBUG
 static const TInt KMtpMaxStringDescLength = KMtpMaxStringLength - 1;
@@ -109,12 +109,17 @@ TInt CMmMtpDpMetadataVideoAccess::OpenDatabase()
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataVideoAccess::OpenDatabase" ) );
 
-    iRfs.CreatePrivatePath( iStoreNum );
-    TInt err = iRfs.SetSessionToPrivate( iStoreNum );
+    TFileName dbFileName;
+    TDriveUnit dbDrive( iStoreNum );
+    iRfs.PrivatePath( dbFileName );
+    dbFileName.Insert( 0, dbDrive.Name() );
+    dbFileName.Append( KMTPNoBackupFolder );
+    dbFileName.Append( KMtpVideoDb );
+    TInt err = iRfs.MkDirAll( dbFileName );
 
-    if ( err == KErrNone )
+    if ( err == KErrNone || err == KErrAlreadyExists )
         {
-        TRAP( err, iFileStore = CPermanentFileStore::OpenL( iRfs, KMtpVideoDb, EFileRead | EFileWrite ) );
+        TRAP( err, iFileStore = CPermanentFileStore::OpenL( iRfs, dbFileName, EFileRead | EFileWrite ) );
 
         if ( err == KErrNone )
             TRAP( err, iFileStore->SetTypeL( iFileStore->Layout() ) );
@@ -127,8 +132,8 @@ TInt CMmMtpDpMetadataVideoAccess::OpenDatabase()
 
         if ( err != KErrNone )
             {
-            iRfs.Delete( KMtpVideoDb );   // delete first before creating a new one
-            TRAP( err, iFileStore = CPermanentFileStore::CreateL( iRfs, KMtpVideoDb, EFileRead | EFileWrite ) );
+            iRfs.Delete( dbFileName );   // delete first before creating a new one
+            TRAP( err, iFileStore = CPermanentFileStore::CreateL( iRfs, dbFileName, EFileRead | EFileWrite ) );
             PRINT1( _L( "MM MTP <> OpenDatabase RDbNamedDatabase::CreateL, err = %d" ), err );
 
             if ( err == KErrNone )
@@ -149,7 +154,7 @@ TInt CMmMtpDpMetadataVideoAccess::OpenDatabase()
                 if ( KErrNone != err )
                     {
                     iDatabase.Close();
-                    iRfs.Delete( KMtpVideoDb );
+                    iRfs.Delete( dbFileName );
                     }
                 }
             }
@@ -160,13 +165,7 @@ TInt CMmMtpDpMetadataVideoAccess::OpenDatabase()
         iDbOpened = ETrue;
         }
 
-    TBuf<KStorageRootMaxLength> storeRoot;
-    if( PathInfo::GetRootPath( storeRoot, iStoreNum ) == KErrNone )
-        {
-        iRfs.SetSessionPath( storeRoot );
-        }
-
-    PRINT( _L( "MM MTP <= CMmMtpDpMetadataVideoAccess::OpenDatabase" ) );
+    PRINT1( _L( "MM MTP <= CMmMtpDpMetadataVideoAccess::OpenDatabase err = %d" ), err );
     return err;
     }
 

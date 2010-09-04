@@ -25,26 +25,27 @@
 // -----------------------------------------------------------------------------
 TInt CCommonTestClass::CreateCMPXViewPlugin()
     {
-	FTRACE(FPrint(_L("CCommonTestClass::CreateCMPXViewPlugin testing CMPXViewPlugin::NewL begin")));
-    iLog->Log(_L("CCommonTestClass::CreateCMPXViewPlugin testing CMPXViewPlugin::NewL begin"));
-    TInt err = KErrNone;
-    if ( iViewPlugin != NULL)
-        {
-        delete iViewPlugin;
-        }
-    iViewPlugin = NULL;
-
-	TUid aUid = TUid::Uid(270531770);
-
-    TRAP(err,iViewPlugin = CMPXViewPlugin::NewL( aUid, this ));
-    if ( iViewPlugin == NULL)
-        {
-        err = KErrNotFound;
-        }
-
-	FTRACE(FPrint(_L("CCommonTestClass::CreateCMPXViewPlugin testing CMPXViewPlugin::NewL end err=%d"), err));
-    iLog->Log(_L("CCommonTestClass::CreateCMPXViewPlugin testing CMPXViewPlugin::NewL end err=%d"), err);
-	return err;
+//    FTRACE(FPrint(_L("CCommonTestClass::CreateCMPXViewPlugin testing CMPXViewPlugin::NewL begin")));
+//    iLog->Log(_L("CCommonTestClass::CreateCMPXViewPlugin testing CMPXViewPlugin::NewL begin"));
+//    TInt err = KErrNone;
+//    if ( iViewPlugin != NULL)
+//        {
+//        delete iViewPlugin;
+//        }
+//    iViewPlugin = NULL;
+//
+//    TUid aUid = TUid::Uid(270531770);
+//
+//    TRAP(err,iViewPlugin = CMPXViewPlugin::NewL( aUid, this ));
+//    if ( iViewPlugin == NULL)
+//        {
+//        err = KErrNotFound;
+//        }
+//
+//    FTRACE(FPrint(_L("CCommonTestClass::CreateCMPXViewPlugin testing CMPXViewPlugin::NewL end err=%d"), err));
+//    iLog->Log(_L("CCommonTestClass::CreateCMPXViewPlugin testing CMPXViewPlugin::NewL end err=%d"), err);
+//    return err;
+    return KErrNone;
     }
 
 // -----------------------------------------------------------------------------
@@ -53,18 +54,19 @@ TInt CCommonTestClass::CreateCMPXViewPlugin()
 // -----------------------------------------------------------------------------
 TInt CCommonTestClass::DeleteCMPXViewPlugin()
     {
-	FTRACE(FPrint(_L("CCommonTestClass::DeleteCMPXViewPlugin testing CMPXViewPlugin::~ begin")));
-    iLog->Log(_L("CCommonTestClass::DeleteCMPXViewPlugin testing CMPXViewPlugin::~ begin"));
-    TInt err = KErrNone;
-    if ( iViewPlugin )
-        {
-        delete iViewPlugin;
-        REComSession::FinalClose();
-        iViewPlugin = NULL;
-        }
-	FTRACE(FPrint(_L("CCommonTestClass::DeleteCMPXViewPlugin testing CMPXViewPlugin::~ end err=%d"), err));
-    iLog->Log(_L("CCommonTestClass::DeleteCMPXViewPlugin testing CMPXViewPlugin::~ end err=%d"), err);
-	return err;
+//    FTRACE(FPrint(_L("CCommonTestClass::DeleteCMPXViewPlugin testing CMPXViewPlugin::~ begin")));
+//    iLog->Log(_L("CCommonTestClass::DeleteCMPXViewPlugin testing CMPXViewPlugin::~ begin"));
+//    TInt err = KErrNone;
+//    if ( iViewPlugin )
+//        {
+//        delete iViewPlugin;
+//        REComSession::FinalClose();
+//        iViewPlugin = NULL;
+//        }
+//    FTRACE(FPrint(_L("CCommonTestClass::DeleteCMPXViewPlugin testing CMPXViewPlugin::~ end err=%d"), err));
+//    iLog->Log(_L("CCommonTestClass::DeleteCMPXViewPlugin testing CMPXViewPlugin::~ end err=%d"), err);
+//    return err;
+    return KErrNone;
     }
 
 

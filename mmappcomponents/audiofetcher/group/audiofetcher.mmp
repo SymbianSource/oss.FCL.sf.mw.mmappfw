@@ -61,7 +61,7 @@ LIBRARY   	apmime.lib  			// TDataType
 LIBRARY		avkon.lib
 LIBRARY     bafl.lib				// For BaflUtils
 LIBRARY		bitgdi.lib 
-LIBRARY     commonengine.lib
+LIBRARY     CommonEngine.lib
 LIBRARY  	euser.lib
 LIBRARY     ecom.lib
 LIBRARY		cone.lib 				// TParser
@@ -72,7 +72,7 @@ LIBRARY		eikctl.lib
 LIBRARY		eikcoctl.lib
 LIBRARY		eikcore.lib
 LIBRARY		fbscli.lib 
-LIBRARY     WS32.lib 				// For Rwindow
+LIBRARY     ws32.lib 				// For Rwindow
 
 LIBRARY		mdccommon.lib           // mds
 LIBRARY   	mdeclient.lib           // mds

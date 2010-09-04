@@ -89,29 +89,32 @@ class QTMSBuffer;
  * <code>
  * QTMSFactory *iFactory;
  * QTMSCall *iCall;
- * QTMSStream *iUplink;
- * QTMSStream *iDownlink;
+ * QTMSStream *iUplinkStream;
+ * QTMSStream *iDownlinkStream;
  * gint err;
  *
  * err = QTMSFactory::CreateFactory(iFactory);
  * err = iFactory->CreateCall(QTMS_CALL_IP, iCall);
- * err = iCall->CreateStream(QTMS_STREAM_UPLINK, iUplink);
- * err = iCall->CreateStream(QTMS_STREAM_DOWNLINK, iDownlink);
+ * err = iCall->CreateStream(QTMS_STREAM_UPLINK, iUplinkStream);
+ * err = iCall->CreateStream(QTMS_STREAM_DOWNLINK, iDownlinkStream);
  * // Configure CS uplink stream
- * iUplinkStream->AddObserver(*this);
+ * connect(iUplinkStream,
+ *         SIGNAL(TMSStreamEvent(const QTMSStream&, QTMSSignalEvent)),
+ *         this,
+ *         SLOT(TMSStreamEvent(const QTMSStream&, QTMSSignalEvent)));
  * iUplinkStream->AddSource(iMicSource);
  * iUplinkStream->AddSink(iModemSink);
  * iUplinkStream->AddEffect(iGainEffect); // To control mic gain
  * iUplinkStream->Init();
- * // Wait for state change callback
+ * // Wait for TMSStreamEvent signal
  * iUplinkStream->Play();
- * // Wait for state change callback
+ * //Wait for TMSStreamEvent signal
  * ...
  * // call terminated on the cell modem side, now signal multimedia system
  * iUplinkStream->Stop();
  * ...
- *  err = iCall->DeleteStream(iDownlink);
- *  err = iCall->DeleteStream(iUplink);
+ *  err = iCall->DeleteStream(iDownlinkStream);
+ *  err = iCall->DeleteStream(iUplinkStream);
  *  err = iFactory->DeleteCall(iCall);
  * delete iFactory;
  *
