@@ -124,7 +124,7 @@ TInt CAbstractMediaMtpDataProviderGetObjectPropList::ServiceSpecificObjectProper
             PRINT2( _L( "MM MTP <> EMTPObjectPropCodeRepresentativeSampleData sampleFile.Size size=%d, err=%d" ), size, err );
             if( err == KErrNone && size > 0 )
                 {
-                HBufC8* sampleData = HBufC8::NewLC( size * sizeof( TUint8 ) );    // + sampleData
+                HBufC8* sampleData = HBufC8::NewLC( size );    // + sampleData
                 TPtr8 samplePtr = sampleData->Des();
                 err = sampleFile.Read( samplePtr );
                 PRINT1( _L( "MM MTP <> EMTPObjectPropCodeRepresentativeSampleData sampleFile.Read err=%d" ), err );
