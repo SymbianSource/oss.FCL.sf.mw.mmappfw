@@ -101,10 +101,11 @@ void CAudioFetcher::SetMultiSelectionL( TBool aMultiSelect )
 // SetMimeTypesL
 // ---------------------------------------------------------------------------
 //
-void CAudioFetcher::SetMimeTypesL( const MDesCArray& /*aMimeTypes*/ )
+void CAudioFetcher::SetMimeTypesL( const MDesCArray& aMimeTypes )
     {
-    WLOG("CAudioFetcher::SetMimeTypesL (not supported)");
-    // No implementation required (not supported)
+    WLOG("CAudioFetcher::SetMimeTypesL");
+    
+    iMimeTypeArray = &aMimeTypes;
     }
 
 // ---------------------------------------------------------------------------
@@ -197,7 +198,8 @@ TBool CAudioFetcher::LaunchL( CDesCArray& aSelectedFiles,
 	
 	// create the dialog first
 	CAudioFetcherDialog* dialog =
-	    CAudioFetcherDialog::NewL( aSelectedFiles, iVerifier, *iTitle, iIsMultiSelection, aMediaType );
+        CAudioFetcherDialog::NewL( aSelectedFiles, iVerifier, *iTitle,
+                iIsMultiSelection, aMediaType, *iMimeTypeArray );
 	
 	// Returns zero when Fetcher is cancelled by User.
 	buttonId = dialog->ExecuteLD( R_MODAL_SINGLE_DIALOG );	

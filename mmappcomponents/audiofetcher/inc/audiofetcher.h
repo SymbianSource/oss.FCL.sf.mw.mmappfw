@@ -182,6 +182,11 @@ NONSHARABLE_CLASS( CAudioFetcher ) :	public CMediaFetchImplementation,
 		* Verifier
 		*/
 		MMGFetchVerifier* iVerifier;
+		
+		/**
+		* Mime Type array
+		*/
+		const MDesCArray* iMimeTypeArray;
 		};
 
 #endif // AUDIOFETCHER_H

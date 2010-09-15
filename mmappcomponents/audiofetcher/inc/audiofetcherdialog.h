@@ -59,7 +59,8 @@ NONSHARABLE_CLASS ( CAudioFetcherDialog ) : public CAknDialog,
             MMGFetchVerifier* aVerifier,
             const TDesC& aTitle,
             TBool aMultiSelectionEnabled, 
-            TMediaFileType aMediaType );
+            TMediaFileType aMediaType,
+            const MDesCArray& aMimeTypeArray);
 
         /**
         * Destructor.
@@ -78,7 +79,8 @@ NONSHARABLE_CLASS ( CAudioFetcherDialog ) : public CAknDialog,
         */
         CAudioFetcherDialog(
             CDesCArray& aSelectedFiles, MMGFetchVerifier* aVerifier, const TDesC& aTitle, 
-            TBool aMultiSelectionEnabled, TMediaFileType aMediaType);
+            TBool aMultiSelectionEnabled, TMediaFileType aMediaType,
+            const MDesCArray& aMimeTypeArray);
 
 	private:
 	    
@@ -248,6 +250,9 @@ NONSHARABLE_CLASS ( CAudioFetcherDialog ) : public CAknDialog,
         CAknInputBlock* iInputBlock;
         
         TMediaFileType iMediaType;
+        
+        // Mine Type array
+        const MDesCArray& iMimeTypeArray;
 	};
 
 #endif // AUDIOFETCHERDIALOG_H

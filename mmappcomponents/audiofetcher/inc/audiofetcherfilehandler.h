@@ -166,6 +166,7 @@ NONSHARABLE_CLASS (CAudioFetcherFileHandler) : public CBase,
         void SetObserver( MAudioFetcherFileHandlerObserver* aObserver );
         void SetQueryId( TInt aId );
         void EnableObserverCall( TBool aEnable );
+        void SetMimeType( const MDesCArray& aMimeTypeArray );
         
     public:
         TInt RomFileAttribute( TInt aIndex, TInt aAttr );
@@ -185,6 +186,7 @@ NONSHARABLE_CLASS (CAudioFetcherFileHandler) : public CBase,
     private:
 
         void ExcludeRomFilesL( CMdELogicCondition& aCondition );
+        void MimeFilterL( CMdELogicCondition& aCondition );
 
     private:
         void LeaveIfSessionClosedL();
@@ -227,6 +229,9 @@ NONSHARABLE_CLASS (CAudioFetcherFileHandler) : public CBase,
 
         // search result list - ui shows items from this list
         CSearchList* iSearchList;
+        
+        // Mime Type array
+        const MDesCArray* iMimeTypeArray;
 
         // metadata search text
         TBuf<128> iSearchText;

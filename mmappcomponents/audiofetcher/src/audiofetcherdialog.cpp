@@ -63,12 +63,14 @@ inline CAudioFetcherDialog::CAudioFetcherDialog(
             MMGFetchVerifier* aVerifier,
             const TDesC& aTitle,
             TBool aMultiSelectionEnabled,
-            TMediaFileType aMediaType)
+            TMediaFileType aMediaType,
+            const MDesCArray& aMimeTypeArray)
         : iSelectedFiles( aSelectedFiles ),
           iVerifier( aVerifier ),
           iTitle( aTitle ),
           iMultiSelectionEnabled(aMultiSelectionEnabled),
-          iMediaType(aMediaType)
+          iMediaType(aMediaType),
+          iMimeTypeArray( aMimeTypeArray )
 	{
 	WLOG("CAudioFetcherDialog::CAudioFetcherDialog");
 	// No implementation required
@@ -80,12 +82,12 @@ inline CAudioFetcherDialog::CAudioFetcherDialog(
 //
 CAudioFetcherDialog* CAudioFetcherDialog::NewL(CDesCArray& aSelectedFiles, 
                MMGFetchVerifier* aVerifier,  const TDesC& aTitle, TBool aMultiSelectionEnabled,
-               TMediaFileType aMediaType)
+               TMediaFileType aMediaType, const MDesCArray& aMimeTypeArray)
 	{
 	WLOG("CAudioFetcherDialog::NewL");
 	CAudioFetcherDialog* self=
-	    new( ELeave ) CAudioFetcherDialog(
-	        aSelectedFiles, aVerifier, aTitle, aMultiSelectionEnabled, aMediaType );
+        new( ELeave ) CAudioFetcherDialog(aSelectedFiles, aVerifier, aTitle,
+                aMultiSelectionEnabled, aMediaType, aMimeTypeArray);
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self );
@@ -887,7 +889,7 @@ void CAudioFetcherDialog::QueryL()
         WLOG("CAudioFetcherDialog::QueryL: query in progress");
         return;
         }
-
+    iFileHandler->SetMimeType( iMimeTypeArray );
     iFileHandler->EnableObserverCall( ETrue );
     iFileHandler->SetQueryId( 0 );
     iFileHandler->QueryAudioL();

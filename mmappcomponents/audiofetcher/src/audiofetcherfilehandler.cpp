@@ -376,6 +376,7 @@ void CAudioFetcherFileHandler::QueryImageL()
     iQuery->AddPropertyFilterL( &fileTypePropertyDef );
    
     CMdELogicCondition& conditions = iQuery->Conditions();
+    MimeFilterL( conditions );
     ExcludeRomFilesL( conditions );
    
     iQuery->SetResultMode( EQueryResultModeItem );
@@ -414,6 +415,7 @@ void CAudioFetcherFileHandler::QueryAudioL()
     iQuery->AddPropertyFilterL( &fileTypePropertyDef );
    
     CMdELogicCondition& conditions = iQuery->Conditions();
+    MimeFilterL( conditions );
     ExcludeRomFilesL( conditions );
     
     // define sort order
@@ -455,6 +457,7 @@ void CAudioFetcherFileHandler::QueryVideoL()
     iQuery->AddPropertyFilterL( &fileTypePropertyDef );
    
     CMdELogicCondition& conditions = iQuery->Conditions();
+    MimeFilterL( conditions );
     ExcludeRomFilesL( conditions );
    
     iQuery->SetResultMode( EQueryResultModeItem );
@@ -700,6 +703,45 @@ void CAudioFetcherFileHandler::ExcludeRomFilesL( CMdELogicCondition& aCondition 
     cond.SetNegate( ETrue );
     }
 
+// -----------------------------------------------------------------------------
+// CAudioFetcherFileHandler::MimeFilterL
+// 
+// -----------------------------------------------------------------------------
+//
+void CAudioFetcherFileHandler::MimeFilterL( CMdELogicCondition& aCondition )
+    {
+    WLOG("CAudioFetcherFileHandler::MimeFilterL");
+
+    if( iMimeTypeArray )
+        {
+		if ( iMimeTypeArray->MdcaCount() > 0 )
+			{
+			CMdELogicCondition& cond =
+					aCondition.AddLogicConditionL( ELogicConditionOperatorOr );
+			for ( TInt i = 0; i < iMimeTypeArray->MdcaCount(); i++ )
+				{
+				TPtrC ptr = iMimeTypeArray->MdcaPoint(i);
+							
+				cond.AddPropertyConditionL( 
+                    iSession->GetDefaultNamespaceDefL().GetObjectDefL(
+                    MdeConstants::Image::KImageObject ).GetPropertyDefL( 
+                    MdeConstants::Object::KItemTypeProperty ),
+                    ETextPropertyConditionCompareEquals, ptr  );
+				}
+			}
+    	}
+    }
+
+// -----------------------------------------------------------------------------
+// CAudioFetcherFileHandler::SetMimeType
+// 
+// -----------------------------------------------------------------------------
+//
+void CAudioFetcherFileHandler::SetMimeType( const MDesCArray& aMimeTypeArray )
+    {
+    WLOG("CAudioFetcherFileHandler::SetMimeType");
+    iMimeTypeArray = &aMimeTypeArray;
+    }
 
 // -------------------------------------------------------------------------------
 // CAudioFetcherFileHandler::StrCopy
