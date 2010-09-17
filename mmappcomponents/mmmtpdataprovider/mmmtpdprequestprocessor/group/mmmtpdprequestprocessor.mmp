@@ -76,10 +76,10 @@ LIBRARY             mpxcollectionhelper.lib
 
 LIBRARY             mtpdatatypes.lib
 LIBRARY             mtpdataproviderapi.lib
-LIBRARY             platformenv.lib
+LIBRARY             PlatformEnv.lib
 
 LIBRARY             edbms.lib
-LIBRARY             contentlistingframework.lib 
+LIBRARY             ContentListingFramework.lib 
 LIBRARY             caf.lib
 
 #if defined(__WINDOWS_MEDIA)

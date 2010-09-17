@@ -79,8 +79,8 @@ LIBRARY         drmhelper.lib
 //CAMESE_IN_DRM_UTILITY
 LIBRARY         drmuihandling.lib
 LIBRARY		drmautomatedusage.lib
-LIBRARY         drmcommon.lib
-LIBRARY         drmrights.lib
+LIBRARY         DRMCommon.lib
+LIBRARY         DrmRights.lib
 LIBRARY         caf.lib
 LIBRARY         cafutils.lib
 LIBRARY         ws32.lib

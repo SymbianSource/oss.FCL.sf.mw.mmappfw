@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extended collection helper with an internal caching array
-*  Version     : %version: da1mmcf#27.1.12.3.5 % 
+*  Version     : %version: e003sa33#27.1.12.3.7 % 
 *
 */
 
@@ -53,6 +53,7 @@ _LIT( K3GPFileExt, ".3gp" );
 _LIT( K3G2FileExt, ".3g2" );
 _LIT( KODFFileExt, ".odf" );
 _LIT( KO4AFileExt, ".o4a" );
+_LIT( KAACFileExt, ".aac" );
 
 // ======== MEMBER FUNCTIONS ========
 
@@ -179,7 +180,7 @@ void CMPXCollectionCachedHelper::AddL( CMPXMedia* aMedia )
     if( iCache->Count() >= cacheCount)
         Commit();
 
-    #ifdef ABSTRACTAUDIOALBUM_INCLUDED
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
     TBool extract = ETrue;
     if( aMedia->IsSupported( KMPXMediaMTPSampleDataFlag ) )
         {
@@ -389,22 +390,29 @@ void CMPXCollectionCachedHelper::SetL( CMPXMedia*& aMedia )
     // Take advantage that MTP always try to access the most recent item
     //
     CMPXMedia* media( NULL );
+    TBool anotherAbstractMediaFound = EFalse;
     for( TInt i=count-1; i>=0; --i )
         {
         const TDesC& uri = iCache->AtL(i)->ValueText( KMPXMediaGeneralUri );
+        TMPXGeneralCategory category = iCache->AtL(i)->ValueTObjectL<TMPXGeneralCategory>(KMPXMediaGeneralCategory);
+        MPX_DEBUG3("CMPXCollectionCachedHelper::SetL iCache[i].category = %d, uri = %S", category, &uri);
         if( newUri.CompareF( uri ) == 0 )
             {
             MPX_DEBUG2("Found existing media, index %i", i);
             media = iCache->AtL(i);
             break;
             }
+        else if ( category == EMPXPlaylist || category == EMPXAbstractAlbum )
+            anotherAbstractMediaFound = ETrue;
         }
     
     // Not found in the array
     if( !media )
         {
         // If the catched count is more than KCacheCount, commit it to database.
-        if( count >= KCacheCount )
+		// could be song or alb coming, not in the cache, and there is at least one .alb on the cache
+        // commit all if another AbstractMedia is found (anotherAbstractMediaFound is on ETrue if not the current one)
+        if( ( count >= KCacheCount ) || anotherAbstractMediaFound )
             {
             Commit();
             }
@@ -808,7 +816,8 @@ const CMPXMedia& CMPXCollectionCachedHelper::GetL( const TDesC& aFile,
         delete iFoundMedia;
         iFoundMedia = NULL;
         
-        Commit();
+		MPX_DEBUG1("CMPXCollectionCachedHelper::GetL, not found on the cache");
+        Commit( ETrue );    // leave AbstractAlbum in cache
 
         RArray<TMPXAttribute> attributes;
         CleanupClosePushL(attributes);
@@ -853,8 +862,15 @@ const CMPXMedia& CMPXCollectionCachedHelper::GetL( const TDesC& aFile,
 CMPXMedia* CMPXCollectionCachedHelper::FindAllL( CMPXMedia& aCriteria, 
                      const TArray<TMPXAttribute>& aAttrs )
     {
-    Commit();
+    TBool cacheAbstractAlbum = EFalse;
+    TMPXGeneralCategory category = aCriteria.ValueTObjectL<TMPXGeneralCategory>( KMPXMediaGeneralCategory );
     
+    // leave AbstractAlbum in cache, unless the new criteria is another abstract media
+    if ( ( category != EMPXPlaylist ) && ( category != EMPXAbstractAlbum ) )
+        cacheAbstractAlbum = ETrue;
+    
+    Commit( cacheAbstractAlbum );
+
     return CMPXCollectionHelperImp::FindAllL( aCriteria, aAttrs );
     }
 
@@ -877,32 +893,39 @@ void CMPXCollectionCachedHelper::Close()
 // Commits all transactions left in the helper
 // ---------------------------------------------------------------------------
 //   
-void CMPXCollectionCachedHelper::Commit()
+void CMPXCollectionCachedHelper::Commit( TBool aCacheAbstractAlbum )
     {
     MPX_DEBUG2("CMPXCollectionCachedHelper::Commit %d <--", iCache->Count());
     TInt error( KErrNotFound );
     TInt count( iCache->Count() );
+    TInt currentIndex = 0;
     
-    for( TInt i=0; i<count; ++i )
+    for( TInt i = 0; i < count; ++i )
         {
-        CMPXMedia* media = (*iCache)[0];
+        CMPXMedia* media = (*iCache)[currentIndex];
+        TMPXGeneralCategory category = media->ValueTObjectL<TMPXGeneralCategory>( KMPXMediaGeneralCategory );
+        TBool needCache = EFalse;
+        
+        if ( ( category == EMPXAbstractAlbum ) && aCacheAbstractAlbum )
+            needCache = ETrue;
+        
         if( media )
             {
-            switch( iOp[0] )
+            switch( iOp[currentIndex] )
                 {
                 case EAdd:
                     {
-                    TRAP( error, SetMissingMetadataL( media ) );    // doing this only before initial add
-                    MPX_DEBUG2( "CMPXCollectionCachedHelper::Commit, SetMissingMetadataL, err = %d", error );
-
-                    TRAP(error,
-                        CMPXCollectionHelperImp::AddL( media );
-                        );
+                    if ( !needCache )
+                        {
+                        TRAP( error, SetMissingMetadataL( media ) );    // doing this only before initial add
+                        MPX_DEBUG2( "CMPXCollectionCachedHelper::Commit, SetMissingMetadataL, err = %d", error );
+                        TRAP( error, CMPXCollectionHelperImp::AddL( media ) );
+                        }
                     break;
                     }
                 case ESet:
                     {
-                    TRAP(error,
+                    TRAP( error,
                         CMPXCollectionHelperImp::SetL( media );
                         );
                     break;
@@ -932,10 +955,19 @@ void CMPXCollectionCachedHelper::Commit()
                     DoAppendContainerL( *media, *iFoundMedia );
                     DoAppendMTPL( *media, *iFoundMedia ); 
                     );
-            }            
-            
-        iCache->Remove(0);
-        iOp.Remove(0);        
+            }
+
+        if ( needCache )
+            {
+            const TDesC& uri = media->ValueText(KMPXMediaGeneralUri);
+			MPX_DEBUG2("need cache uri %S", &uri);
+            currentIndex++;
+            }
+        else
+            {
+            iCache->Remove( currentIndex );
+            iOp.Remove( currentIndex );
+            }        
         }
     
     MPX_DEBUG1("CMPXCollectionCachedHelper::Commit -->");        
@@ -1214,6 +1246,7 @@ void CMPXCollectionCachedHelper::SetMissingMetadataL(CMPXMedia* aMedia)
     // only do this for file that might not be natively supported by PC
     if ( ( parse.Ext().CompareF(K3GPFileExt) == 0 )
         || ( parse.Ext().CompareF(K3G2FileExt) == 0 )
+        || ( parse.Ext().CompareF(KAACFileExt) == 0 )
         || ( parse.Ext().CompareF(KODFFileExt) == 0 )
         || ( parse.Ext().CompareF(KO4AFileExt) == 0 ) )
         {
