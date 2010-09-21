@@ -63,7 +63,7 @@ public:
     /**
     * Check the file size, if file doesn't exist, leave
     * @param aFs, handle of file server session
-    * @param aFileName, fine name
+    * @param aFileName, file name
     * @return TUint64 size for specified file
     */
     static TUint64 GetObjectSizeL( RFs& aFs, const TDesC& aFileName );
@@ -71,10 +71,20 @@ public:
     /**
     * Get file date modified info
     * @param aFs , handle of file server session
-    * @param aFullFileName, fine name
-    * @return TTime for specified file
+    * @param aFullFileName, file name
+    * @param aDateModified, MTP time format (YYYYMMDDTHHMMSS) for the file
     */
     static void GetObjectDateModifiedL( RFs& aFs, const TDesC& aFullFileName, TDes& aDateModified );
+
+
+    /**
+    * Converts a date time string in the internal MTP format (YYYYMMDDTHHMMSS)
+    * to a TTime.
+    * @param aDateTime string, containing date and time
+    * @param aTime, the TTime objec if the date time string is parsed correctly
+    * @return error code 
+    */
+    static TInt DesToTTime( const TDesC& aDateTime, TTime& aTime );
 
     /**
     * Check if file is read-only, if file doesn't exist, leave

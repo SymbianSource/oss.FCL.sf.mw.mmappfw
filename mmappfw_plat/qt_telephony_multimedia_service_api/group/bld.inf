@@ -23,6 +23,7 @@ DEFAULT
 PRJ_EXPORTS
 
 ../inc/qtms.h                    MW_LAYER_PLATFORM_EXPORT_PATH(qtms.h)
+../inc/qtmsver.h                 MW_LAYER_PLATFORM_EXPORT_PATH(qtmsver.h)
 ../inc/qtmsamrformat.h           MW_LAYER_PLATFORM_EXPORT_PATH(qtmsamrformat.h)
 ../inc/qtmsbuffer.h              MW_LAYER_PLATFORM_EXPORT_PATH(qtmsbuffer.h)
 ../inc/qtmscall.h                MW_LAYER_PLATFORM_EXPORT_PATH(qtmscall.h)

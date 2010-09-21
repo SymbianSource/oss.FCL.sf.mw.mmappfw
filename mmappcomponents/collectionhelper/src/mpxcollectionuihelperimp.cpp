@@ -84,7 +84,7 @@ void CMPXCollectionUiHelperImp::ConstructL(const TUid& aModeId)
     iChunkSize = 0;
     iArrayIndex = 0;
     iRefCount = 1;
-
+    iModeId = aModeId;
     }
 
 
@@ -1049,20 +1049,23 @@ void CMPXCollectionUiHelperImp::Cancel()
 //
 void CMPXCollectionUiHelperImp::Close()
     {
-
-    ASSERT( iRefCount > 0 );
-    if ( --iRefCount == 0 )
+    if ( iModeId == KMcModeDefault )
         {
-        // last client released
-        CMPXCollectionUiHelperImp* s = reinterpret_cast<CMPXCollectionUiHelperImp*>( Dll::Tls() );
-        if ( s )
+        ASSERT( iRefCount > 0 );
+        if ( --iRefCount == 0 )
             {
-            if ( s == this )
+            // last client released
+            CMPXCollectionUiHelperImp* s = reinterpret_cast<CMPXCollectionUiHelperImp*>( Dll::Tls() );
+            if ( s && s == this )
                 {
                 delete this;
                 Dll::SetTls( NULL );
                 }
             }
+        }
+    else
+        {
+        delete this;
         }
     }
 

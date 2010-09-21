@@ -55,11 +55,11 @@
 using namespace QTMS;
 using namespace TMS;
 
-QTMSFactoryImpl::QTMSFactoryImpl()
+QTMSFactoryImpl::QTMSFactoryImpl(QTMSVer& /*ver*/)
 {
     TRACE_PRN_FN_ENT;
-    TMSVer* ver = NULL;
-    TMSFactory::CreateFactory(iFactory, *ver);
+    TMSVer* v = NULL;
+    TMSFactory::CreateFactory(iFactory, *v);
     TRACE_PRN_FN_EXT;
 }
 

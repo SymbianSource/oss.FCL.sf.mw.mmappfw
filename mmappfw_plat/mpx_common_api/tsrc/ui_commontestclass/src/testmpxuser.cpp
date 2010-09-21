@@ -376,9 +376,9 @@ TInt CCommonTestClass::MergeArray()
     iLog->Log(_L("CCommonTestClass::MergeArray testing MPXUser::MergeArray() begin"));
     TInt err = KErrNone;
 
-    CDesCArray* src;
+    CDesCArray* src( NULL );
     TRAP(err,src = new(ELeave)CDesCArrayFlat(10));    
-    CDesCArray* dest;
+    CDesCArray* dest( NULL );
     TRAP(err,dest = new(ELeave)CDesCArrayFlat(20));    
     TRAP(err , src->AppendL(_L("test")));
     MPXUser::MergeArray( *src, *dest );

@@ -34,7 +34,7 @@ class QTMSBuffer;
 class QTMSSource;
 class QTMSSink;
 class QTMSFactoryImpl;
-class QTMSVer; // QTMS version definition
+class QTMSVer;
 class QTMSGlobalRouting;
 class QTMSDTMF;
 class QTMSRingTone;
@@ -448,7 +448,7 @@ private:
     /**
      * Constructor
      */
-    QTMSFactory();
+    QTMSFactory(QTMSVer& ver);
 
 private:
     QTMSFactoryImpl* impl;

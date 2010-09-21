@@ -260,7 +260,7 @@ TInt Cmpxalbumartutilitytest::CMPXAlbumArtUtilityDecode( CStifItemParser& aItem 
   	    KTestStr.Append(string);
 	    TRequestStatus iStatus(0);
 	    TBufC<50> path(KTestStr);
-	    CFbsBitmap* iDestBMP;
+	    CFbsBitmap* iDestBMP( NULL );
 	    TRAP( err , iDestBMP = new(ELeave) CFbsBitmap());
 	    iLog->Log(_L("Cmpxalbumartutilitytest::CMPXAlbumArtUtilityDecode"));
 	    TRAP( err , iAlbumArtUtility = CMPXAlbumArtUtility::NewL());
@@ -303,7 +303,7 @@ TInt Cmpxalbumartutilitytest::CMPXAlbumArtUtilityDecodeASourceJPG( CStifItemPars
 	    TBufC<50> descriptor16(KTestStr);
 	    TPtrC8 sourcepath = MPXUser::Ptr(descriptor16);
 	
-	    CFbsBitmap* iDestBMP;
+	    CFbsBitmap* iDestBMP( NULL );
 	    TRAP(err,iDestBMP = new(ELeave) CFbsBitmap());
 	    iLog->Log(_L("Cmpxalbumartutilitytest::CMPXAlbumArtUtilityDecodeASourceJPG"));
 	    iAlbumArtUtility->Decode(iStatus,sourcepath,*iDestBMP,TSize(1,1));
@@ -364,9 +364,9 @@ TInt Cmpxalbumartutilitytest::CMPXAlbumArtUtilityScale( CStifItemParser& /*aItem
     {
     TInt err=KErrNone;
     TRequestStatus iStatus(0); 
-    CFbsBitmap* iSourceBMP;
+    CFbsBitmap* iSourceBMP( NULL );
     TRAP(err,iSourceBMP=new(ELeave) CFbsBitmap());
-    CFbsBitmap* iDestBMP;
+    CFbsBitmap* iDestBMP( NULL );
     TRAP(err,iDestBMP=new(ELeave) CFbsBitmap());
     
     iLog->Log(_L("Cmpxalbumartutilitytest::CMPXAlbumArtUtilityScale"));
@@ -440,7 +440,7 @@ TInt Cmpxalbumartutilitytest::CMPXAlbumArtUtilityEncodeL( CStifItemParser& aItem
   	    TBuf<50> KTestStr;
   	    KTestStr.Append(Kmpxalbumartutilitytest_testPath);
   	    KTestStr.Append(string);
-	    CFbsBitmap* iSourceBMP;
+	    CFbsBitmap* iSourceBMP( NULL );
 	    TRAP(err , iSourceBMP = new(ELeave) CFbsBitmap());	  
 	    iSourceBMP->Load(KTestStr);   
 	    iLog->Log(_L("Cmpxalbumartutilitytest::CMPXAlbumArtUtilityEncodeL"));

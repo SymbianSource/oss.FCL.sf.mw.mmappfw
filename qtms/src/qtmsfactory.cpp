@@ -23,9 +23,9 @@
 
 using namespace QTMS;
 
-QTMSFactory::QTMSFactory()
+QTMSFactory::QTMSFactory(QTMSVer& ver)
 {
-    impl = new QTMSFactoryImpl();
+    impl = new QTMSFactoryImpl(ver);
 }
 
 QTMSFactory::~QTMSFactory()
@@ -33,9 +33,9 @@ QTMSFactory::~QTMSFactory()
     delete impl;
 }
 
-gint QTMSFactory::CreateFactory(QTMSFactory*& tmsfactory, QTMSVer& /*ver*/)
+gint QTMSFactory::CreateFactory(QTMSFactory*& tmsfactory, QTMSVer& ver)
 {
-    QTMSFactory* self = new QTMSFactory();
+    QTMSFactory* self = new QTMSFactory(ver);
     tmsfactory = self;
     return QTMS_RESULT_SUCCESS;
 }

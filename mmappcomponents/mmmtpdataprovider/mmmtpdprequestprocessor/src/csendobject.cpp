@@ -451,7 +451,6 @@ TBool CSendObject::DoHandleResponsePhaseInfoL()
         iWidth,
         iHeight );
 
-    // TODO: dateModified is reserved for extention usage.
     delete iDateMod;
     iDateMod = NULL;
     iDateMod = iObjectInfo->StringCharsL( CMTPTypeObjectInfo::EDateModified ).AllocL();
@@ -911,7 +910,6 @@ TMTPResponseCode CSendObject::SetObjectPropListL()
 
             case EMTPObjectPropCodeDateAdded:
             case EMTPObjectPropCodeDateCreated:
-            case EMTPObjectPropCodeDateModified:
             case EMTPObjectPropCodeObjectFileName:
                 // Do nothing for read-only properties
                 /* spec:
@@ -921,9 +919,9 @@ TMTPResponseCode CSendObject::SetObjectPropListL()
                  */
                 break;
 
+            case EMTPObjectPropCodeDateModified:
             case EMTPObjectPropCodeProtectionStatus:
                 // Already done in AddMediaToStore, it's not necessary to set it again.
-                // SetProtectionStatus();
                 break;
 
             case EMTPObjectPropCodeName:
@@ -1226,12 +1224,12 @@ TInt CSendObject::ReserveObjectL()
     }
 
 // -----------------------------------------------------------------------------
-// CSendObject::SetProtectionStatus
+// CSendObject::SetFileProperties
 // -----------------------------------------------------------------------------
 //
-void CSendObject::SetProtectionStatus()
+void CSendObject::SetFileProperties()
     {
-    PRINT1( _L( "MM MTP => CSendObject::SetProtectionStatus iProtectionStatus = %d" ), iProtectionStatus );
+    PRINT1( _L( "MM MTP => CSendObject::SetFileProperties iProtectionStatus = %d" ), iProtectionStatus );
 
     if ( iFileReceived != NULL )
         {
@@ -1250,10 +1248,22 @@ void CSendObject::SetProtectionStatus()
     
             if ( err != KErrNone )
                 {
-                PRINT1( _L("MM MTP <> CSendObject::SetProtectionStatus err = %d" ), err );
+                PRINT1( _L( "MM MTP <> CSendObject::SetFileProperties SetAtt err = %d" ), err );
                 }
             }
-        // Close the file after SetProtectionStatus to make sure other process won't open
+
+        if( iDateMod != NULL )
+            {
+            TTime modTime( 0 );
+            TInt err = MmMtpDpUtility::DesToTTime( *iDateMod, modTime );
+            if( err == KErrNone )
+                {
+                err = iFileReceived->File().SetModified( modTime );
+                PRINT1( _L( "MM MTP <> CSendObject::SetFileProperties SetModified err = %d" ), err );
+                }
+            }
+
+        // Close the file after SetFileProperties to make sure other process won't open
         // the file successfully right at the time calling RFile::SetAtt.
         if ( iObjectSize > 0 )
             {
@@ -1264,7 +1274,7 @@ void CSendObject::SetProtectionStatus()
             iFileReceived->File().Close();
         }
 
-    PRINT( _L( "MM MTP <= CSendObject::SetProtectionStatus" ) );
+    PRINT( _L( "MM MTP <= CSendObject::SetFileProperties" ) );
     }
 
 // -----------------------------------------------------------------------------
@@ -1309,10 +1319,10 @@ void CSendObject::AddMediaToStoreL()
     {
     PRINT( _L( "MM MTP => CSendObject::AddMediaToStoreL" ) );
 
-    // SetProtectionStatus here make sure no matter the previous operation is SendObjectInfo
+    // SetFileProperties here make sure no matter the previous operation is SendObjectInfo
     // or SendObjectPropList
-    // Might need to set dateadded and datemodify for further extension.
-    SetProtectionStatus();
+    // Might need to set dateadded for further extension.
+    SetFileProperties();
 
     PRINT1( _L( "MM MTP <> CSendObject::AddMediaToStoreL iFullPath = %S" ), &iFullPath );
     iDpConfig.GetWrapperL().AddObjectL( *iReceivedObjectInfo );
