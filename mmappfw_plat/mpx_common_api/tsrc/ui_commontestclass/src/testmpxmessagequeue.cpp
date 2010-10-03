@@ -101,7 +101,7 @@ TInt CCommonTestClass::AddCMPXMessageQueue()
 	FTRACE(FPrint(_L("CCommonTestClass::AddCMPXMessageQueue testing CMPXMessageQueue::Add begin")));
     iLog->Log(_L("CCommonTestClass::AddCMPXMessageQueue testing CMPXMessageQueue::Add begin"));
     TInt err = KErrNone;
-    CMPXMessage *message;
+    CMPXMessage *message( NULL );
     TRAP(err , message = CMPXMessage::NewL());
     iMessageQueue->Add(message, err);
     delete message;

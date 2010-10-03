@@ -212,6 +212,69 @@ void MmMtpDpUtility::GetObjectDateModifiedL( RFs& aFs, const TDesC& aFullFileNam
     }
 
 // -----------------------------------------------------------------------------
+// MmMtpDpUtility::DesToTTimeL
+// Converts a MTP format (YYYYMMDDTHHMMSS) date time string to a TTime.
+// -----------------------------------------------------------------------------
+//
+TInt MmMtpDpUtility::DesToTTime( const TDesC& aDateTime, TTime& aTime )
+    {
+    PRINT1( _L ( "MM MTP => MmMtpDpUtility::DesToTTime aDateTime=%S" ), &aDateTime );
+
+    TInt err = KErrNone;
+    if ( aDateTime.Length() < KMtpMaxDateTimeStringLength )
+        {
+        err =  KErrGeneral;
+        }
+    else
+        {
+        TLex dateBuf( aDateTime.Left( 4 ) );
+        TInt year;
+        dateBuf.Val( year );
+
+        dateBuf = aDateTime.Mid( 4, 2 );
+        TInt month;
+        dateBuf.Val( month );
+
+        dateBuf = aDateTime.Mid( 6, 2 );
+        TInt day;
+        dateBuf.Val( day );
+
+        dateBuf = aDateTime.Mid( 9, 2 );
+        TInt hour;
+        dateBuf.Val( hour );
+
+        dateBuf = aDateTime.Mid( 11, 2 );
+        TInt minute;
+        dateBuf.Val( minute );
+
+        dateBuf = aDateTime.Mid( 13, 2 );
+        TInt second;
+        dateBuf.Val( second );
+
+        PRINT3( _L ( "MM MTP <> MmMtpDpUtility::DesToTTime Year = %d, Month = %d, Day = %d" ), year, month, day );
+        PRINT3( _L ( "MM MTP <> MmMtpDpUtility::DesToTTime Hour = %d, Minute = %d, Second = %d" ), hour, minute, second );
+
+        if ( ( month > 0 && month < 13 )
+            && ( day > 0 && day < 32 )
+            && ( hour >= 0 && hour < 60 )
+            && ( minute >= 0 && minute < 60 )
+            && ( second >= 0 && second < 60 ) )
+            {
+            // microsecond is ignored because MPX doesn't support it, following s60
+            TDateTime dateTime( year, TMonth( --month ), --day, hour, minute, second, 0 );
+            aTime = dateTime;
+            }
+        else
+            {
+            // date string syntax is wrong
+            err =  KErrGeneral;
+            }
+        }
+    PRINT1( _L ( "MM MTP <= MmMtpDpUtility::DesToTTime err = %d" ), err );
+    return err;
+    }
+
+// -----------------------------------------------------------------------------
 // MmMtpDpUtility::GetProtectionStatusL
 // Get the file protection status.
 // -----------------------------------------------------------------------------

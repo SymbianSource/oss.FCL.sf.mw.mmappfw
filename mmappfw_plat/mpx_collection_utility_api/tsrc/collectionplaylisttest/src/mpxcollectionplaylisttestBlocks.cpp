@@ -353,7 +353,7 @@ TInt CMPXCollectionPlaylistTest::CreateUtilityCollectionStream( CStifItemParser&
     if ((err == KErrNone) && firstPlaylist)
         {
         // Pass stream to create another instance of playlist
-        CBufBase* buffer;
+        CBufBase* buffer( NULL );
         TRAP(err,buffer = CBufFlat::NewL( 200 )); 
         CleanupStack::PushL( buffer );
         RBufWriteStream writeStream( *buffer );
@@ -1072,7 +1072,7 @@ TInt CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilityStartL( CStifItemParse
        aAttrs.AppendL(attribut);
        TInt aChunkSize=0;
        TRAP( err , iCollectionPlaylist = CMPXCollectionPlaylist::NewL());
-       CMPXCollectionOpenUtility* utility;
+       CMPXCollectionOpenUtility* utility( NULL );
        TRAP( err , utility = CMPXCollectionOpenUtility::NewL(iCollectionPlaylist,KMcModeDefault));
        TRAP( err , utility->StartL(aAttrs.Array(),aChunkSize));
        delete utility;
@@ -1093,7 +1093,7 @@ TInt CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilityPathL( CStifItemParser
     iLog->Log(_L("CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilityPathL"));
     TInt err = KErrNone;
     TRAP( err , iCollectionPlaylist = CMPXCollectionPlaylist::NewL());
-    CMPXCollectionOpenUtility* utility;
+    CMPXCollectionOpenUtility* utility( NULL );
     TRAP( err , utility = CMPXCollectionOpenUtility::NewL(iCollectionPlaylist,KMcModeDefault));
     
     TRAP( err ,iCollectionPath = utility->PathL());
@@ -1119,7 +1119,7 @@ TInt CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilityStop( CStifItemParser&
     iLog->Log(_L("CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilityStop"));
     TInt err = KErrNone;
     TRAP( err , iCollectionPlaylist = CMPXCollectionPlaylist::NewL());
-    CMPXCollectionOpenUtility* utility;
+    CMPXCollectionOpenUtility* utility( NULL );
     TRAP( err , utility = CMPXCollectionOpenUtility::NewL(iCollectionPlaylist,KMcModeDefault));
     
     TRAP( err , utility->Stop());
@@ -1146,7 +1146,7 @@ TInt CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilitySetDelay( CStifItemPar
     iLog->Log(_L("CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilitySetDelay"));
     TInt err = KErrNone;
     TRAP( err , iCollectionPlaylist = CMPXCollectionPlaylist::NewL());
-    CMPXCollectionOpenUtility* utility;
+    CMPXCollectionOpenUtility* utility( NULL );
     TRAP( err , utility = CMPXCollectionOpenUtility::NewL(iCollectionPlaylist,KMcModeDefault));
 
     TInt delay = 10;
@@ -1207,7 +1207,7 @@ TInt CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilityStartUsingPath( CStifI
          itemIdArray.Close();
    
          
-    CMPXCollectionPath* path;
+    CMPXCollectionPath* path( NULL );
     TRAP( err , path = CMPXCollectionPath::NewL(*iCollectionPath));
     
     RArray<TMPXAttribute> aAttrs;   
@@ -1219,7 +1219,7 @@ TInt CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilityStartUsingPath( CStifI
    	TMPXAttribute aKeyAttribute = KMPXMediaNullAttribute ;
    	
    	TRAP( err , iCollectionPlaylist = CMPXCollectionPlaylist::NewL());
-    CMPXCollectionOpenUtility* utility;
+    CMPXCollectionOpenUtility* utility( NULL );
     TRAP( err , utility = CMPXCollectionOpenUtility::NewL(iCollectionPlaylist,KMcModeIsolated/*KMcModeDefault*/));
     TRAP( err , utility->StartL(*path,aAttrs.Array(),aChunkSize,aOffset,direction,aKeyAttribute));
     delete utility;
@@ -1242,7 +1242,7 @@ TInt CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilitySetDirection( CStifIte
     iLog->Log(_L("CMPXCollectionPlaylistTest::CMPXCollectionOpenUtilitySetDirection"));
     TInt err = KErrNone;
     TRAP( err , iCollectionPlaylist = CMPXCollectionPlaylist::NewL());
-    CMPXCollectionOpenUtility* utility;
+    CMPXCollectionOpenUtility* utility( NULL );
     TRAP( err ,  utility = CMPXCollectionOpenUtility::NewL(iCollectionPlaylist,KMcModeDefault));    
     CMPXCollectionOpenUtility::TDirection direction = CMPXCollectionOpenUtility::EFetchNormal;
     TRAP( err , utility->SetDirection(direction));
@@ -1271,7 +1271,7 @@ TInt CMPXCollectionPlaylistTest::NewLMMPXCollectionUtility( CStifItemParser& /*a
     iLog->Log(_L("CMPXCollectionPlaylistTest::NewLMMPXCollectionUtility"));
     TInt err = KErrNone;
     TRAP( err,iCollectionPlaylist = CMPXCollectionPlaylist::NewL());
-    MMPXCollectionUtility* collectionUtility;
+    MMPXCollectionUtility* collectionUtility( NULL );
     TRAP( err ,  collectionUtility = MMPXCollectionUtility::NewL(iCollectionPlaylist,KMcModeDefault));
     collectionUtility->Close();
     iLog->Log(_L("CMPXCollectionPlaylist::NewLMMPXCollectionUtility OK"));

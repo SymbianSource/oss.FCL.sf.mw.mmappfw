@@ -778,7 +778,7 @@ void QTmsVoipTest::CreateFormat_data()
     QTest::newRow("G729")<<QTMS_FORMAT_G729;
     QTest::newRow("iLBC")<<QTMS_FORMAT_ILBC;
     QTest::newRow("AMR")<<QTMS_FORMAT_AMR;
-#endif    
+#endif
     QTest::newRow("PCM") << QTMS_FORMAT_PCM;
 }
 
@@ -1453,7 +1453,7 @@ void QTmsVoipTest::CreateRouting()
         DisplayDevice(current);
 
         QVERIFY(status == QTMS_RESULT_SUCCESS);
-#ifndef __WINSCW__      
+#ifndef __WINSCW__
         QCOMPARE(routing,current);
 #endif
         StopDnlink();
@@ -1571,7 +1571,7 @@ void QTmsVoipTest::BufferProcessed(QTMSBuffer* /*buffer*/, gint /*reason*/)
 void QTmsVoipTest::ProcessBuffer(const QTMSBuffer* buffer)
 {
     //TODO: add loopback test
-#ifdef  __TEST_CODE_COVERAGE__    
+#ifdef  __TEST_CODE_COVERAGE__
     QTMSBuffer* recBuf(NULL);
     recBuf = const_cast<QTMS::QTMSBuffer*> (buffer);
     if (m_ClientSink) {

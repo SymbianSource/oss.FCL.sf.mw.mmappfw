@@ -205,9 +205,9 @@ private:
     TInt ReserveObjectL();
 
     /**
-    * Set protection status of object which could be read/write-only
+    * Set file properties of object
     */
-    void SetProtectionStatus();
+    void SetFileProperties();
 
     /**
     * Save object information of object whose size is zero
@@ -266,8 +266,7 @@ private:
     TUint16 iObjectFormat;
     TUint64 iObjectSize;
 
-    // S60 feature doesn't include this.
-    // Reserve for future
+    // cache info during SendObjectInfo/SendObjectProplist for file properties
     TUint16 iProtectionStatus;
     HBufC* iDateMod;
 

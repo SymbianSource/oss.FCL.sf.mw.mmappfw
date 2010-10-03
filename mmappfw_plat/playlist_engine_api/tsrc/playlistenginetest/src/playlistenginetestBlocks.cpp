@@ -382,8 +382,8 @@ TInt Cplaylistenginetest::CMPXPlaylistPluginHandlerCreate( CStifItemParser& /*aI
     
     RFs fs=RFs();
     User::LeaveIfError(fs.Connect());
-    CArrayFix<CCnvCharacterSetConverter::SCharacterSet>* iTopCharacterSet;	
-    CArrayFix<CCnvCharacterSetConverter::SCharacterSet>* iAvailableCharacterSet;
+    CArrayFix<CCnvCharacterSetConverter::SCharacterSet>* iTopCharacterSet( NULL );	
+    CArrayFix<CCnvCharacterSetConverter::SCharacterSet>* iAvailableCharacterSet( NULL );
     TRAP( err , iAvailableCharacterSet =  new (ELeave)CArrayFixFlat<CCnvCharacterSetConverter::SCharacterSet>(12));
     TRAP( err , iTopCharacterSet = new (ELeave)CArrayFixFlat<CCnvCharacterSetConverter::SCharacterSet>(12));
     

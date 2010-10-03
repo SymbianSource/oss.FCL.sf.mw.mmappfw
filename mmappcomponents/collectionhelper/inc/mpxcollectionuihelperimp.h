@@ -859,6 +859,7 @@ private: // data
     TBool                               iInitialized;  // collection db merging
     TBool                               iIncAdding;  // Incremental adding guard
     TInt 								iRefCount;
+    TUid                                iModeId;
     };
 
 #endif // CMPX_COLLECTION_UI_HELPER_H

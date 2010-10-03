@@ -227,7 +227,7 @@ TInt CCommonTestClass::MpxMediaOperatorAssignment(CStifItemParser& aItem)
         return KErrBadTestParameter;
         }
 
-    CMPXMedia* media;
+    CMPXMedia* media( NULL );
     TRAP(err , media= CMPXMedia::NewL());
     CleanupStack::PushL(media);
     media->operator =(*(*iMPXMediaArray)[index]);
@@ -1655,7 +1655,7 @@ TInt CCommonTestClass::MpxMediaArrayInsertByPtr(CStifItemParser& aItem)
         return KErrBadTestParameter;
         }
 
-    CMPXMedia* media;
+    CMPXMedia* media( NULL );
     TRAP(err,media = CMPXMedia::NewL());
     err = iMPXMediaArray->Insert(media, index);
     if ( err )
@@ -1690,7 +1690,7 @@ TInt CCommonTestClass::MpxMediaArrayInsertByRef(CStifItemParser& aItem)
         return KErrBadTestParameter;
         }
 
-    CMPXMedia* media;
+    CMPXMedia* media( NULL );
     TRAP(err , media= CMPXMedia::NewL());
     err = iMPXMediaArray->Insert(*media, index);
     if ( err )
@@ -1725,7 +1725,7 @@ TInt CCommonTestClass::MpxMediaArrayInsertLByPtrL(CStifItemParser& aItem)
         return KErrBadTestParameter;
         }
 
-    CMPXMedia* media;
+    CMPXMedia* media( NULL );
     TRAP(err , media= CMPXMedia::NewL());
     CleanupStack::PushL(media);
     TRAP(err , iMPXMediaArray->InsertL(media, index));
@@ -1757,7 +1757,7 @@ TInt CCommonTestClass::MpxMediaArrayInsertLByRefL(CStifItemParser& aItem)
         return KErrBadTestParameter;
         }
 
-    CMPXMedia* media;
+    CMPXMedia* media( NULL );
     TRAP(err , media= CMPXMedia::NewL());
     CleanupStack::PushL(media);
     TRAP(err , iMPXMediaArray->InsertL(*media, index));
@@ -1789,7 +1789,7 @@ TInt CCommonTestClass::MpxMediaArraySet(CStifItemParser& aItem)
         return KErrBadTestParameter;
         }
 
-    CMPXMedia* media;
+    CMPXMedia* media( NULL );
     TRAP(err , media= CMPXMedia::NewL());
     CleanupStack::PushL(media);
     iMPXMediaArray->Set(*media, index);
@@ -1864,7 +1864,7 @@ TInt CCommonTestClass::MpxMediaCopyL(CStifItemParser& aItem)
             return KErrBadTestParameter;
             }
 
-    CMPXMedia* media;
+    CMPXMedia* media( NULL );
     TRAP(err , media= CMPXMedia::NewL());
     CleanupStack::PushL(media);
     TRAP(err,iMPXMediaArray->AppendL(media));
@@ -1907,7 +1907,7 @@ TInt CCommonTestClass::MpxMediaHeapMemoryInfoL(CStifItemParser&)
     TInt& aTotal=total; 
     TInt& aUsed=used;
 
-    CMPXMedia* media;
+    CMPXMedia* media( NULL );
     TRAP(err , media= CMPXMedia::NewL());
     CleanupStack::PushL(media);
     TRAP(err,iMPXMediaArray->AppendL(media));
@@ -1932,7 +1932,7 @@ TInt CCommonTestClass::MpxMediaMergeMediaL(CStifItemParser&)
     TInt err = KErrNone;
     TUint index=0;
 
-    CMPXMedia* media;
+    CMPXMedia* media( NULL );
     TRAP(err , media= CMPXMedia::NewL());
     CleanupStack::PushL(media);
     TRAP(err,iMPXMediaArray->AppendL(media));
@@ -1956,7 +1956,7 @@ TInt CCommonTestClass::MpxMediaMatchL(CStifItemParser&)
     TInt err = KErrNone;
     TUint index=0;    
 
-    CMPXMedia* media;
+    CMPXMedia* media( NULL );
     TRAP(err , media= CMPXMedia::NewL());
     CleanupStack::PushL(media);
     TRAP(err ,iMPXMediaArray->AppendL(media));       

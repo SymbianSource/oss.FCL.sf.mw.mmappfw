@@ -20,6 +20,7 @@
 
 #include <e32cmn.h>
 #include <qtms.h>
+#include <qtmsver.h>
 
 // FORWARD DECLARATIONS
 namespace TMS
@@ -47,7 +48,7 @@ class QTMSInbandTone;
 class QTMSFactoryImpl
 {
 public:
-    QTMSFactoryImpl();
+    QTMSFactoryImpl(QTMSVer& ver);
     virtual ~QTMSFactoryImpl();
 
     gint CreateCall(QTMSCallType ctype, QTMSCall*& QTMScall, guint ctxid);
