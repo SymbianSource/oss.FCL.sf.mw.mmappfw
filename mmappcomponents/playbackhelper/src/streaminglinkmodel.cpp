@@ -15,7 +15,7 @@
 *
 */
 
-// Version : %version: 5 %
+// Version : %version: 4 %
 
 
 
@@ -559,8 +559,6 @@ TInt CStreamingLinkModel::PopulateRamLinksL( RFile aRamFile,
 
     TInt size = 0;
     TInt result = KErrNone;
-    
-    TBool linkadded = EFalse;
 
     if ( aRamFile.Size( size ) == KErrNone && size <= KMaxLinkFileSize )
     {
@@ -578,8 +576,6 @@ TInt CStreamingLinkModel::PopulateRamLinksL( RFile aRamFile,
         // Get links from buffer
         while ( ret == KErrNone )
         {
-            linkadded = EFalse;
-        
             // Create a linkitem ptr
             LinkStruct* linkItem = new( ELeave ) LinkStruct;   
             CleanupStack::PushL( linkItem );
@@ -597,23 +593,14 @@ TInt CStreamingLinkModel::PopulateRamLinksL( RFile aRamFile,
                 {
                     ptr2.TrimRight();
                     iLinkArray.Append( linkItem );
-                    linkadded = ETrue;
                 }
             }
             else
             {
                 iLinkArray.Append( linkItem );
-                linkadded = ETrue;
             }
             
-            if ( linkadded )
-            {
-                CleanupStack::Pop(2); // pop the linkItem and the HbufC created for linkItem->link               
-            }                              
-            else 
-            {
-                CleanupStack::PopAndDestroy(2); //pop and destroy linkItem and the HbufC created for linkItem->link
-            }
+            CleanupStack::Pop(2); // pop the linkItem and the HbufC created for linkItem->link
         }
 
         CleanupStack::PopAndDestroy(2);  // buffer, recognizer
@@ -649,8 +636,6 @@ TInt CStreamingLinkModel::PopulateAsxLinksL( CAsxParser* aAsxParser,
     iLinkCount = 0;
 
     TInt ret = KErrNone;
-    
-    TBool linkadded = EFalse;
 
     if ( aAsxParser )
     {
@@ -665,9 +650,6 @@ TInt CStreamingLinkModel::PopulateAsxLinksL( CAsxParser* aAsxParser,
 
             for (TInt i=1; i <= urlCount; i++)
             {
-
-                linkadded = EFalse;
-                
                 // Get the asx struct from the parser
                 asxItem = aAsxParser->GetUrl(i);
                 // Set the url to the bufferptr
@@ -695,23 +677,15 @@ TInt CStreamingLinkModel::PopulateAsxLinksL( CAsxParser* aAsxParser,
                     {
                         ptr2.TrimRight();
                         iLinkArray.Append( linkItem );
-                        linkadded = ETrue;
                     }
                 }
                 else
                 {
                     iLinkArray.Append( linkItem );
-                    linkadded = ETrue;
                 }
-                                              
-                if ( linkadded )
-                {
-                    CleanupStack::Pop(2); // pop the linkItem and the HbufC created for linkItem->link                    
-                }                              
-                else 
-                {
-                    CleanupStack::PopAndDestroy(2); //pop and destroy linkItem and the HbufC created for linkItem->link
-                }
+                
+                CleanupStack::Pop(2); // pop the linkItem and the HbufC created for linkItem->link 
+
             }
 
             CleanupStack::PopAndDestroy();  //recognizer

@@ -262,5 +262,4 @@ EXPORTS
 	_ZThn28_NK17CRequestProcessor5MatchERK13TMTPTypeEventR14MMTPConnection @ 261 NONAME
 	_ZThn28_NK17CRequestProcessor5MatchERK15TMTPTypeRequestR14MMTPConnection @ 262 NONAME
 	_ZThn28_NK17CRequestProcessor7RequestEv @ 263 NONAME
-	_ZN13CDeleteObject24DoHandleCompletingPhaseLEv @ 264 NONAME
 

@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  This class is responsible for reading file info
-*  Version     : %version: e003sa33#5.1.3.1.10 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#5.1.3.1.8 % << Don't touch! Updated by Synergy at check-out.
 *
 *  Copyright © 2005 Nokia. All rights reserved.
 */
@@ -81,8 +81,8 @@ CMPXFileInfoUtility::~CMPXFileInfoUtility()
     iMMFControllers.ResetAndDestroy();
     iMMFControllers.Close();
     
-    //delete non cached Helix controller
-    if( iController && ( iCurrentControllerUid == 0x10207B65 ) )
+    // delete non cached controller
+    if(iController)
         {
         iController->Close();
         delete iController;
@@ -163,6 +163,9 @@ void CMPXFileInfoUtility::OpenFileL(RFile& aFile,
                                                  buf->Ptr(0),
                                                  dataSource));
     
+    MPX_DEBUG1("CMPXFileInfoUtility::OpenFileL()- AddDataSink()");
+    User::LeaveIfError(iController->AddDataSink(KUidMmfAudioOutput,
+                                               KNullDesC8));
     CleanupStack::PopAndDestroy(buf);
     
     MPX_DEBUG1("CMPXFileInfoUtility::OpenFileL()--->");

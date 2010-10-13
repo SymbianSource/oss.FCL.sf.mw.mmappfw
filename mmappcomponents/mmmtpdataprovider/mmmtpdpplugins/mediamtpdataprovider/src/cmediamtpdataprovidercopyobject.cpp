@@ -222,6 +222,10 @@ void CMediaMtpDataProviderCopyObject::ServiceGetSpecificObjectPropertyL( TUint16
         {
         iPropertyElement = NULL;
         }
+    else
+        {
+        User::LeaveIfError( err );
+        }
     PRINT( _L( "MM MTP <= CMediaMtpDataProviderCopyObject::ServiceSpecificObjectPropertyL" ) );
     }
 

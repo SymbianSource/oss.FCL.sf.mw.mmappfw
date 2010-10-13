@@ -28,6 +28,5 @@ PRJ_MMPFILES
 
 PRJ_TESTMMPFILES
 #include "../mpxplaybackutilitytest/group/bld.inf"
-#include "../testvideoplaybackplugin/group/bld.inf"
 
 //  End of File  

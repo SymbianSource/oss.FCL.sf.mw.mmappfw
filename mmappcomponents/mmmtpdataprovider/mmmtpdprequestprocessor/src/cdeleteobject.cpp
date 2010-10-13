@@ -26,7 +26,6 @@
 #include "mmmtpdputility.h"
 
 const TInt KMaxDeletionTimes = 10;
-const TInt KMaxDeviceBusyTimes = 3;
 const TInt KDeletionThreshold = 100 * 1000; // (100 millisec)
 
 // -----------------------------------------------------------------------------
@@ -295,25 +294,6 @@ EXPORT_C void CDeleteObject::DoCancel()
     }
 
 // -----------------------------------------------------------------------------
-// CDeleteObject::DoHandleCompletingPhaseL
-// Completeing phase Handler
-// -----------------------------------------------------------------------------
-//
-EXPORT_C TBool CDeleteObject::DoHandleCompletingPhaseL()
-    {
-    CRequestProcessor::DoHandleCompletingPhaseL();
-
-    // If the response code is EMTPRespCodeDeviceBusy, don't release this object
-    TBool result = !iDeviceBusy;
-
-    PRINT2( _L( "MM MTP <> CDeleteObject::DoHandleCompletingPhaseL iDeleteError= %d, result = %d" ),
-            iDeleteError,
-            result );
-
-    return result;
-    }
-
-// -----------------------------------------------------------------------------
 // CDeleteObject::ProcessFinalPhaseL
 // Delete all of the associations if file deletion was successful
 // Then signals that the deletion has been completed
@@ -325,7 +305,6 @@ void CDeleteObject::ProcessFinalPhaseL()
 
     TInt num = iObjectsToDelete.Count();
     TBool isOk = iDeleteError == KErrNone || iDeleteError == KErrNotFound;
-    iDeviceBusy = EFalse;
 
     if ( num == 0 && isOk )
         {
@@ -336,15 +315,12 @@ void CDeleteObject::ProcessFinalPhaseL()
         SendResponseL( EMTPRespCodePartialDeletion );
         }
     else if ( !iIsMultiDelete && iDeleteError == KErrAccessDenied )
-        { 
+        {
         SendResponseL( EMTPRespCodeObjectWriteProtected );
         }
-    else if ( iDeleteError == KErrInUse 
-            && iCountDeviceBusyError < KMaxDeviceBusyTimes )
+    else if ( iDeleteError == KErrInUse )
         {
-        iCountDeviceBusyError++;
         SendResponseL( EMTPRespCodeDeviceBusy );
-        iDeviceBusy = ETrue;
         }
     else
         {

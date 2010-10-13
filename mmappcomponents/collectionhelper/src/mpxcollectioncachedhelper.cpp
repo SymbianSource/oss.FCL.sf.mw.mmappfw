@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extended collection helper with an internal caching array
-*  Version     : %version: da1mmcf#27.1.12.1.4 % 
+*  Version     : %version: da1mmcf#27.1.12.1.2.1.3 % 
 *
 */
 
@@ -53,6 +53,7 @@ _LIT( K3GPFileExt, ".3gp" );
 _LIT( K3G2FileExt, ".3g2" );
 _LIT( KODFFileExt, ".odf" );
 _LIT( KO4AFileExt, ".o4a" );
+_LIT( KAACFileExt, ".aac" );
 
 // ======== MEMBER FUNCTIONS ========
 
@@ -179,7 +180,7 @@ void CMPXCollectionCachedHelper::AddL( CMPXMedia* aMedia )
     if( iCache->Count() >= cacheCount)
         Commit();
 
-    #ifdef ABSTRACTAUDIOALBUM_INCLUDED
+#ifdef ABSTRACTAUDIOALBUM_INCLUDED
     TBool extract = ETrue;
     if( aMedia->IsSupported( KMPXMediaMTPSampleDataFlag ) )
         {
@@ -1214,6 +1215,7 @@ void CMPXCollectionCachedHelper::SetMissingMetadataL(CMPXMedia* aMedia)
     // only do this for file that might not be natively supported by PC
     if ( ( parse.Ext().CompareF(K3GPFileExt) == 0 )
         || ( parse.Ext().CompareF(K3G2FileExt) == 0 )
+        || ( parse.Ext().CompareF(KAACFileExt) == 0 )
         || ( parse.Ext().CompareF(KODFFileExt) == 0 )
         || ( parse.Ext().CompareF(KO4AFileExt) == 0 ) )
         {

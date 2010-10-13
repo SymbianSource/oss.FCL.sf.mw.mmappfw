@@ -155,7 +155,7 @@ EXPORT_C void CMmMtpDpMetadataAccessWrapper::GetObjectMetadataValueL( const TUin
                 break;
                 }
             // else
-            // Fall through on purpoe to get from mpx
+            // get from mpx
         case EMPXPlaylist:
         case EMPXSong:
             {

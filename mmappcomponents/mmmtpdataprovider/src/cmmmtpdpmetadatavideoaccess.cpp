@@ -40,7 +40,7 @@
 #include "mmmtpvideodbdefs.h"
 #include "tobjectdescription.h"
 
-_LIT( KMTPNoBackupFolder, "nobackup\\" );
+const TInt KStorageRootMaxLength = 10;
 
 #ifdef _DEBUG
 static const TInt KMtpMaxStringDescLength = KMtpMaxStringLength - 1;
@@ -89,8 +89,6 @@ void CMmMtpDpMetadataVideoAccess::ConstructL()
     User::LeaveIfError( iDbsSession.Connect() );
 
     TInt err = DriveInfo::GetDefaultDrive( DriveInfo::EDefaultPhoneMemory, iStoreNum );
-    PRINT1( _L( "MM MTP <> CMmMtpDpMetadataVideoAccess::ConstructL, EDefaultPhoneMemory err = %d" ), err );
-    User::LeaveIfError( err );
 
     err = OpenDatabase();
 
@@ -109,17 +107,12 @@ TInt CMmMtpDpMetadataVideoAccess::OpenDatabase()
     {
     PRINT( _L( "MM MTP => CMmMtpDpMetadataVideoAccess::OpenDatabase" ) );
 
-    TFileName dbFileName;
-    TDriveUnit dbDrive( iStoreNum );
-    iRfs.PrivatePath( dbFileName );
-    dbFileName.Insert( 0, dbDrive.Name() );
-    dbFileName.Append( KMTPNoBackupFolder );
-    dbFileName.Append( KMtpVideoDb );
-    TInt err = iRfs.MkDirAll( dbFileName );
+    iRfs.CreatePrivatePath( iStoreNum );
+    TInt err = iRfs.SetSessionToPrivate( iStoreNum );
 
-    if ( err == KErrNone || err == KErrAlreadyExists )
+    if ( err == KErrNone )
         {
-        TRAP( err, iFileStore = CPermanentFileStore::OpenL( iRfs, dbFileName, EFileRead | EFileWrite ) );
+        TRAP( err, iFileStore = CPermanentFileStore::OpenL( iRfs, KMtpVideoDb, EFileRead | EFileWrite ) );
 
         if ( err == KErrNone )
             TRAP( err, iFileStore->SetTypeL( iFileStore->Layout() ) );
@@ -132,8 +125,8 @@ TInt CMmMtpDpMetadataVideoAccess::OpenDatabase()
 
         if ( err != KErrNone )
             {
-            iRfs.Delete( dbFileName );   // delete first before creating a new one
-            TRAP( err, iFileStore = CPermanentFileStore::CreateL( iRfs, dbFileName, EFileRead | EFileWrite ) );
+            iRfs.Delete( KMtpVideoDb );   // delete first before creating a new one
+            TRAP( err, iFileStore = CPermanentFileStore::CreateL( iRfs, KMtpVideoDb, EFileRead | EFileWrite ) );
             PRINT1( _L( "MM MTP <> OpenDatabase RDbNamedDatabase::CreateL, err = %d" ), err );
 
             if ( err == KErrNone )
@@ -154,18 +147,22 @@ TInt CMmMtpDpMetadataVideoAccess::OpenDatabase()
                 if ( KErrNone != err )
                     {
                     iDatabase.Close();
-                    iRfs.Delete( dbFileName );
+                    iRfs.Delete( KMtpVideoDb );
                     }
                 }
             }
         }
+
+    TBuf<KStorageRootMaxLength> storeRoot;
+    err = PathInfo::GetRootPath( storeRoot, iStoreNum );
+    iRfs.SetSessionPath( storeRoot );
 
     if ( err == KErrNone )
         {
         iDbOpened = ETrue;
         }
 
-    PRINT1( _L( "MM MTP <= CMmMtpDpMetadataVideoAccess::OpenDatabase err = %d" ), err );
+    PRINT( _L( "MM MTP <= CMmMtpDpMetadataVideoAccess::OpenDatabase" ) );
     return err;
     }
 
@@ -352,14 +349,12 @@ void CMmMtpDpMetadataVideoAccess::CleanupDbIfNecessaryL()
 
     for ( iRecordSet.FirstL(); iRecordSet.AtRow(); iRecordSet.NextL() )
         {
-#ifdef _DEBUG
         HBufC* data = ReadLongTextL( KMtpVideoLocation );
+        CleanupStack::PushL( data );
 
         PRINT1( _L( "MM MTP <> CleanupDbIfNecessaryL removing %S from database" ), data );
-        delete data;
-        data = NULL;
-#endif
         iRecordSet.DeleteL();
+        CleanupStack::PopAndDestroy( data );
         }
 
     delete iColSet;
@@ -711,8 +706,9 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
         OpenDatabaseL();
 
     // File Path
-    const TDesC& suid = aObjectMetaData.DesC( CMTPObjectMetaData::ESuid );
-    SetRecordL( suid, ERecordRead );
+    HBufC* suid = aObjectMetaData.DesC( CMTPObjectMetaData::ESuid ).AllocLC();  // + suid
+    SetRecordL( *suid, ERecordRead );
+    CleanupStack::PopAndDestroy( suid ); // - suid
 
     HBufC* data = NULL;
     TDbColNo num;
@@ -783,14 +779,16 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
             {
             PRINT( _L( "MM MTP <> EMTPObjectPropCodeDescription-MD" ) );
             data = ReadLongTextL( KMtpVideoComment );
-            CleanupStack::PushL( data ); // + data
 
             TInt len = data->Length();
             PRINT1( _L( "MM MTP <> CMmMtpDpMetadataMpxAccess::GetObjectMetadataValue len = %d" ),len );
-            for ( TInt i = 0; i < len; i++ )
-                ( ( CMTPTypeArray& ) aNewData ).AppendUintL( ( *data )[i] );
+            if ( len != 0 )
+                {
+                for ( TInt i = 0; i < len; i++ )
+                    ( ( CMTPTypeArray& ) aNewData ).AppendUintL( ( *data )[i] );
+                }
 
-            CleanupStack::PopAndDestroy( data ); // - data
+            delete data;
             data = NULL;
             }
             break;
@@ -1027,7 +1025,6 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
     // Pack the info to aNewData
     if ( data )
         {
-        CleanupStack::PushL( data ); // + data
 #ifdef _DEBUG
         if ( data->Length() > KMtpMaxStringDescLength )   // Have to concatenate for MTP
             {
@@ -1043,7 +1040,8 @@ void CMmMtpDpMetadataVideoAccess::GetObjectMetadataValueL( const TUint16 aPropCo
             {
             User::Leave( KErrArgument );
             }
-        CleanupStack::PopAndDestroy( data ); // - data
+        delete data;
+        data = NULL;
         }
 
     PRINT( _L( "MM MTP <= CMmMtpDpMetadataVideoAccess::GetObjectMetadataValue" ) );

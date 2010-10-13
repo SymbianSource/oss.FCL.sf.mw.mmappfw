@@ -21,25 +21,7 @@
 const TInt KGeneralPlaybackMsgOffset = 0;
 const TInt KVideoPlaybackMsgOffset = 100;
 const TInt KStifPlaybackMsgOffset = 200;
-
-
-
-
 const TInt KMPXMessageStif = 0x20011397;
-
-//
-//  TInt for Command Id
-//
-const TMPXAttributeData KMPXStifPlaybackCommand = { KMPXMessageStif, 0x01 };
-
-
-enum TMPXStifCommand
-{
-    EPbStifPlayComplete,
-    EPbStifSeekForward,
-    EPbStifSeekBackward
-
-};
 
 
 #endif      // MPXPLAYBACKUTILITYTESTDEFS_H

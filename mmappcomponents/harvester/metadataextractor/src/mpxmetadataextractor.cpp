@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Extracts metadata from a file
-*  Version     : %version: da1mmcf#38.1.4.2.6.1.17 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: da1mmcf#38.1.4.2.6.1.14 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -254,10 +254,6 @@ void CMPXMetadataExtractor::SetDefaultL( CMPXMedia& aMediaProp )
     // URL
     aMediaProp.SetTextValueL( KMPXMediaMusicURL,
                               KNullDesC );
-    // AlbumArtist
-    aMediaProp.SetTextValueL( KMPXMediaMusicAlbumArtist,
-                              KNullDesC );
-    
     }
 
 // ---------------------------------------------------------------------------
@@ -433,62 +429,6 @@ void CMPXMetadataExtractor::SetMediaPropertiesL()
                                                 duration );      
                 
                     MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL- duration = %i", duration);  
-                    }
-                break;
-                }
-            case EMetaDataSampleRate:     
-                {                  
-                const TDesC& mimeType = iMedia->ValueText( KMPXMediaGeneralMimeType );
-                MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL, mimeType = %S", &mimeType);   
-                
-                // Verify if WMA, get the sample rate
-                if( mimeType.Compare(KWmaMimeType) == 0 || mimeType.Compare(KWmaCafMimeType) == 0 )
-                    {
-                    MPX_DEBUG1("CMPXMetadataExtractor::SetMediaPropertiesL- WMA");                         
-
-                    // Perform the sample rate conversion
-                    TLex lexer( *value );
-                    TInt32 sampleRate ( 0 );
-                    lexer.Val( sampleRate );         
-                    
-                    iMedia->SetTObjectValueL<TUint>( KMPXMediaAudioSamplerate,
-                                                      sampleRate );
-                           
-                    MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL- sample rate = %i", sampleRate);  
-                    }
-                break;
-                }
-            case EMetaDataBitRate:     
-                {                  
-                const TDesC& mimeType = iMedia->ValueText( KMPXMediaGeneralMimeType );
-                MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL, mimeType = %S", &mimeType);   
-                
-                // Verify if WMA, get the duration
-                if( mimeType.Compare(KWmaMimeType) == 0 || mimeType.Compare(KWmaCafMimeType) == 0 )
-                    {
-                    MPX_DEBUG1("CMPXMetadataExtractor::SetMediaPropertiesL- WMA");                         
-
-                    // Perform the duration conversion
-                    TLex lexer( *value );
-                    TInt32 bitRate ( 0 );
-                    lexer.Val( bitRate );   
-                
-                    iMedia->SetTObjectValueL<TUint>( KMPXMediaAudioBitrate,
-                                                     bitRate );
-                
-                    MPX_DEBUG2("CMPXMetadataExtractor::SetMediaPropertiesL- duration = %i", bitRate);  
-                    }
-                break;
-                }
-            case EMetaDataAlbumArtist:
-                {
-                TPtr valptr = value->Des();
-                valptr.Trim();
-                TInt vallen = value->Length();
-                if (vallen>0)
-                    {
-                    FindAndReplaceForbiddenChars(valptr, vallen);
-                    iMedia->SetTextValueL(KMPXMediaMusicAlbumArtist, *value);
                     }
                 break;
                 }
@@ -942,20 +882,7 @@ void CMPXMetadataExtractor::DoCreateMediaL()
         {
         TDataType dataType;
         TUid dummyUid(KNullUid);
-        // File handle based mime type recogniton required , because AppArc does 
-        // not have All Files capa required for files in private folders 
-        TDataRecognitionResult result;
-        RFs fs;
-		RFile rFile;
-        User::LeaveIfError(fs.Connect());
-		CleanupClosePushL(fs);
-        User::LeaveIfError(fs.ShareProtected());
-        User::LeaveIfError(rFile.Open(fs, iFileName, EFileShareReadersOrWriters));
-		CleanupClosePushL(rFile);
-        User::LeaveIfError(iAppArc.RecognizeData(rFile, result)); 
-        CleanupStack::PopAndDestroy(&rFile);
-        CleanupStack::PopAndDestroy(&fs);
-        dataType = result.iDataType;
+        iAppArc.AppForDocument(iFileName, dummyUid, dataType);
         iMedia->SetTextValueL( KMPXMediaGeneralMimeType,dataType.Des() );
         }
         

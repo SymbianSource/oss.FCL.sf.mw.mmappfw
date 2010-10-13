@@ -1075,17 +1075,6 @@ TBool CSendObject::GetFullPathNameL( const TDesC& aFileName )
             // might happen if function is called before physical file arrives
             // do nothing
             }
-        else if ( iObjectFormat == EMTPFormatCodeASF )
-            {
-            // happens on some buggy PC implementation, default formatcode to WMA or WMV if extension matches
-            PRINT( _L( "MM MTP <> happens on some buggy PC implementation, default formatcode to WMA or WMV if extension matches" ) );
-            if ( parser.Ext().CompareF( KTxtExtensionWMA ) == 0 )
-                iObjectFormat = EMTPFormatCodeWMA;
-            else if ( parser.Ext().CompareF( KTxtExtensionWMV ) == 0 )
-                iObjectFormat = EMTPFormatCodeWMV;
-            else
-                result = EFalse;
-            }
         else
             {
             PRINT2( _L( "MM MTP <> %S does not match 0x%x" ), &iFullPath, iObjectFormat );

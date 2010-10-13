@@ -40,14 +40,14 @@ _LIT( KmpxplaybackutilitytestLogPath, "C:\\logs\\testframework\\mpxplaybackutili
 _LIT( KmpxplaybackutilitytestLogFile, "mpxplaybackutilitytest.txt" ); 
 _LIT( KmpxplaybackutilitytestLogFileWithTitle, "mpxplaybackutilitytest_[%S].txt" );
 // data file
-_LIT( KmpxplaybackutilityTestFilePath, "C:\\" );
+_LIT( KmpxplaybackutilityTestFilePath, "C:\\testing\\data\\" );
 #else
-_LIT( KmpxplaybackutilitytestLogPath, "c:\\logs\\testframework\\mpxplaybackutilitytest\\" ); 
+_LIT( KmpxplaybackutilitytestLogPath, "f:\\logs\\testframework\\mpxplaybackutilitytest\\" ); 
 // Log file
 _LIT( KmpxplaybackutilitytestLogFile, "mpxplaybackutilitytest.txt" ); 
 _LIT( KmpxplaybackutilitytestLogFileWithTitle, "mpxplaybackutilitytest_[%S].txt" );
 // data file
-_LIT( KmpxplaybackutilityTestFilePath, "c:\\" );
+_LIT( KmpxplaybackutilityTestFilePath, "f:\\testing\\data\\" );
 #endif
 
 // FUNCTION PROTOTYPES
@@ -204,17 +204,6 @@ private: // functions
     TInt MMPXPlaybackUtilityAddObserverL(CStifItemParser& /*aItem*/);
     TInt MMPXPlaybackUtilityRemoveObserverL(CStifItemParser& /*aItem*/);
     TInt MMPXPlaybackUtilityPlayerManagerSelectPlayerL(CStifItemParser& /*aItem*/);
-    
-    TInt MMPXPlaybackUtilityCommandPlayL ( CStifItemParser & /*aItem*/ );
-    TInt MMPXPlaybackUtilityCommandStopL ( CStifItemParser & /*aItem*/ );
-    TInt MMPXPlaybackUtilityCommandPauseL ( CStifItemParser & /*aItem*/);
-    TInt MMPXPlaybackUtilityCommandPlayPauseL ( CStifItemParser & /*Item*/);
-    TInt MMPXPlaybackUtilityCommandPlayCompleteL ( CStifItemParser & /*Item*/);
-    TInt MMPXPlaybackUtilityCommandSeekForwardL ( CStifItemParser & /*Item*/);
-    TInt MMPXPlaybackUtilityCommandSeekBackwardL ( CStifItemParser & /*Item*/);
-    TInt MMPXPlaybackUtilityCommandCloseL ( CStifItemParser & /*Item*/);
-    TInt MMPXPlaybackUtilitySetL(CStifItemParser& /*aItem*/ );
-    
     TInt EndTest(CStifItemParser& /*aItem*/);
    
     /**
@@ -230,8 +219,6 @@ private: // data
     RFs iFs;
     TInt iCallbackError;
     RFile iFile;
-    TFileName iFileName;
-
 #ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
     RFile64 iFile64;
 #endif // SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API

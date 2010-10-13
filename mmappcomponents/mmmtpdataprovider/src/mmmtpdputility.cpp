@@ -110,8 +110,14 @@ EXPORT_C TMTPFormatCode MmMtpDpUtility::FormatFromFilename( const TDesC& aFullFi
                     if ( mime->CompareF( KMimeTypeAudio3gpp ) == 0
                         || mime->CompareF( KMimeTypeVideo3gpp ) == 0 )
                         {
+                        delete mime;
+                        mime = NULL;
                         format = EMTPFormatCode3GPContainer;
                         }
+                    }
+
+                if ( mime != NULL )
+                    {
                     delete mime;
                     mime = NULL;
                     }
@@ -519,15 +525,34 @@ HBufC8* MmMtpDpUtility::Mp4MimeTypeL( const TDesC& aFullPath )
 HBufC8* MmMtpDpUtility::OdfMimeTypeL( const TDesC& aFullPath )
     {
     PRINT( _L( "MM MTP => MmMtpDpUtility::OdfMimeTypeL" ) );
+    HBufC8* mimebuf = NULL;
 
-    CContent* content = CContent::NewLC( aFullPath ); // + content
-    HBufC* buffer = HBufC::NewLC( KMimeTypeMaxLength ); // + buffer
+    CContent* content = CContent::NewL( aFullPath );
+    CleanupStack::PushL( content ); // + content
+
+    HBufC* buffer = HBufC::NewL( KMimeTypeMaxLength );
+    CleanupStack::PushL( buffer ); // + buffer
 
     TPtr data = buffer->Des();
-    User::LeaveIfError( content->GetStringAttribute( EMimeType, data ) );
+    TInt err = content->GetStringAttribute( EMimeType, data );
 
-    HBufC8* mimebuf = HBufC8::NewL( buffer->Length() );
-    mimebuf->Des().Copy( *buffer );
+    if ( err == KErrNone )
+        {
+        mimebuf = HBufC8::New( buffer->Length() );
+
+        if ( mimebuf == NULL )
+            {
+            User::LeaveIfError( KErrNotFound );
+            }
+
+        mimebuf->Des().Copy( *buffer );
+        }
+
+    // leave if NULL
+    if ( mimebuf == NULL )
+        {
+        User::Leave( KErrNotFound );
+        }
 
     CleanupStack::PopAndDestroy( buffer ); // - buffer
     CleanupStack::PopAndDestroy( content ); // - content

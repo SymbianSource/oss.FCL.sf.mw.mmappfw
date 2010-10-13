@@ -269,7 +269,7 @@ void CRenameObject::GetParentSuidL( TUint32 aHandle,
         PRINT1( _L( "MM MTP <> CRenameObject::GetParentSuidL new folder full file name(%S)" ), &iNewFolderName );
 
         iOldFolderFullName.Zero();
-        iOldFolderFullName.Append( aFolderName );
+        iOldFolderFullName.Append( aFolderName ); // just name not suid
 
         PRINT1( _L( "MM MTP <> CRenameObject::GetParentSuidL = %S" ), &iOldFolderFullName );
         }

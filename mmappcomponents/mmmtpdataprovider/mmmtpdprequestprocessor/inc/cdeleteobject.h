@@ -77,11 +77,6 @@ protected:
     */
     IMPORT_C void DoCancel();
 
-    /**
-    * Completeing phase Handler
-    */
-    IMPORT_C TBool DoHandleCompletingPhaseL();
-
 private:
     void ConstructL();
     /**
@@ -118,12 +113,6 @@ private:
 
     // Keeps track of whether any files where deleted
     TBool iIsMultiDelete;
-
-    // Keeps track of the respone code when it is EMTPRespCodeDeviceBusy
-    TBool iDeviceBusy;
-
-    // Keeps track of the count of EMTPRespCodeDeviceBusy that return to PC
-    TInt iCountDeviceBusyError;
 
     // Accessor of DB
     MMmMtpDpConfig& iDpConfig;
